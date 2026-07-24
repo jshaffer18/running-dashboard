@@ -429,12 +429,12 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
             <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>Lap average pace</p>
             <div style={{ height: 100 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={r.splits} margin={{ top: 2, right: 4, left: 0, bottom: 0 }} barCategoryGap={0} barGap={0}>
+                <AreaChart data={r.splits.map((s) => ({ ...s, paceNeg: s.pace != null ? -s.pace : null }))} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
                   <XAxis dataKey="mile" tickFormatter={(v) => "Mi " + v} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
-                  <YAxis domain={["dataMin - 15", "dataMax + 15"]} tickFormatter={fmtPace} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={38} />
-                  <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(value, _, item) => [fmtPace(value) + "/mi" + (item.payload.partial ? " (extrapolated)" : ""), "Pace"]} labelFormatter={(v) => "Mile " + v} />
-                  <Bar dataKey="pace" fill="#9DAAA2" radius={[3, 3, 0, 0]} />
-                </BarChart>
+                  <YAxis domain={["dataMin - 15", "dataMax + 15"]} tickFormatter={(v) => fmtPace(-v)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={38} />
+                  <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(value, _, item) => [fmtPace(-value) + "/mi" + (item.payload.partial ? " (extrapolated)" : ""), "Pace"]} labelFormatter={(v) => "Mile " + v} />
+                  <Area type="step" dataKey="paceNeg" stroke="#77807A" strokeWidth={1.5} fill="#9DAAA2" fillOpacity={0.75} />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -461,25 +461,43 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
                     <tr style={{ borderBottom: "0.5px solid var(--border)" }}>
-                      <th style={{ textAlign: "left", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Mile</th>
+                      <th style={{ textAlign: "left", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Mi</th>
+                      <th style={{ textAlign: "left", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Pace</th>
                       <th style={{ textAlign: "right", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Dist</th>
-                      <th style={{ textAlign: "right", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Time</th>
-                      <th style={{ textAlign: "right", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Pace</th>
-                      <th style={{ textAlign: "right", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Avg HR</th>
+                      <th style={{ textAlign: "right", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>HR</th>
+                      <th style={{ textAlign: "right", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Elevation</th>
                       <th style={{ textAlign: "right", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Cadence</th>
+                      <th style={{ textAlign: "right", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Temp</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {r.splits.map((s) => (
-                      <tr key={s.mile} style={{ borderBottom: "0.5px solid var(--border)" }}>
-                        <td style={{ padding: "6px 8px" }}>{s.mile}{s.partial ? " *" : ""}</td>
-                        <td style={{ padding: "6px 8px", textAlign: "right" }}>{s.partial ? s.partial_distance_mi : "1.00"} mi</td>
-                        <td style={{ padding: "6px 8px", textAlign: "right" }}>{Math.round(s.time_s)}s</td>
-                        <td style={{ padding: "6px 8px", textAlign: "right" }}>{fmtPace(s.pace)}/mi</td>
-                        <td style={{ padding: "6px 8px", textAlign: "right" }}>{s.avg_hr ?? "\u2014"}</td>
-                        <td style={{ padding: "6px 8px", textAlign: "right" }}>{s.avg_cadence ?? "\u2014"}</td>
-                      </tr>
-                    ))}
+                    {(() => {
+                      const paces = r.splits.map((s) => s.pace);
+                      const minPace = Math.min(...paces);
+                      const maxPace = Math.max(...paces);
+                      return r.splits.map((s) => {
+                        const barPct = maxPace > minPace ? 100 * (1 - (s.pace - minPace) / (maxPace - minPace)) : 100;
+                        const barWidth = Math.max(12, barPct);
+                        return (
+                          <tr key={s.mile} style={{ borderBottom: "0.5px solid var(--border)" }}>
+                            <td style={{ padding: "6px 8px" }}>{s.mile}{s.partial ? " *" : ""}</td>
+                            <td style={{ padding: "6px 8px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <span style={{ minWidth: 44 }}>{fmtPace(s.pace)}</span>
+                                <div style={{ flex: 1, minWidth: 40, maxWidth: 90, height: 8, background: "var(--surface-2)", borderRadius: 4, overflow: "hidden" }}>
+                                  <div style={{ width: barWidth + "%", height: "100%", background: "#9DAAA2", borderRadius: 4 }} />
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ padding: "6px 8px", textAlign: "right" }}>{s.partial ? s.partial_distance_mi : "1.00"} mi</td>
+                            <td style={{ padding: "6px 8px", textAlign: "right" }}>{s.avg_hr ?? "\u2014"}</td>
+                            <td style={{ padding: "6px 8px", textAlign: "right" }}>{s.elev_net_ft != null ? (s.elev_net_ft > 0 ? "+" : "") + s.elev_net_ft + " ft" : "\u2014"}</td>
+                            <td style={{ padding: "6px 8px", textAlign: "right" }}>{s.avg_cadence ?? "\u2014"}</td>
+                            <td style={{ padding: "6px 8px", textAlign: "right" }}>{r.avg_temp_c != null ? cToF(r.avg_temp_c) + "\u00b0F" : "\u2014"}</td>
+                          </tr>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
                 {r.splits.some((s) => s.partial) && (
@@ -659,18 +677,29 @@ function RunningDashboard() {
 
           <div style={{ background: "var(--surface-1)", borderRadius: 16, padding: "1rem 1.2rem", marginBottom: 16 }}>
             <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)", margin: "0 0 8px" }}>Mileage trend</p>
-            <div style={{ height: 180 }}>
+            <div style={{ display: "flex", gap: 14, fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>
+              <span><span style={{ display: "inline-block", width: 10, height: 10, background: "#BDD1C5", borderRadius: 2, marginRight: 4 }}></span>Actual</span>
+              <span><span style={{ display: "inline-block", width: 10, height: 10, border: "2px dashed #5F594C", borderRadius: 2, marginRight: 4 }}></span>Planned</span>
+            </div>
+            <div style={{ height: 180, position: "relative" }}>
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={planVsActualByWeek} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                <BarChart data={planVsActualByWeek} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="weekLabel" tick={{ fontSize: 12, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
-                  <YAxis tick={{ fontSize: 12, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={36} />
+                  <YAxis domain={[0, "dataMax + 2"]} tick={{ fontSize: 12, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={36} />
                   <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 13 }} formatter={(value, name) => [value + " mi", name === "planned" ? "Planned" : "Actual"]} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => (v === "planned" ? "Planned" : "Actual")} />
-                  <Bar dataKey="actual" fill="#BDD1C5" radius={[4, 4, 0, 0]} barSize={48} />
-                  <Line dataKey="planned" stroke="#5F594C" strokeWidth={2} strokeDasharray="5 4" dot={{ r: 3, fill: "var(--surface-1)", stroke: "#5F594C" }} />
-                </ComposedChart>
+                  <Bar dataKey="planned" fill="none" stroke="#5F594C" strokeWidth={2} strokeDasharray="5 4" barSize={48} radius={[4, 4, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
+              <div style={{ position: "absolute", inset: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={planVsActualByWeek} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                    <XAxis dataKey="weekLabel" hide />
+                    <YAxis domain={[0, "dataMax + 2"]} hide />
+                    <Bar dataKey="actual" fill="#BDD1C5" barSize={30} radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
