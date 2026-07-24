@@ -90,12 +90,23 @@ const ZONE_RANGE_LABEL = {
 };
 
 const SHOE_MAX_MILES = 400;
+const PLANNED_COLOR = "#EDCC8B";
+const ACTUAL_COLOR = "#B6CDE2";
+const ACCENT_PURPLE = "#9993B2";
+const RACE_DATE = "2026-11-29";
+// Positional — must stay in sync with the shoe insertion order in
+// shoeMileage (RUNS order first, then any shoe-only entries from
+// SHOE_ADJUSTMENTS). Verified against Jennifer's Garmin gear
+// screenshots: matches exactly for every shoe except White Knights
+// SK13, where it's higher than our logged-run count — she's likely
+// run in it a couple more times without uploading those FIT files.
+const SHOE_ACTIVITY_COUNTS = [7, 43, 2, 52, 32, 39, 4, 54];
 
 const KPI_GRADIENTS = {
-  distance: "linear-gradient(135deg, #BDD1C5 0%, #D4E1D9 100%)",
-  time: "linear-gradient(135deg, #E8B298 0%, #A26360 100%)",
-  hr: "linear-gradient(135deg, #9DAAA2 0%, #BFC8C3 100%)",
-  runs: "linear-gradient(135deg, #D4A29C 0%, #E3C3BF 100%)",
+  race: "linear-gradient(135deg, #9DAAA2 0%, #BFC8C3 100%)",
+  mileage: "linear-gradient(135deg, #B6CDE2 0%, #DCE7F0 100%)",
+  cadence: "linear-gradient(135deg, #E8B298 0%, #A26360 100%)",
+  distance: "linear-gradient(135deg, #EDCC8B 0%, #F4E1B8 100%)",
 };
 
 const RESPONSIVE_CSS = `
@@ -162,6 +173,25 @@ function fmtDateShort(iso) {
 
 function cToF(c) {
   return Math.round((c * 9) / 5 + 32);
+}
+
+function getScheduleWorkoutDisplay(planned) {
+  const raw = planned && planned.type ? planned.type : "\u2014";
+  if (raw === "\u2014") return { main: raw, detail: "" };
+  if (/^Long slow$/i.test(raw)) return { main: "Long", detail: "" };
+  if (raw.includes(" + ")) {
+    const [main, ...rest] = raw.split(" + ");
+    return { main, detail: "+" + rest.join(" + ") };
+  }
+  const parenMatch = raw.match(/^(.*?)\s*\((.*)\)$/);
+  if (parenMatch) {
+    let main = parenMatch[1].trim();
+    let detail = parenMatch[2].trim();
+    if (/^Hill workout$/i.test(main)) main = "Hills";
+    detail = detail.replace(/warmup/gi, "wu").replace(/cooldown/gi, "cd").replace(/ repeats/gi, "");
+    return { main, detail };
+  }
+  return { main: raw, detail: "" };
 }
 
 function runForDate(date) {
@@ -302,6 +332,8 @@ function CalendarMonth({ monthDate, setMonthDate, onDayClick }) {
 
 function RunDetailCard({ r, expanded, onToggleExpand }) {
   const c = TYPE_COLOR[r.type] || TYPE_COLOR.Easy;
+  const [hiddenSeries, setHiddenSeries] = useState({});
+  const toggleSeries = (entryOrKey) => { const key = typeof entryOrKey === "string" ? entryOrKey : entryOrKey && entryOrKey.dataKey; if (key) setHiddenSeries((h) => ({ ...h, [key]: !h[key] })); };
   return (
     <div style={{ background: "var(--surface-1)", borderRadius: 16, padding: "1rem 1.2rem" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
@@ -325,13 +357,14 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
       </div>
 
       <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>Elevation, pace and HR</p>
-      <p style={{ fontSize: 10, color: "var(--text-secondary)", margin: "0 0 4px" }}>Left axis: pace (min/mi) &middot; Right axis: elevation (ft) &middot; HR via tooltip</p>
+      <p style={{ fontSize: 10, color: "var(--text-secondary)", margin: "0 0 4px" }}>Left axis: pace (min/mi) &middot; Right axis: elevation (ft) &middot; HR &amp; cadence via tooltip</p>
       <div style={{ height: 190 }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={r.detail_trace.map((p) => ({ ...p, paceNeg: p.pace != null ? -p.pace : null }))} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
             <XAxis dataKey="dist_mi" tickFormatter={(v) => v.toFixed(1)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
             <YAxis yAxisId="elev" orientation="right" domain={["dataMin - 8", "dataMax + 60"]} tick={{ fontSize: 9, fill: "#8FA88F" }} axisLine={false} tickLine={false} width={30} tickFormatter={(v) => Math.round(v)} />
             <YAxis yAxisId="hr" hide domain={[100, 220]} />
+            <YAxis yAxisId="cad" hide domain={[130, 220]} />
             <YAxis yAxisId="pace" orientation="left" domain={["dataMin - 20", "dataMax + 20"]} tick={{ fontSize: 9, fill: "#77807A" }} axisLine={false} tickLine={false} width={40} tickFormatter={(v) => fmtPace(-v)} />
             <Tooltip
               contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }}
@@ -339,20 +372,24 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
                 if (name === "elev_ft") return [Math.round(value) + " ft", "Elevation"];
                 if (name === "paceNeg") return [fmtPace(-value) + "/mi", "Pace"];
                 if (name === "hr") return [value + " bpm", "HR"];
+                if (name === "cad") return [value + " spm", "Cadence"];
                 return [value, name];
               }}
               labelFormatter={(v) => v.toFixed(2) + " mi"}
             />
-            <Area yAxisId="elev" type="monotone" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={0.25} strokeWidth={1.2} />
-            <Line yAxisId="pace" type="monotone" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls />
-            <Line yAxisId="hr" type="monotone" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls />
+            <Area name="Elevation" yAxisId="elev" type="monotone" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={0.25} strokeWidth={1.2} hide={!!hiddenSeries.elev_ft} />
+            <Line name="Pace" yAxisId="pace" type="monotone" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls hide={!!hiddenSeries.paceNeg} />
+            <Line name="HR" yAxisId="hr" type="monotone" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls hide={!!hiddenSeries.hr} />
+            <Line name="Cadence" yAxisId="cad" dataKey="cad" stroke="none" dot={{ r: 1.6, fill: ACCENT_PURPLE, stroke: ACCENT_PURPLE }} activeDot={{ r: 3 }} isAnimationActive={false} connectNulls hide={!!hiddenSeries.cad} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
       <div style={{ display: "flex", gap: 14, fontSize: 11, color: "var(--text-secondary)", marginTop: 4, flexWrap: "wrap" }}>
-        <span><span style={{ display: "inline-block", width: 9, height: 9, background: "#BDD1C5", borderRadius: 2, marginRight: 4, opacity: 0.5 }}></span>Elevation</span>
-        <span><span style={{ display: "inline-block", width: 9, height: 9, background: "#9DAAA2", borderRadius: 2, marginRight: 4 }}></span>Pace</span>
-        <span><span style={{ display: "inline-block", width: 9, height: 9, background: "#A26360", borderRadius: 2, marginRight: 4 }}></span>Avg HR</span>
+        {[{ key: "elev_ft", label: "Elevation", swatch: { background: "#BDD1C5", opacity: 0.5, borderRadius: 2 } }, { key: "paceNeg", label: "Pace", swatch: { background: "#9DAAA2", borderRadius: 2 } }, { key: "hr", label: "Avg HR", swatch: { background: "#A26360", borderRadius: 2 } }, { key: "cad", label: "Cadence", swatch: { background: ACCENT_PURPLE, borderRadius: "50%" } }].map((item) => (
+          <span key={item.key} onClick={() => toggleSeries(item.key)} style={{ cursor: "pointer", opacity: hiddenSeries[item.key] ? 0.45 : 1, textDecoration: hiddenSeries[item.key] ? "line-through" : "none" }}>
+            <span style={{ display: "inline-block", width: 9, height: 9, marginRight: 4, ...item.swatch }}></span>{item.label}
+          </span>
+        ))}
       </div>
 
       {r.type === "Hill" && r.hill_reps && (
@@ -539,7 +576,7 @@ function RunningDashboard() {
       if (!map[adj.shoe]) map[adj.shoe] = { miles: 0, runs: 0 };
       map[adj.shoe].miles += adj.miles;
     });
-    return Object.entries(map).map(([shoe, v]) => ({ shoe, miles: Math.round(v.miles * 100) / 100, runs: v.runs }));
+    return Object.entries(map).map(([shoe, v], i) => ({ shoe, miles: Math.round(v.miles * 100) / 100, runs: SHOE_ACTIVITY_COUNTS[i] ?? v.runs, maxMiles: shoe === "Sunrise Evo SL" ? 600 : 400 }));
   }, []);
 
   const totalMiles = useMemo(() => RUNS.reduce((a, r) => a + r.distance_mi, 0), []);
@@ -547,6 +584,23 @@ function RunningDashboard() {
   const avgHrOverall = useMemo(() => {
     const vals = RUNS.map((r) => r.avg_hr);
     return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  }, []);
+  const avgCadenceOverall = useMemo(() => {
+    const vals = RUNS.map((r) => r.avg_cadence).filter((v) => v != null);
+    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  }, []);
+  const weeksToRace = useMemo(() => {
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const race = new Date(RACE_DATE + "T00:00:00");
+    const days = Math.max(0, Math.ceil((race - now) / 86400000));
+    return { weeks: Math.floor(days / 7), days: days % 7 };
+  }, []);
+  const avgFullWeekMileage = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const complete = PLAN.filter((w) => { const end = new Date(w.weekStart + "T00:00:00"); end.setDate(end.getDate() + 7); return end <= today; });
+    if (!complete.length) return 0;
+    const totals = complete.map((w) => w.days.reduce((a, d) => { const r = runForDate(d.date); return a + (r ? r.distance_mi : 0); }, 0));
+    return totals.reduce((a, b) => a + b, 0) / totals.length;
   }, []);
 
   const typeBreakdown = useMemo(() => {
@@ -602,10 +656,10 @@ function RunningDashboard() {
       </h2>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <KpiCard gradient={KPI_GRADIENTS.distance} icon="ti-route" label="Total distance" value={totalMiles.toFixed(2) + " mi"} sub={RUNS.length + " runs logged"} />
-        <KpiCard gradient={KPI_GRADIENTS.time} icon="ti-clock" label="Total time" value={Math.floor(totalTime / 60) + " min"} sub={fmtDuration(totalTime / RUNS.length) + " avg /run"} />
-        <KpiCard gradient={KPI_GRADIENTS.hr} icon="ti-heart" label="Avg heart rate" value={avgHrOverall + " bpm"} sub="across all runs" />
-        <KpiCard gradient={KPI_GRADIENTS.runs} icon="ti-mountain" label="Elev gain" value={RUNS.reduce((a, r) => a + r.elev_gain_ft, 0) + " ft"} sub="total climbed" />
+        <KpiCard gradient={KPI_GRADIENTS.race} icon="ti-flag" label="Weeks to Race" value={weeksToRace.weeks + "w " + weeksToRace.days + "d"} sub="Sun, Nov 29" />
+        <KpiCard gradient={KPI_GRADIENTS.mileage} icon="ti-chart-bar" label="Weekly Mileage" value={avgFullWeekMileage.toFixed(1) + " mi"} sub="average of full weeks" />
+        <KpiCard gradient={KPI_GRADIENTS.cadence} icon="ti-activity" label="Cadence (avg.)" value={avgCadenceOverall + " spm"} sub="across all runs" />
+        <KpiCard gradient={KPI_GRADIENTS.distance} icon="ti-route" label="Total Distance" value={totalMiles.toFixed(2) + " mi"} sub={RUNS.length + " runs logged"} />
       </div>
 
       <div style={{ display: "flex", gap: 4, borderBottom: "0.5px solid var(--border)", marginBottom: 20, flexWrap: "wrap" }}>
@@ -678,8 +732,8 @@ function RunningDashboard() {
           <div style={{ background: "var(--surface-1)", borderRadius: 16, padding: "1rem 1.2rem", marginBottom: 16 }}>
             <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)", margin: "0 0 8px" }}>Mileage trend</p>
             <div style={{ display: "flex", gap: 14, fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>
-              <span><span style={{ display: "inline-block", width: 10, height: 10, background: "#BDD1C5", borderRadius: 2, marginRight: 4 }}></span>Actual</span>
-              <span><span style={{ display: "inline-block", width: 10, height: 10, border: "2px dashed #5F594C", borderRadius: 2, marginRight: 4 }}></span>Planned</span>
+              <span><span style={{ display: "inline-block", width: 10, height: 10, background: ACTUAL_COLOR, borderRadius: 2, marginRight: 4 }}></span>Actual</span>
+              <span><span style={{ display: "inline-block", width: 10, height: 10, border: "2px dashed " + PLANNED_COLOR, borderRadius: 2, marginRight: 4 }}></span>Goal</span>
             </div>
             <div style={{ height: 180, position: "relative" }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -687,16 +741,16 @@ function RunningDashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="weekLabel" tick={{ fontSize: 12, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
                   <YAxis domain={[0, "dataMax + 2"]} tick={{ fontSize: 12, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={36} />
-                  <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 13 }} formatter={(value, name) => [value + " mi", name === "planned" ? "Planned" : "Actual"]} />
-                  <Bar dataKey="planned" fill="none" stroke="#5F594C" strokeWidth={2} strokeDasharray="5 4" barSize={48} radius={[4, 4, 0, 0]} />
+                  <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 13 }} formatter={(value, name) => [value + " mi", name === "planned" ? "Goal" : "Actual"]} />
+                  <Bar dataKey="planned" fill="none" stroke={PLANNED_COLOR} strokeWidth={2} strokeDasharray="5 4" barSize={48} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
               <div style={{ position: "absolute", inset: 0 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={planVsActualByWeek} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <BarChart data={planVsActualByWeek} margin={{ top: 4, right: 8, left: 36, bottom: 30 }}>
                     <XAxis dataKey="weekLabel" hide />
                     <YAxis domain={[0, "dataMax + 2"]} hide />
-                    <Bar dataKey="actual" fill="#BDD1C5" barSize={30} radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="actual" fill={ACTUAL_COLOR} barSize={30} radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -824,7 +878,7 @@ function RunningDashboard() {
                   return (
                     <tr key={d.date} style={{ borderBottom: "0.5px solid var(--border)" }}>
                       <td style={{ padding: "8px 10px" }}><span style={{ fontWeight: 700 }}>{dayLetter}</span> {fmtDateShort(d.date)}</td>
-                      <td style={{ padding: "8px 10px" }}>{d.planned ? d.planned.type : (d.note || "\u2014")}</td>
+                      <td style={{ padding: "8px 10px" }}>{(() => { const { main, detail } = getScheduleWorkoutDisplay(d.planned); return <div><div>{main}</div>{detail && <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>{detail}</div>}</div>; })()}</td>
                       <td style={{ padding: "8px 10px", textAlign: "right" }}>{plannedMi != null ? plannedMi : "\u2014"}</td>
                       <td style={{ padding: "8px 10px", textAlign: "right", color: deltaColor, fontWeight: 500 }}>{actualMi != null ? actualMi : "\u2014"}</td>
                       <td style={{ padding: "8px 10px", textAlign: "right" }}>{d.planned && d.planned.paceTarget ? d.planned.paceTarget : "\u2014"}</td>
@@ -943,7 +997,7 @@ function RunningDashboard() {
             Shoe mileage isn't in the Garmin FIT export itself, so this is built from what you tell Claude per run. Default retirement target is {SHOE_MAX_MILES} mi.
           </p>
           {shoeMileage.map((s) => {
-            const pct = Math.min(100, (s.miles / SHOE_MAX_MILES) * 100);
+            const pct = Math.min(100, (s.miles / s.maxMiles) * 100);
             return (
               <div key={s.shoe} style={{ background: "var(--surface-1)", borderRadius: 14, padding: "0.9rem 1.1rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
@@ -953,7 +1007,7 @@ function RunningDashboard() {
                 <div style={{ width: "100%", height: 10, background: "var(--surface-2)", borderRadius: 6, overflow: "hidden", marginBottom: 4 }}>
                   <div style={{ width: pct + "%", height: "100%", background: pct > 90 ? "#A26360" : "#BDD1C5" }} />
                 </div>
-                <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{s.miles} of {SHOE_MAX_MILES} mi</p>
+                <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{s.miles} of {s.maxMiles} mi</p>
               </div>
             );
           })}
