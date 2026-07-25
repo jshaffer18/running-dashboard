@@ -118,6 +118,8 @@ const RESPONSIVE_CSS = `
   .rd-two-col { grid-template-columns: 1fr !important; }
   .rd-donut-row { flex-direction: column; align-items: flex-start !important; height: auto !important; padding-bottom: 8px; }
   .rd-donut-row > div:first-child { width: 100% !important; height: 160px !important; }
+  .rd-schedule-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .rd-schedule-table { min-width: 850px; }
 }
 `;
 
@@ -388,11 +390,12 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
   const detailDistanceScale = niceScale(r.detail_trace.map((p) => p.dist_mi), 0.5, true);
   const detailDistanceEnd = r.distance_mi;
   const detailDistanceTicks = detailDistanceScale.ticks
-    .filter((v) => v < detailDistanceEnd - 0.001)
+    .filter((v) => v < detailDistanceEnd - 0.08)
     .concat(detailDistanceEnd);
   const detailPaceScale = regularPaceScale(r.detail_trace.map((p) => p.pace));
   const detailElevScale = niceScale(r.detail_trace.map((p) => p.elev_ft), 25);
-  const lapPaceScale = niceScale(r.splits.map((s) => s.pace == null ? null : -s.pace), 120);
+  const lapPaceValues = r.splits.filter((s) => s.pace != null).flatMap((s) => [-s.pace - 30, -s.pace + 30]);
+  const lapPaceScale = niceScale(lapPaceValues, 60);
   return (
     <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 16, padding: "1rem 1.2rem" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
@@ -499,7 +502,7 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
             <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>Lap average pace</p>
             <div style={{ height: 100 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={r.splits.map((s) => ({ ...s, paceNeg: s.pace != null ? -s.pace : null }))} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
+                <AreaChart data={r.splits.map((s) => ({ ...s, paceNeg: s.pace != null ? -s.pace : null }))} margin={{ top: 10, right: 4, left: 0, bottom: 0 }}>
                   <XAxis dataKey="mile" tickFormatter={(v) => "Mi " + v} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
                   <YAxis domain={lapPaceScale.domain} ticks={lapPaceScale.ticks} interval={0} tickFormatter={(v) => fmtPace(-v)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={38} />
                   <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(value, _, item) => [fmtPace(-value) + "/mi" + (item.payload.partial ? " (extrapolated)" : ""), "Pace"]} labelFormatter={(v) => "Mile " + v} />
@@ -904,7 +907,7 @@ function RunningDashboard() {
             </select>
           </div>
 
-          <div style={{ overflowX: "hidden", marginBottom: 24, background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 16, padding: "0.8rem" }}>
+          <div className="rd-schedule-scroll" style={{ overflowX: "hidden", marginBottom: 24, background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 16, padding: "0.8rem" }}>
             <table className="rd-schedule-table" style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse", fontSize: 12 }}>
               <colgroup>
                 <col style={{ width: "9%" }} />
