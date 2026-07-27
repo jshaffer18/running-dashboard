@@ -132,6 +132,7 @@ const DEVICE_META = [
     swatches: ["#F8C8B5", "#566D75", "#FFFFFF"],
     status: "Current device",
     period: "Oct 14, 2022 - Present",
+    firstUse: "2022-10-14",
     runs: 74,
     miles: "327.04",
     time: "54h 19m 37s",
@@ -148,6 +149,7 @@ const DEVICE_META = [
     model: "Series 5 GPS 40 mm",
     status: "Previous device",
     period: "Nov 11, 2019–Aug 13, 2022",
+    firstUse: "2019-11-11",
     runs: 106,
     miles: "369.83",
     time: "59h 46m 05s",
@@ -162,6 +164,7 @@ const DEVICE_META = [
     swatches: ["#287BC1", "#F06F5E", "#242424"],
     status: "Previous device",
     period: "Feb 4, 2017–Oct 13, 2022",
+    firstUse: "2017-02-04",
     runs: 415,
     miles: "2,448.88",
     time: "374h 43m 34s",
@@ -175,6 +178,7 @@ const DEVICE_META = [
     swatches: ["#D449AE", "#9993B2", "#242424"],
     status: "Previous device",
     period: "Apr 17, 2014–Feb 3, 2017",
+    firstUse: "2014-04-17",
     runs: 65,
     miles: "406.56",
     time: "68h 02m 18s",
@@ -270,21 +274,22 @@ function niceScale(values, step, includeZero = false) {
 }
 
 function regularPaceScale(values, targetIntervals = 4) {
-  const paces = values.filter((v) => v != null && isFinite(v) && v > 0);
+  // Shared by Splits and every run-detail popup. Ignore stopped/near-stopped
+  // samples so the pace axis keeps running-scale intervals.
+  const allPaces = values.filter((v) => v != null && isFinite(v) && v > 0);
+  const runningPaces = allPaces.filter((v) => v >= 240 && v <= 1200);
+  const paces = runningPaces.length ? runningPaces : allPaces;
   if (!paces.length) return { domain: [-720, -600], ticks: [-720, -600] };
   const minPace = Math.min(...paces);
   const maxPace = Math.max(...paces);
   const rawStep = Math.max(1, (maxPace - minPace) / targetIntervals);
-  const allowedSteps = [30, 60, 120, 300, 600, 900, 1200, 1800, 3600, 7200];
-  const step = allowedSteps.find((candidate) => candidate >= rawStep) || allowedSteps[allowedSteps.length - 1];
-  const start = Math.floor(minPace / 60) * 60;
-  const end = start + Math.max(1, Math.ceil((maxPace - start) / step)) * step;
+  const allowedSteps = [30, 60, 120];
+  const step = allowedSteps.find((candidate) => candidate >= rawStep) || 120;
+  const start = Math.floor((minPace - 30) / step) * step;
+  const end = Math.ceil((maxPace + 30) / step) * step;
   const paceTicks = [];
   for (let value = start; value <= end + 0.001; value += step) paceTicks.push(value);
-  return {
-    domain: [-end, -start],
-    ticks: paceTicks.slice().reverse().map((value) => -value),
-  };
+  return { domain: [-end, -start], ticks: paceTicks.slice().reverse().map((value) => -value) };
 }
 
 function fmtDate(iso) {
@@ -417,7 +422,7 @@ function KpiCard({ gradient, icon, label, value, sub }) {
           <span aria-hidden="true" style={{ position: "absolute", width: 48, height: 48, left: -20, bottom: -15, borderRadius: "50%", background: "rgba(255,255,255,0.19)" }} />
           <span style={{ position: "relative", zIndex: 1, width: 50, height: 68, display: "grid", placeItems: "center" }}>{railGraphic}</span>
         </div>
-        <div style={{ padding: "14px 15px 13px", minWidth: 0, height: 110, display: "grid", gridTemplateRows: "15px 35px 17px", alignContent: "center" }}>
+        <div style={{ padding: "14px 15px 13px", minWidth: 0, minHeight: 110, display: "grid", gridTemplateRows: "auto auto auto", rowGap: 2, alignContent: "center" }}>
           <p style={{ fontSize: 11, lineHeight: "15px", fontWeight: 700, letterSpacing: 0.65, textTransform: "uppercase", margin: 0, opacity: 0.78, alignSelf: "start" }}>{label}</p>
           <p style={{ fontSize: 25, lineHeight: "32px", fontWeight: 700, margin: "3px 0 0", letterSpacing: -0.5, whiteSpace: "nowrap", alignSelf: "start" }}>{value}</p>
           {sub && <p style={{ fontSize: 11.5, lineHeight: "17px", margin: 0, opacity: 0.7, alignSelf: "start", whiteSpace: "nowrap" }}>{sub}</p>}
@@ -517,8 +522,7 @@ function GearCard({ shoe }) {
       <div style={{ height: 126, display: "flex", alignItems: "center", justifyContent: "center", padding: "2px 10px 0", position: "relative" }}>
         {meta.image && (
           <React.Fragment>
-            <span aria-hidden="true" style={{ position: "absolute", left: "13%", right: "13%", bottom: 14, height: 7, borderRadius: "50%", background: "rgba(22,29,39,0.72)", transform: "skewX(-7deg)", boxShadow: "0 1px 2px rgba(22,29,39,0.28)", zIndex: 0 }} />
-            <img src={meta.image} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", position: "relative", zIndex: 1 }} />
+            <img src={meta.image} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", position: "relative" }} />
           </React.Fragment>
         )}
       </div>
@@ -569,24 +573,22 @@ function formatDeviceWatchTime(device) {
   return source;
 }
 
-function getDeviceStartDateParts(period) {
-  const start = String(period || "").split(/[–-]/)[0].trim();
-  const match = start.match(/^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})$/);
-  if (!match) return { month: "", monthShort: "", day: "", year: "", display: start };
-  const monthMap = { Jan: "JAN", Feb: "FEB", Mar: "MAR", Apr: "APR", May: "MAY", Jun: "JUN", Jul: "JUL", Aug: "AUG", Sep: "SEP", Oct: "OCT", Nov: "NOV", Dec: "DEC" };
-  const monthTitle = match[1].slice(0, 3);
-  const day = String(parseInt(match[2], 10));
-  return {
-    month: monthTitle,
-    monthShort: monthMap[monthTitle] || monthTitle.toUpperCase(),
-    day,
-    year: match[3],
-    display: `${day} ${monthTitle} ${match[3]}`
-  };
+function getDeviceFirstUseDateParts(device) {
+  const iso = String(device.firstUse || "");
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return { monthShort: "", day: "", year: "", display: "" };
+  const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  const monthTitle = monthNames[Number(match[2]) - 1];
+  const day = String(Number(match[3]));
+  return { monthShort: monthTitle, day, year: match[1], display: `${day} ${monthTitle.charAt(0)}${monthTitle.slice(1).toLowerCase()} ${match[1]}` };
+}
+
+function watchOverlayNumber(value) {
+  return String(value == null ? "" : value).replace(/,/g, "");
 }
 
 function AppleWatchGraphic({ device }) {
-  const start = getDeviceStartDateParts(device.period);
+  const start = getDeviceFirstUseDateParts(device);
   const watchTime = formatDeviceWatchTime(device);
   return (
     <div
@@ -617,14 +619,14 @@ function AppleWatchGraphic({ device }) {
       />
       <section style={{ position: "absolute", zIndex: 2, left: "3.38%", top: "3.80%", width: "93.26%", height: "96%", fontFamily: '"Segoe UI", Arial, Helvetica, sans-serif', fontWeight: 400, textAlign: "left" }}>
         <h1 style={{ position: "absolute", left: "22.5%", top: "25.9%", margin: 0, color: "#A1BD79", fontSize: "5.688cqw", fontWeight: 700, lineHeight: 1 }}>Summary</h1>
-        <div style={{ position: "absolute", top: "25.9%", right: "21.5%", color: "#FFFFFF", fontSize: "5.688cqw", fontWeight: 400, lineHeight: 1.05, textAlign: "right", textTransform: "uppercase", fontVariantNumeric: "tabular-nums" }}>
+        <div style={{ position: "absolute", top: "25.9%", right: "21.5%", color: "#FFFFFF", fontSize: "5.282cqw", fontWeight: 400, lineHeight: 1.05, textAlign: "right", textTransform: "uppercase", fontVariantNumeric: "tabular-nums" }}>
           <span style={{ display: "block" }}>{start.monthShort}</span>
           <span style={{ display: "block" }}>{start.day}</span>
           <span style={{ display: "block" }}>{start.year}</span>
         </div>
         <div style={{ position: "absolute", left: "22.7%", top: "33.3%", margin: 0 }}>
           <span style={{ display: "flex", alignItems: "baseline", marginTop: 0, color: "#D5BC68", lineHeight: .82, whiteSpace: "nowrap" }}>
-            <span style={{ fontSize: "11.283cqw", letterSpacing: "-.420cqw", fontVariantNumeric: "tabular-nums" }}>{device.runs}</span><span style={{ marginLeft: 0, fontSize: "7.647cqw", letterSpacing: "-.187cqw", textTransform: "uppercase" }}>RUNS</span>
+            <span style={{ fontSize: "11.283cqw", letterSpacing: "-.420cqw", fontVariantNumeric: "tabular-nums" }}>{watchOverlayNumber(device.runs)}</span><span style={{ marginLeft: 0, fontSize: "7.647cqw", letterSpacing: "-.187cqw", textTransform: "uppercase" }}>RUNS</span>
           </span>
         </div>
         <div style={{ position: "absolute", left: "22.7%", top: "42.7%", margin: 0 }}>
@@ -634,7 +636,7 @@ function AppleWatchGraphic({ device }) {
         <div style={{ position: "absolute", left: "22.7%", top: "56.1%", margin: 0 }}>
           <span style={{ display: "block", margin: 0, color: "#FFFFFF", fontSize: "4.849cqw", lineHeight: 1, textTransform: "uppercase", whiteSpace: "nowrap" }}>Total Distance</span>
           <span style={{ display: "flex", alignItems: "baseline", marginTop: "1.073cqw", color: "#609797", lineHeight: .9, whiteSpace: "nowrap" }}>
-            <span style={{ fontSize: "11.283cqw", letterSpacing: "-.373cqw", fontVariantNumeric: "tabular-nums" }}>{device.miles}</span><span style={{ marginLeft: 0, fontSize: "7.647cqw", letterSpacing: "-.187cqw" }}>MI</span>
+            <span style={{ fontSize: "11.283cqw", letterSpacing: "-.373cqw", fontVariantNumeric: "tabular-nums" }}>{watchOverlayNumber(device.miles)}</span><span style={{ marginLeft: 0, fontSize: "7.647cqw", letterSpacing: "-.187cqw" }}>MI</span>
           </span>
         </div>
       </section>
@@ -663,7 +665,7 @@ function FenixWatchGraphic({ device }) {
         <img src={RED_RUNNER_IMAGE} alt="" style={{ position: "absolute", left: "44.25%", top: 0, width: "12.5%", height: "19.1%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
         <div style={{ position: "absolute", top: "25.5%", left: 0, width: "100%", height: "39.5%", display: "flex", alignItems: "center", justifyContent: "flex-end", background: "rgba(12, 12, 12, 0.19)" }}>
           <div style={{ position: "absolute", top: "39.9%", right: "2.237cqw", display: "inline-flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", gap: "0.999cqw", transform: "translateY(-50%)", textAlign: "right", whiteSpace: "nowrap" }}>
-            <span style={{ fontSize: "11.184cqw", lineHeight: 0.78, letterSpacing: "-.440cqw", fontVariantNumeric: "tabular-nums" }}>{device.miles}</span>
+            <span style={{ fontSize: "11.184cqw", lineHeight: 0.78, letterSpacing: "-.440cqw", fontVariantNumeric: "tabular-nums" }}>{watchOverlayNumber(device.miles)}</span>
             <span style={{ fontSize: "3.596cqw", lineHeight: 0.9, letterSpacing: "-.064cqw" }}>Miles</span>
           </div>
         </div>
@@ -674,12 +676,12 @@ function FenixWatchGraphic({ device }) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", paddingTop: "1.319cqw", borderLeft: "0.440cqw solid rgba(216, 216, 216, 0.38)" }}>
             <span style={{ fontSize: "3.596cqw", lineHeight: 1, letterSpacing: "-.072cqw" }}>Runs</span>
-            <span style={{ marginTop: "1.038cqw", fontSize: "6.311cqw", lineHeight: .93, letterSpacing: "-.175cqw", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{device.runs}</span>
+            <span style={{ marginTop: "1.038cqw", fontSize: "6.311cqw", lineHeight: .93, letterSpacing: "-.175cqw", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{watchOverlayNumber(device.runs)}</span>
           </div>
         </div>
         <div style={{ position: "absolute", left: 0, top: "99.6%", width: "100%", height: "31%", display: "flex", flexDirection: "column", alignItems: "center", background: "rgba(12, 12, 12, 0.10)", paddingTop: "1.757cqw" }}>
           <span style={{ fontSize: "3.596cqw", lineHeight: 1, letterSpacing: "-.072cqw" }}>This Week:</span>
-          <span style={{ marginTop: "0.719cqw", fontSize: "6.311cqw", lineHeight: .93, letterSpacing: "-.175cqw", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{device.weeklyMileage || "0.00"}</span>
+          <span style={{ marginTop: "0.719cqw", fontSize: "6.311cqw", lineHeight: .93, letterSpacing: "-.175cqw", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{watchOverlayNumber(device.weeklyMileage || "0.00")}</span>
           <span aria-hidden="true" style={{ width: 0, height: 0, marginTop: "1.199cqw", borderLeft: "0.999cqw solid transparent", borderRight: "0.999cqw solid transparent", borderTop: "1.238cqw solid #FFFFFF" }} />
         </div>
       </section>
@@ -689,7 +691,7 @@ function FenixWatchGraphic({ device }) {
 
 function Forerunner630Graphic({ device }) {
   const watchTime = formatDeviceWatchTime(device);
-  const start = getDeviceStartDateParts(device.period);
+  const start = getDeviceFirstUseDateParts(device);
   return (
     <div
       aria-label={"Garmin Forerunner 630 showing " + device.runs + " runs, " + watchTime + " recorded time, and " + device.miles + " miles"}
@@ -698,11 +700,11 @@ function Forerunner630Graphic({ device }) {
       <img src={device.image} alt="" style={{ position: "absolute", zIndex: 1, inset: 0, width: "100%", height: "100%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
       <section style={{ position: "absolute", zIndex: 2, left: "3%", top: "18.06%", width: "91.58%", height: "65.16%", color: "#FFFFFF", fontFamily: '"Segoe UI", Arial, Helvetica, sans-serif', fontWeight: 400, fontVariantNumeric: "tabular-nums" }}>
         <h1 style={{ position: "absolute", top: "30.4%", left: "20.8%", width: "61%", margin: 0, fontSize: "3.748cqw", fontWeight: 400, lineHeight: 1, textAlign: "center" }}>Activities</h1>
-        <div style={{ position: "absolute", zIndex: 3, top: "42.3%", left: "26%", width: "54%", fontSize: "5.953cqw", fontWeight: 700, lineHeight: 1, textAlign: "center", whiteSpace: "nowrap" }}>Total Runs <span>{device.runs}</span></div>
+        <div style={{ position: "absolute", zIndex: 3, top: "42.3%", left: "26%", width: "54%", fontSize: "5.953cqw", fontWeight: 700, lineHeight: 1, textAlign: "center", whiteSpace: "nowrap" }}>Total Runs <span>{watchOverlayNumber(device.runs)}</span></div>
         <img src={PALE_RUNNER_IMAGE} alt="" style={{ position: "absolute", zIndex: 2, top: "41%", left: "71.4%", width: "9.5%", height: "16%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", zIndex: 3, top: "50.8%", left: "25.8%", width: "51.5%", display: "grid", gridTemplateColumns: "1fr 1fr", alignItems: "baseline", columnGap: "3.206cqw", fontSize: "5.221cqw", fontWeight: 400, lineHeight: 1, whiteSpace: "nowrap" }}>
+        <div style={{ position: "absolute", zIndex: 3, top: "50.8%", left: "25.8%", width: "51.5%", display: "grid", gridTemplateColumns: "1fr 1fr", alignItems: "baseline", columnGap: "3.206cqw", fontSize: "4.849cqw", fontWeight: 400, lineHeight: 1, whiteSpace: "nowrap" }}>
           <span style={{ textAlign: "left" }}>{watchTime}</span>
-          <span style={{ position: "relative", zIndex: 3, textAlign: "right", transform: "translateX(-1.1cqw)" }}><span>{device.miles}</span><span style={{ marginLeft: 0, textTransform: "lowercase" }}>&nbsp;mi</span></span>
+          <span style={{ position: "relative", zIndex: 3, textAlign: "right", transform: "translateX(-1.1cqw)" }}><span>{watchOverlayNumber(device.miles)}</span><span style={{ marginLeft: 0, textTransform: "lowercase" }}>&nbsp;mi</span></span>
         </div>
         <div style={{ position: "absolute", top: "63.7%", left: "24%", width: "56%", fontSize: "3.748cqw", fontWeight: 400, lineHeight: 1, textAlign: "center", whiteSpace: "nowrap" }}>{start.display}</div>
       </section>
@@ -712,7 +714,7 @@ function Forerunner630Graphic({ device }) {
 
 function Forerunner220Graphic({ device }) {
   const watchTime = formatDeviceWatchTime(device);
-  const start = getDeviceStartDateParts(device.period);
+  const start = getDeviceFirstUseDateParts(device);
   return (
     <div
       aria-label={"Garmin Forerunner 220 showing " + device.runs + " runs, " + watchTime + " recorded time, and " + device.miles + " miles"}
@@ -721,8 +723,8 @@ function Forerunner220Graphic({ device }) {
       <img src={device.image} alt="" style={{ position: "absolute", zIndex: 1, inset: 0, width: "100%", height: "100%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
       <section style={{ position: "absolute", zIndex: 2, inset: 0, transform: "translateX(0.993%)", color: "#FFFFFF", fontFamily: '"Segoe UI", Arial, Helvetica, sans-serif', fontVariantNumeric: "tabular-nums", textAlign: "center" }}>
         <h1 style={{ position: "absolute", left: "24%", width: "52%", margin: 0, top: "37.52%", fontSize: "3.45cqw", fontWeight: 400, lineHeight: 1, whiteSpace: "nowrap" }}>Activities</h1>
-        <div style={{ position: "absolute", left: "24%", width: "52%", margin: 0, top: "42.80%", color: "#111111", fontSize: "5.36cqw", fontWeight: 700, letterSpacing: "-.12cqw", lineHeight: 1, whiteSpace: "nowrap" }}>Total Runs <span>{device.runs}</span></div>
-        <div style={{ position: "absolute", left: "24%", width: "52%", margin: 0, top: "46.65%", color: "#111111", fontSize: "5.36cqw", fontWeight: 400, lineHeight: 1, whiteSpace: "nowrap" }}><span>{device.miles}</span><span>mi</span></div>
+        <div style={{ position: "absolute", left: "24%", width: "52%", margin: 0, top: "42.80%", color: "#111111", fontSize: "5.36cqw", fontWeight: 700, letterSpacing: "-.12cqw", lineHeight: 1, whiteSpace: "nowrap" }}>Total Runs <span>{watchOverlayNumber(device.runs)}</span></div>
+        <div style={{ position: "absolute", left: "24%", width: "52%", margin: 0, top: "46.65%", color: "#111111", fontSize: "5.36cqw", fontWeight: 400, lineHeight: 1, whiteSpace: "nowrap" }}><span>{watchOverlayNumber(device.miles)}</span><span>mi</span></div>
         <div style={{ position: "absolute", left: "24%", width: "52%", margin: 0, top: "50.50%", color: "#111111", fontSize: "5.36cqw", fontWeight: 400, lineHeight: 1, whiteSpace: "nowrap" }}>{watchTime}</div>
         <div style={{ position: "absolute", left: "24%", width: "52%", margin: 0, top: "56.92%", fontSize: "3.45cqw", fontWeight: 400, lineHeight: 1, whiteSpace: "nowrap" }}>{start.display}</div>
       </section>
@@ -827,7 +829,7 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
   const lapPaceValues = r.splits.filter((s) => s.pace != null).flatMap((s) => [-s.pace - 30, -s.pace + 30]);
   const lapPaceScale = niceScale(lapPaceValues, 60);
   return (
-    <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 16, padding: "1rem 1.2rem" }}>
+    <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 16, padding: "1rem 1.2rem", WebkitTextSizeAdjust: "100%", textSizeAdjust: "100%" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -846,8 +848,7 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {SHOE_META[r.shoe] && (
             <span style={{ width: 108, height: 70, position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <span aria-hidden="true" style={{ position: "absolute", left: "13%", right: "13%", bottom: 14, height: 7, borderRadius: "50%", background: "rgba(22,29,39,0.72)", transform: "skewX(-7deg)", boxShadow: "0 1px 2px rgba(22,29,39,0.28)", zIndex: 0 }} />
-              <img className="rd-run-shoe-thumb" src={SHOE_META[r.shoe].image} alt={r.shoe} title={r.shoe} style={{ width: 108, height: 70, objectFit: "contain", position: "relative", zIndex: 1 }} />
+              <img className="rd-run-shoe-thumb" src={SHOE_META[r.shoe].image} alt={r.shoe} title={r.shoe} style={{ width: 108, height: 70, objectFit: "contain", position: "relative" }} />
             </span>
           )}
           <RouteSvg route={r.route} routeShape={r.route_shape} color={c.solid} />
@@ -1324,7 +1325,7 @@ function RunningDashboard() {
           onClick={() => setActiveRunDate(null)}
           style={{ position: "fixed", inset: 0, background: "rgba(30,26,20,0.4)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "24px 16px", overflowY: "auto", zIndex: 1000 }}
         >
-          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640, width: "100%", position: "relative" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640, width: "100%", position: "relative", WebkitTextSizeAdjust: "100%", textSizeAdjust: "100%" }}>
             <button
               onClick={() => setActiveRunDate(null)}
               style={{ position: "absolute", top: -12, right: -12, width: 32, height: 32, borderRadius: "50%", background: "var(--surface-2)", border: "0.5px solid var(--border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}
