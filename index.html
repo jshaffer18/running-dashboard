@@ -539,7 +539,7 @@ function GearCard({ shoe }) {
           </React.Fragment>
         )}
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 7 }}>
         <div style={{ minWidth: 0 }}>
           <p style={{ margin: 0, fontSize: 15, lineHeight: 1.2, fontWeight: 600 }}>{shoe.shoe}</p>
           <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--text-secondary)" }}>{meta.model} · {meta.stack} stack · {meta.drop} drop</p>
@@ -567,7 +567,7 @@ function GearCard({ shoe }) {
         <div style={{ width: pct + "%", height: "100%", background: meta.accent, borderRadius: 8 }} />
       </div>
       <p style={{ margin: "5px 0 10px", fontSize: 10, color: "var(--text-secondary)" }}>{mileageLabel} of {shoe.maxMiles} mi</p>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 7 }}>
         <span style={{ fontSize: 10, color: "var(--text-secondary)" }}>First use: {meta.firstUseLabel}</span>
         <span style={{ padding: "3px 8px", borderRadius: 999, background: meta.accent + "18", color: meta.accent, fontSize: 10, fontWeight: 600, whiteSpace: "nowrap" }}>In Rotation</span>
       </div>
@@ -613,7 +613,7 @@ function AppleWatchGraphic({ device }) {
         width: "100%",
         maxWidth: "none",
         aspectRatio: "746 / 1242",
-        transform: "scale(1.14)",
+        transform: "translateX(6px) scale(1.17)",
         transformOrigin: "center center",
         overflow: "hidden",
         containerType: "inline-size",
@@ -687,7 +687,7 @@ function FenixWatchGraphic({ device }) {
         width: "100%",
         maxWidth: "none",
         aspectRatio: "887 / 1242",
-        transform: "scale(1.14)",
+        transform: "translateX(6px) scale(1.17)",
         transformOrigin: "center center",
         overflow: "hidden",
         containerType: "inline-size",
@@ -729,7 +729,7 @@ function Forerunner630Graphic({ device }) {
   return (
     <div
       aria-label={"Garmin Forerunner 630 showing " + device.runs + " runs, " + watchTime + " recorded time, and " + device.miles + " miles"}
-      style={{ position: "relative", width: "100%", maxWidth: "none", aspectRatio: "824 / 1242", transform: "scale(1.14)", transformOrigin: "center center", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
+      style={{ position: "relative", width: "100%", maxWidth: "none", aspectRatio: "824 / 1242", transform: "translateX(6px) scale(1.17)", transformOrigin: "center center", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
     >
       <img src={device.image} alt="" style={{ position: "absolute", zIndex: 1, inset: 0, width: "100%", height: "100%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
       <section style={{ position: "absolute", zIndex: 2, left: "3%", top: "18.06%", width: "91.58%", height: "65.16%", color: "#FFFFFF", fontFamily: '"Segoe UI", Arial, Helvetica, sans-serif', fontWeight: 400, fontVariantNumeric: "tabular-nums" }}>
@@ -752,7 +752,7 @@ function Forerunner220Graphic({ device }) {
   return (
     <div
       aria-label={"Garmin Forerunner 220 showing " + device.runs + " runs, " + watchTime + " recorded time, and " + device.miles + " miles"}
-      style={{ position: "relative", width: "100%", maxWidth: "none", aspectRatio: "806 / 1242", transform: "scale(1.14)", transformOrigin: "center center", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
+      style={{ position: "relative", width: "100%", maxWidth: "none", aspectRatio: "806 / 1242", transform: "translateX(6px) scale(1.17)", transformOrigin: "center center", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
     >
       <img src={device.image} alt="" style={{ position: "absolute", zIndex: 1, inset: 0, width: "100%", height: "100%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
       <section style={{ position: "absolute", zIndex: 2, inset: 0, transform: "translateX(0.993%)", color: "#FFFFFF", fontFamily: '"Segoe UI", Arial, Helvetica, sans-serif', fontVariantNumeric: "tabular-nums", textAlign: "center" }}>
@@ -786,7 +786,7 @@ function DeviceCard({ device }) {
       className="rd-device-card"
       style={{
         display: "grid",
-        gridTemplateColumns: "minmax(190px, 47%) 1fr",
+        gridTemplateColumns: "minmax(205px, 49%) 1fr",
         minHeight: 410,
         position: "relative",
         overflow: "hidden",
@@ -811,8 +811,8 @@ function DeviceCard({ device }) {
           border: "1px solid rgba(61,52,40,.18)",
         }}
       />
-      <div className="rd-device-art" style={{ minHeight: 380, display: "grid", placeItems: "center", padding: "0 10px", position: "relative", overflow: "visible", pointerEvents: "none", zIndex: 1 }}>
-        <div className="rd-device-watch-scale" style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", transform: "scale(1.14)", transformOrigin: "center center" }}>
+      <div className="rd-device-art" style={{ minHeight: 380, display: "grid", placeItems: "center", padding: "0 6px 0 12px", position: "relative", overflow: "visible", pointerEvents: "none", zIndex: 1 }}>
+        <div className="rd-device-watch-scale" style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", transform: "translateX(6px) scale(1.17)", transformOrigin: "center center" }}>
           {isFenix ? (
             <FenixWatchGraphic device={device} />
           ) : isApple ? (
@@ -826,49 +826,41 @@ function DeviceCard({ device }) {
           )}
         </div>
       </div>
-      <div style={{ padding: "1rem .8rem .85rem .25rem", minWidth: 0, display: "flex", flexDirection: "column", position: "relative", zIndex: 2 }}>
-        <div style={{ textAlign: "right", paddingRight: 6, paddingTop: 24 }}>
+      <div style={{ padding: ".95rem .72rem .78rem .18rem", minWidth: 0, display: "flex", flexDirection: "column", position: "relative", zIndex: 2 }}>
+        <div style={{ textAlign: "right", paddingRight: 5, paddingTop: 20 }}>
           <p style={{ margin: 0, fontSize: 11, lineHeight: 1.45, color: "var(--text-secondary)" }}>{device.period}</p>
-          <span style={{ display: "inline-block", marginTop: 8, padding: "5px 10px", borderRadius: 999, background: device.accent + "18", color: device.accent, fontSize: 10, fontWeight: 650 }}>
+          <span style={{ display: "inline-block", marginTop: 7, padding: "4px 9px", borderRadius: 999, background: device.accent + "18", color: device.accent, fontSize: 10, fontWeight: 650 }}>
             {device.status}
           </span>
         </div>
-        <div style={{ marginTop: "auto", marginBottom: 18 }}>
-          <div className="rd-device-card-summary" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 4, margin: "0 0 7px", padding: "7px 6px", borderRadius: 10, background: "rgba(228,225,218,.32)" }}>
+        <div style={{ marginTop: "auto", marginBottom: 14 }}>
+          <div className="rd-device-metric-stack" style={{ display: "grid", gap: 6, margin: "0 0 10px" }}>
             {[
-              ["Mileage", device.miles],
-              ["Time", compactDeviceTime(device.time)],
-              ["Runs", device.runs],
-            ].map(([label, value]) => (
-              <div key={label} style={{ minWidth: 0, textAlign: "center" }}>
-                <p style={{ margin: 0, fontSize: 8.2, lineHeight: 1.08, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{label}</p>
-                <p style={{ margin: "3px 0 0", fontSize: 10.2, lineHeight: 1.08, fontWeight: 650, whiteSpace: "nowrap" }}>{value}</p>
-              </div>
-            ))}
-          </div>
-          <div className="rd-device-records" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 4, margin: "0 0 10px", padding: "7px 6px", borderRadius: 10, background: "rgba(228,225,218,.32)" }}>
-            {[
-              ["Furthest run", device.furthest],
-              ["Max ascent", device.maxAscent],
-              ["Total ascent", device.totalAscent],
-            ].map(([label, value]) => (
-              <div key={label} style={{ minWidth: 0, textAlign: "center" }}>
-                <p style={{ margin: 0, fontSize: 8.2, lineHeight: 1.08, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{label}</p>
-                <p style={{ margin: "3px 0 0", fontSize: 10.2, lineHeight: 1.08, fontWeight: 650, whiteSpace: "nowrap" }}>{value}</p>
+              [["Mileage", device.miles], ["Time", compactDeviceTime(device.time)]],
+              [["Runs", device.runs], ["Furthest run", device.furthest]],
+              [["Max ascent", device.maxAscent], ["Total ascent", device.totalAscent]],
+            ].map((row, rowIndex) => (
+              <div key={rowIndex} style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 6, padding: "7px 8px", borderRadius: 10, background: "rgba(228,225,218,.32)" }}>
+                {row.map(([label, value]) => (
+                  <div key={label} style={{ minWidth: 0, textAlign: "center" }}>
+                    <p style={{ margin: 0, fontSize: 8.2, lineHeight: 1.08, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{label}</p>
+                    <p style={{ margin: "3px 0 0", fontSize: 10.2, lineHeight: 1.08, fontWeight: 650, whiteSpace: "nowrap" }}>{value}</p>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
           <div style={{ height: 1, background: "var(--border)", margin: "0 0 10px" }} />
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-              <p style={{ margin: 0, minWidth: 0, fontSize: 16.5, lineHeight: 1.16, fontWeight: 650 }}>{device.name}</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 7 }}>
+              <p style={{ margin: 0, minWidth: 0, fontSize: 16.25, lineHeight: 1.14, fontWeight: 650 }}>{device.name}</p>
               <div aria-label="Device colors" style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                 {(device.swatches || [device.accent]).map((color, i) => (
                   <span key={i} style={{ width: 12, height: 12, borderRadius: "50%", background: color, border: "1px solid rgba(61,52,40,.18)" }} />
                 ))}
               </div>
             </div>
-            <p style={{ margin: "3px 0 0", fontSize: 9.6, color: "var(--text-secondary)", lineHeight: 1.2, whiteSpace: "nowrap", letterSpacing: "-.08px" }}>{compactDeviceDetail(device.detail || device.model)}</p>
+            <p style={{ margin: "2px 0 0", fontSize: 9.3, color: "var(--text-secondary)", lineHeight: 1.2, whiteSpace: "nowrap", letterSpacing: "-.08px" }}>{compactDeviceDetail(device.detail || device.model)}</p>
           </div>
         </div>
       </div>
@@ -890,9 +882,9 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
   const lapPaceScale = niceScale(lapPaceValues, 60);
   return (
     <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 16, padding: "1rem 1.2rem", WebkitTextSizeAdjust: "100%", textSizeAdjust: "100%" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 7 }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
             <span style={{ background: c.solid, color: "#3D3428", fontSize: 12, padding: "3px 9px", borderRadius: 8, fontWeight: 500 }}>{displayWorkoutType(r.type)}</span>
             <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>{fmtDate(r.date)}</p>
           </div>
@@ -905,7 +897,7 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
             </p>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
           {SHOE_META[r.shoe] && (
             <span style={{ width: 108, height: 70, position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
               <img className="rd-run-shoe-thumb" src={SHOE_META[r.shoe].image} alt={r.shoe} title={r.shoe} style={{ width: 108, height: 70, objectFit: "contain", position: "relative" }} />
@@ -1052,7 +1044,7 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
                           <tr key={s.mile} style={{ borderBottom: "0.5px solid var(--border)" }}>
                             <td style={{ padding: "6px 8px", textAlign: "center" }}>{s.mile}{s.partial ? " *" : ""}</td>
                             <td style={{ padding: "6px 8px" }}>
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                                 <span style={{ minWidth: 44, textAlign: "center" }}>{fmtPace(s.pace)}</span>
                                 <div style={{ flex: 1, minWidth: 40, maxWidth: 90, height: 8, background: "var(--surface-2)", borderRadius: 4, overflow: "hidden" }}>
                                   <div style={{ width: barWidth + "%", height: "100%", background: "#9DAAA2", borderRadius: 4 }} />
@@ -1291,7 +1283,7 @@ function RunningDashboard() {
                   </ResponsiveContainer>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {typeBreakdown.map((t, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12 }}>
                         <span style={{ width: 9, height: 9, borderRadius: "50%", background: t.color, display: "inline-block" }} />
                         <span style={{ color: "var(--text-secondary)" }}>{displayWorkoutType(t.type)}</span>
                         <span style={{ fontWeight: 500 }}>{t.miles} mi</span>
@@ -1339,7 +1331,7 @@ function RunningDashboard() {
               </button>
             ))}
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
+          <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
             <label style={{ fontSize: 12, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6 }}>
               From
               <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "0.5px solid var(--border)", background: "var(--surface-2)", color: "var(--text-primary)" }} />
@@ -1354,7 +1346,7 @@ function RunningDashboard() {
               </button>
             )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
             {RUNS.filter((r) => (runFilter === "All" || r.type === runFilter) && (!dateFrom || r.date >= dateFrom) && (!dateTo || r.date <= dateTo)).slice().reverse().map((r) => {
               const c = TYPE_COLOR[r.type] || TYPE_COLOR.Easy;
               return (
@@ -1540,7 +1532,7 @@ function RunningDashboard() {
             const repElevScale = niceScale(points.map((p) => p.repElev), 10, true);
             return (
               <div key={type} style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 16, padding: "1rem 1.2rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
                   <span style={{ background: c.solid, color: "#3D3428", fontSize: 12, padding: "3px 9px", borderRadius: 8, fontWeight: 500 }}>{displayWorkoutType(type)}</span>
                   <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{points.length} run{points.length !== 1 ? "s" : ""} logged</p>
                 </div>
