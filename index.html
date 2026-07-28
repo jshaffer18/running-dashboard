@@ -785,9 +785,6 @@ function DeviceCard({ device }) {
     <article
       className="rd-device-card"
       style={{
-        display: "grid",
-        gridTemplateColumns: "minmax(205px, 49%) 1fr",
-        minHeight: 410,
         position: "relative",
         overflow: "hidden",
         background: "var(--surface-1)",
@@ -795,6 +792,9 @@ function DeviceCard({ device }) {
         borderTop: "3px solid " + device.accent,
         borderRadius: 16,
         boxShadow: "0 5px 18px rgba(61,52,40,0.06)",
+        minHeight: 410,
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <span
@@ -811,65 +811,81 @@ function DeviceCard({ device }) {
           border: "1px solid rgba(61,52,40,.18)",
         }}
       />
-      <div className="rd-device-art" style={{ minHeight: 380, display: "grid", placeItems: "center", padding: "0 6px 0 12px", position: "relative", overflow: "visible", pointerEvents: "none", zIndex: 1 }}>
-        <div className="rd-device-watch-scale" style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", transform: "translate(6px, -14px) scale(1.17)", transformOrigin: "center center" }}>
-          {isFenix ? (
-            <FenixWatchGraphic device={device} />
-          ) : isApple ? (
-            <AppleWatchGraphic device={device} />
-          ) : is630 ? (
-            <Forerunner630Graphic device={device} />
-          ) : is220 ? (
-            <Forerunner220Graphic device={device} />
-          ) : (
-            <img src={device.image} alt="" style={{ width: "100%", height: "100%", maxHeight: 320, objectFit: "contain" }} />
-          )}
+
+      <div
+        className="rd-device-top"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(205px, 49%) 1fr",
+          minHeight: 320,
+          flex: "1 1 auto",
+        }}
+      >
+        <div className="rd-device-art" style={{ minHeight: 320, display: "grid", placeItems: "center", padding: "0 6px 0 12px", position: "relative", overflow: "visible", pointerEvents: "none", zIndex: 1 }}>
+          <div className="rd-device-watch-scale" style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", transform: "translate(6px, -14px) scale(1.17)", transformOrigin: "center center" }}>
+            {isFenix ? (
+              <FenixWatchGraphic device={device} />
+            ) : isApple ? (
+              <AppleWatchGraphic device={device} />
+            ) : is630 ? (
+              <Forerunner630Graphic device={device} />
+            ) : is220 ? (
+              <Forerunner220Graphic device={device} />
+            ) : (
+              <img src={device.image} alt="" style={{ width: "100%", height: "100%", maxHeight: 320, objectFit: "contain" }} />
+            )}
+          </div>
+        </div>
+
+        <div className="rd-device-content-top" style={{ padding: ".95rem .72rem 0 .18rem", minWidth: 0, display: "flex", flexDirection: "column", position: "relative", zIndex: 2 }}>
+          <div style={{ textAlign: "right", paddingRight: 5, paddingTop: 20 }}>
+            <p style={{ margin: 0, fontSize: 11, lineHeight: 1.45, color: "var(--text-secondary)" }}>{device.period}</p>
+            <span style={{ display: "inline-block", marginTop: 7, padding: "4px 9px", borderRadius: 999, background: device.accent + "18", color: device.accent, fontSize: 10, fontWeight: 650 }}>
+              {device.status}
+            </span>
+          </div>
+
+          <div style={{ marginTop: "auto", marginBottom: 0 }}>
+            <div className="rd-device-card-summary" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 4, margin: "0 0 7px", padding: "7px 6px", borderRadius: 10, background: "rgba(228,225,218,.32)" }}>
+              {[
+                ["Mileage", device.miles],
+                ["Time", compactDeviceTime(device.time)],
+                ["Runs", device.runs],
+              ].map(([label, value]) => (
+                <div key={label} style={{ minWidth: 0, textAlign: "center" }}>
+                  <p style={{ margin: 0, fontSize: 8.2, lineHeight: 1.08, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{label}</p>
+                  <p style={{ margin: "3px 0 0", fontSize: 10.2, lineHeight: 1.08, fontWeight: 650, whiteSpace: "nowrap" }}>{value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="rd-device-records" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 4, margin: 0, padding: "7px 6px", borderRadius: 10, background: "rgba(228,225,218,.32)" }}>
+              {[
+                ["Furthest run", device.furthest],
+                ["Max ascent", device.maxAscent],
+                ["Total ascent", device.totalAscent],
+              ].map(([label, value]) => (
+                <div key={label} style={{ minWidth: 0, textAlign: "center" }}>
+                  <p style={{ margin: 0, fontSize: 8.2, lineHeight: 1.08, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{label}</p>
+                  <p style={{ margin: "3px 0 0", fontSize: 10.2, lineHeight: 1.08, fontWeight: 650, whiteSpace: "nowrap" }}>{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-      <div style={{ padding: ".95rem .72rem .78rem .18rem", minWidth: 0, display: "flex", flexDirection: "column", position: "relative", zIndex: 2 }}>
-        <div style={{ textAlign: "right", paddingRight: 5, paddingTop: 20 }}>
-          <p style={{ margin: 0, fontSize: 11, lineHeight: 1.45, color: "var(--text-secondary)" }}>{device.period}</p>
-          <span style={{ display: "inline-block", marginTop: 7, padding: "4px 9px", borderRadius: 999, background: device.accent + "18", color: device.accent, fontSize: 10, fontWeight: 650 }}>
-            {device.status}
-          </span>
-        </div>
-        <div style={{ marginTop: "auto", marginBottom: 14 }}>
-          <div className="rd-device-card-summary" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 4, margin: "0 0 7px", padding: "7px 6px", borderRadius: 10, background: "rgba(228,225,218,.32)" }}>
-            {[
-              ["Mileage", device.miles],
-              ["Time", compactDeviceTime(device.time)],
-              ["Runs", device.runs],
-            ].map(([label, value]) => (
-              <div key={label} style={{ minWidth: 0, textAlign: "center" }}>
-                <p style={{ margin: 0, fontSize: 8.2, lineHeight: 1.08, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{label}</p>
-                <p style={{ margin: "3px 0 0", fontSize: 10.2, lineHeight: 1.08, fontWeight: 650, whiteSpace: "nowrap" }}>{value}</p>
-              </div>
-            ))}
-          </div>
-          <div className="rd-device-records" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 4, margin: "0 0 10px", padding: "7px 6px", borderRadius: 10, background: "rgba(228,225,218,.32)" }}>
-            {[
-              ["Furthest run", device.furthest],
-              ["Max ascent", device.maxAscent],
-              ["Total ascent", device.totalAscent],
-            ].map(([label, value]) => (
-              <div key={label} style={{ minWidth: 0, textAlign: "center" }}>
-                <p style={{ margin: 0, fontSize: 8.2, lineHeight: 1.08, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{label}</p>
-                <p style={{ margin: "3px 0 0", fontSize: 10.2, lineHeight: 1.08, fontWeight: 650, whiteSpace: "nowrap" }}>{value}</p>
-              </div>
-            ))}
-          </div>
-          <div style={{ height: 1, background: "var(--border)", margin: "0 0 10px" }} />
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 7 }}>
-              <p style={{ margin: 0, minWidth: 0, fontSize: 16.25, lineHeight: 1.14, fontWeight: 650 }}>{device.name}</p>
-              <div aria-label="Device colors" style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                {(device.swatches || [device.accent]).map((color, i) => (
-                  <span key={i} style={{ width: 12, height: 12, borderRadius: "50%", background: color, border: "1px solid rgba(61,52,40,.18)" }} />
-                ))}
-              </div>
+
+      <div className="rd-device-bottom" style={{ padding: "0 .72rem .78rem .72rem", position: "relative", zIndex: 2 }}>
+        <div style={{ height: 1, background: "var(--border)", margin: "0 0 10px" }} />
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 7 }}>
+            <p style={{ margin: 0, minWidth: 0, fontSize: 16.25, lineHeight: 1.14, fontWeight: 650 }}>{device.name}</p>
+            <div aria-label="Device colors" style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+              {(device.swatches || [device.accent]).map((color, i) => (
+                <span key={i} style={{ width: 12, height: 12, borderRadius: "50%", background: color, border: "1px solid rgba(61,52,40,.18)" }} />
+              ))}
             </div>
-            <p style={{ margin: "2px 0 0", fontSize: 9.3, color: "var(--text-secondary)", lineHeight: 1.2, whiteSpace: "nowrap", letterSpacing: "-.08px" }}>{compactDeviceDetail(device.detail || device.model)}</p>
           </div>
+          <p style={{ margin: "2px 0 0", fontSize: 9.3, color: "var(--text-secondary)", lineHeight: 1.2, whiteSpace: "nowrap", letterSpacing: "-.08px" }}>{compactDeviceDetail(device.detail || device.model)}</p>
         </div>
       </div>
     </article>
