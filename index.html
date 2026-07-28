@@ -213,8 +213,8 @@ const RESPONSIVE_CSS = `
   .rd-scroll-fade { display: flex !important; }
   .rd-gear-grid { grid-template-columns: 1fr !important; }
   .rd-device-grid { grid-template-columns: 1fr !important; }
-  .rd-device-card { grid-template-columns: minmax(142px, 44%) 1fr !important; min-height: 385px !important; }
-  .rd-device-art { min-height: 330px !important; }
+  .rd-device-card { grid-template-columns: minmax(138px, 43%) 1fr !important; min-height: 385px !important; }
+  .rd-device-art { min-height: 355px !important; }
   .rd-device-card-summary { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 0 !important; }
   .rd-device-card-runs { padding-left: 12px !important; }
   .rd-run-shoe-thumb { width: 90px !important; height: 58px !important; }
@@ -611,8 +611,10 @@ function AppleWatchGraphic({ device }) {
       style={{
         position: "relative",
         width: "100%",
-        maxWidth: 274,
+        maxWidth: "none",
         aspectRatio: "746 / 1242",
+        transform: "scale(1.14)",
+        transformOrigin: "center center",
         overflow: "hidden",
         containerType: "inline-size",
         background: "#F7F6F3",
@@ -683,8 +685,10 @@ function FenixWatchGraphic({ device }) {
       style={{
         position: "relative",
         width: "100%",
-        maxWidth: 314,
+        maxWidth: "none",
         aspectRatio: "887 / 1242",
+        transform: "scale(1.14)",
+        transformOrigin: "center center",
         overflow: "hidden",
         containerType: "inline-size",
         background: "#f7f6f3",
@@ -725,7 +729,7 @@ function Forerunner630Graphic({ device }) {
   return (
     <div
       aria-label={"Garmin Forerunner 630 showing " + device.runs + " runs, " + watchTime + " recorded time, and " + device.miles + " miles"}
-      style={{ position: "relative", width: "100%", maxWidth: 286, aspectRatio: "824 / 1242", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
+      style={{ position: "relative", width: "100%", maxWidth: "none", aspectRatio: "824 / 1242", transform: "scale(1.14)", transformOrigin: "center center", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
     >
       <img src={device.image} alt="" style={{ position: "absolute", zIndex: 1, inset: 0, width: "100%", height: "100%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
       <section style={{ position: "absolute", zIndex: 2, left: "3%", top: "18.06%", width: "91.58%", height: "65.16%", color: "#FFFFFF", fontFamily: '"Segoe UI", Arial, Helvetica, sans-serif', fontWeight: 400, fontVariantNumeric: "tabular-nums" }}>
@@ -748,7 +752,7 @@ function Forerunner220Graphic({ device }) {
   return (
     <div
       aria-label={"Garmin Forerunner 220 showing " + device.runs + " runs, " + watchTime + " recorded time, and " + device.miles + " miles"}
-      style={{ position: "relative", width: "100%", maxWidth: 280, aspectRatio: "806 / 1242", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
+      style={{ position: "relative", width: "100%", maxWidth: "none", aspectRatio: "806 / 1242", transform: "scale(1.14)", transformOrigin: "center center", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
     >
       <img src={device.image} alt="" style={{ position: "absolute", zIndex: 1, inset: 0, width: "100%", height: "100%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
       <section style={{ position: "absolute", zIndex: 2, inset: 0, transform: "translateX(0.993%)", color: "#FFFFFF", fontFamily: '"Segoe UI", Arial, Helvetica, sans-serif', fontVariantNumeric: "tabular-nums", textAlign: "center" }}>
@@ -782,7 +786,7 @@ function DeviceCard({ device }) {
       className="rd-device-card"
       style={{
         display: "grid",
-        gridTemplateColumns: "minmax(185px, 45%) 1fr",
+        gridTemplateColumns: "minmax(178px, 43%) 1fr",
         minHeight: 410,
         position: "relative",
         overflow: "hidden",
@@ -807,7 +811,7 @@ function DeviceCard({ device }) {
           border: "1px solid rgba(61,52,40,.18)",
         }}
       />
-      <div className="rd-device-art" style={{ minHeight: 380, display: "grid", placeItems: "center", padding: (isFenix || isApple || is630 || is220) ? 0 : "22px 8px 12px", position: "relative", overflow: "hidden" }}>
+      <div className="rd-device-art" style={{ minHeight: 380, display: "grid", placeItems: "stretch", padding: (isFenix || isApple || is630 || is220) ? 0 : "22px 8px 12px", position: "relative", overflow: "hidden" }}>
         {isFenix ? (
           <FenixWatchGraphic device={device} />
         ) : isApple ? (
@@ -828,19 +832,17 @@ function DeviceCard({ device }) {
           </span>
         </div>
         <div style={{ marginTop: "auto" }}>
-          <div className="rd-device-card-summary" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", marginBottom: 12 }}>
-            <div>
-              <p style={{ margin: 0, fontSize: 10, color: "var(--text-secondary)" }}>Mileage</p>
-              <p style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 650, whiteSpace: "nowrap" }}>{device.miles} mi</p>
-            </div>
-            <div style={{ borderLeft: "1px solid var(--border)", paddingLeft: 12 }}>
-              <p style={{ margin: 0, fontSize: 10, color: "var(--text-secondary)" }}>Time</p>
-              <p style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 650, whiteSpace: "nowrap" }}>{compactDeviceTime(device.time)}</p>
-            </div>
-            <div className="rd-device-card-runs" style={{ borderLeft: "1px solid var(--border)", paddingLeft: 12 }}>
-              <p style={{ margin: 0, fontSize: 10, color: "var(--text-secondary)" }}>Runs</p>
-              <p style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 650 }}>{device.runs}</p>
-            </div>
+          <div className="rd-device-card-summary" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, margin: "0 0 8px", padding: "8px 7px", borderRadius: 10, background: "rgba(228,225,218,.32)" }}>
+            {[
+              ["Mileage", device.miles + " mi"],
+              ["Time", compactDeviceTime(device.time)],
+              ["Runs", device.runs],
+            ].map(([label, value]) => (
+              <div key={label} style={{ minWidth: 0, textAlign: "center" }}>
+                <p style={{ margin: 0, fontSize: 8.5, lineHeight: 1.1, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{label}</p>
+                <p style={{ margin: "3px 0 0", fontSize: 10.5, lineHeight: 1.1, fontWeight: 650, whiteSpace: "nowrap" }}>{value}</p>
+              </div>
+            ))}
           </div>
           <div className="rd-device-records" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, margin: "0 0 12px", padding: "8px 7px", borderRadius: 10, background: "rgba(228,225,218,.32)" }}>
             {[
@@ -1629,7 +1631,7 @@ function RunningDashboard() {
             {DEVICE_META.map((device) => <DeviceCard key={device.name} device={device} />)}
           </div>
           <p style={{ margin: "10px 2px 0", fontSize: 10, color: "var(--text-secondary)" }}>
-            Totals use the cleaned, deduplicated watch dataset. Seven borrowed-watch activities from May 6–Jul 20, 2015 are excluded from Forerunner 220 totals. Ascent totals use normalized available data; Apple Watch and Forerunner 220 ascent coverage is partial.
+            Ascent totals use normalized available data; Apple Watch and Forerunner 220 ascent coverage is partial.
           </p>
         </div>
       )}
