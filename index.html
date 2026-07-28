@@ -697,13 +697,13 @@ function FenixWatchGraphic({ device }) {
       <img src={device.image} alt="" style={{ position: "absolute", zIndex: 1, inset: 0, width: "100%", height: "100%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
       <section style={{ position: "absolute", zIndex: 2, left: "25.787%", top: "29.534%", width: "50.17%", height: "29.41%", color: "#ffffff", fontFamily: '"Segoe UI", Arial, Helvetica, sans-serif', fontWeight: 700, textAlign: "center", textTransform: "uppercase" }}>
         <img src={RED_RUNNER_IMAGE} alt="" style={{ position: "absolute", left: "44.25%", top: 0, width: "12.5%", height: "19.1%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: "25.5%", left: 0, width: "100%", height: "39.5%", display: "flex", alignItems: "center", justifyContent: "flex-end", background: "rgba(12, 12, 12, 0.19)" }}>
+        <div style={{ position: "absolute", top: "25.5%", left: 0, width: "100%", height: "39.5%", display: "flex", alignItems: "center", justifyContent: "flex-end", background: "transparent" }}>
           <div style={{ position: "absolute", top: "39.9%", right: "2.237cqw", display: "inline-flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", gap: "0.999cqw", transform: "translateY(-50%)", textAlign: "right", whiteSpace: "nowrap" }}>
             <span style={{ ...mileageStyle, lineHeight: 0.78, fontVariantNumeric: "tabular-nums" }}>{mileageText}</span>
             <span style={{ fontSize: "3.596cqw", lineHeight: 0.9, letterSpacing: "-.064cqw" }}>Miles</span>
           </div>
         </div>
-        <div style={{ position: "absolute", left: 0, top: "65%", width: "100%", height: "34.6%", display: "grid", gridTemplateColumns: "1fr 1fr", borderTop: "0.440cqw solid rgba(216, 216, 216, 0.50)", borderBottom: "0.440cqw solid rgba(216, 216, 216, 0.32)", background: "rgba(12, 12, 12, 0.13)" }}>
+        <div style={{ position: "absolute", left: "-10%", top: "65%", width: "120%", height: "34.6%", display: "grid", gridTemplateColumns: "1fr 1fr", borderTop: "0.440cqw solid rgba(216, 216, 216, 0.50)", borderBottom: "0.440cqw solid rgba(216, 216, 216, 0.32)", background: "transparent" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", paddingTop: "1.319cqw" }}>
             <span style={{ fontSize: "3.596cqw", lineHeight: 1, letterSpacing: "-.072cqw" }}>Time</span>
             <span style={{ marginTop: "1.038cqw", fontSize: isLongTime ? "5.345cqw" : "5.984cqw", lineHeight: .93, letterSpacing: isLongTime ? "-.256cqw" : "-.175cqw", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{watchTime}</span>
@@ -713,7 +713,7 @@ function FenixWatchGraphic({ device }) {
             <span style={{ marginTop: "1.038cqw", ...runsStyle }}>{runsText}</span>
           </div>
         </div>
-        <div style={{ position: "absolute", left: 0, top: "99.6%", width: "100%", height: "31%", display: "flex", flexDirection: "column", alignItems: "center", background: "rgba(12, 12, 12, 0.10)", paddingTop: "1.757cqw" }}>
+        <div style={{ position: "absolute", left: "-10%", top: "99.6%", width: "120%", height: "31%", display: "flex", flexDirection: "column", alignItems: "center", background: "transparent", paddingTop: "1.757cqw" }}>
           <span style={{ fontSize: "3.596cqw", lineHeight: 1, letterSpacing: "-.072cqw" }}>This Week:</span>
           <span style={{ marginTop: "0.719cqw", ...weeklyMileageStyle }}>{weeklyMileageText}</span>
           <span aria-hidden="true" style={{ width: 0, height: 0, marginTop: "1.199cqw", borderLeft: "0.999cqw solid transparent", borderRight: "0.999cqw solid transparent", borderTop: "1.238cqw solid #FFFFFF" }} />
