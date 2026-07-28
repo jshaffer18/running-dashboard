@@ -613,7 +613,7 @@ function AppleWatchGraphic({ device }) {
         width: "100%",
         maxWidth: "none",
         aspectRatio: "746 / 1242",
-        transform: "translateX(6px) scale(1.17)",
+        transform: "translate(6px, -14px) scale(1.17)",
         transformOrigin: "center center",
         overflow: "hidden",
         containerType: "inline-size",
@@ -687,7 +687,7 @@ function FenixWatchGraphic({ device }) {
         width: "100%",
         maxWidth: "none",
         aspectRatio: "887 / 1242",
-        transform: "translateX(6px) scale(1.17)",
+        transform: "translate(6px, -14px) scale(1.17)",
         transformOrigin: "center center",
         overflow: "hidden",
         containerType: "inline-size",
@@ -729,7 +729,7 @@ function Forerunner630Graphic({ device }) {
   return (
     <div
       aria-label={"Garmin Forerunner 630 showing " + device.runs + " runs, " + watchTime + " recorded time, and " + device.miles + " miles"}
-      style={{ position: "relative", width: "100%", maxWidth: "none", aspectRatio: "824 / 1242", transform: "translateX(6px) scale(1.17)", transformOrigin: "center center", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
+      style={{ position: "relative", width: "100%", maxWidth: "none", aspectRatio: "824 / 1242", transform: "translate(6px, -14px) scale(1.17)", transformOrigin: "center center", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
     >
       <img src={device.image} alt="" style={{ position: "absolute", zIndex: 1, inset: 0, width: "100%", height: "100%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
       <section style={{ position: "absolute", zIndex: 2, left: "3%", top: "18.06%", width: "91.58%", height: "65.16%", color: "#FFFFFF", fontFamily: '"Segoe UI", Arial, Helvetica, sans-serif', fontWeight: 400, fontVariantNumeric: "tabular-nums" }}>
@@ -752,7 +752,7 @@ function Forerunner220Graphic({ device }) {
   return (
     <div
       aria-label={"Garmin Forerunner 220 showing " + device.runs + " runs, " + watchTime + " recorded time, and " + device.miles + " miles"}
-      style={{ position: "relative", width: "100%", maxWidth: "none", aspectRatio: "806 / 1242", transform: "translateX(6px) scale(1.17)", transformOrigin: "center center", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
+      style={{ position: "relative", width: "100%", maxWidth: "none", aspectRatio: "806 / 1242", transform: "translate(6px, -14px) scale(1.17)", transformOrigin: "center center", overflow: "hidden", containerType: "inline-size", background: "#F7F6F3" }}
     >
       <img src={device.image} alt="" style={{ position: "absolute", zIndex: 1, inset: 0, width: "100%", height: "100%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }} />
       <section style={{ position: "absolute", zIndex: 2, inset: 0, transform: "translateX(0.993%)", color: "#FFFFFF", fontFamily: '"Segoe UI", Arial, Helvetica, sans-serif', fontVariantNumeric: "tabular-nums", textAlign: "center" }}>
@@ -812,7 +812,7 @@ function DeviceCard({ device }) {
         }}
       />
       <div className="rd-device-art" style={{ minHeight: 380, display: "grid", placeItems: "center", padding: "0 6px 0 12px", position: "relative", overflow: "visible", pointerEvents: "none", zIndex: 1 }}>
-        <div className="rd-device-watch-scale" style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", transform: "translateX(6px) scale(1.17)", transformOrigin: "center center" }}>
+        <div className="rd-device-watch-scale" style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", transform: "translate(6px, -14px) scale(1.17)", transformOrigin: "center center" }}>
           {isFenix ? (
             <FenixWatchGraphic device={device} />
           ) : isApple ? (
