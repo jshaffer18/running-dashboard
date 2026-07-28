@@ -786,7 +786,7 @@ function DeviceCard({ device }) {
       className="rd-device-card"
       style={{
         display: "grid",
-        gridTemplateColumns: "minmax(178px, 43%) 1fr",
+        gridTemplateColumns: "minmax(185px, 45%) 1fr",
         minHeight: 410,
         position: "relative",
         overflow: "hidden",
@@ -811,18 +811,20 @@ function DeviceCard({ device }) {
           border: "1px solid rgba(61,52,40,.18)",
         }}
       />
-      <div className="rd-device-art" style={{ minHeight: 380, display: "grid", placeItems: "stretch", padding: (isFenix || isApple || is630 || is220) ? 0 : "22px 8px 12px", position: "relative", overflow: "hidden" }}>
-        {isFenix ? (
-          <FenixWatchGraphic device={device} />
-        ) : isApple ? (
-          <AppleWatchGraphic device={device} />
-        ) : is630 ? (
-          <Forerunner630Graphic device={device} />
-        ) : is220 ? (
-          <Forerunner220Graphic device={device} />
-        ) : (
-          <img src={device.image} alt="" style={{ width: "100%", height: "100%", maxHeight: 320, objectFit: "contain" }} />
-        )}
+      <div className="rd-device-art" style={{ minHeight: 380, display: "grid", placeItems: "center", padding: 0, position: "relative", overflow: "visible", pointerEvents: "none", zIndex: 1 }}>
+        <div className="rd-device-watch-scale" style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", transform: "scale(1.08)", transformOrigin: "center center" }}>
+          {isFenix ? (
+            <FenixWatchGraphic device={device} />
+          ) : isApple ? (
+            <AppleWatchGraphic device={device} />
+          ) : is630 ? (
+            <Forerunner630Graphic device={device} />
+          ) : is220 ? (
+            <Forerunner220Graphic device={device} />
+          ) : (
+            <img src={device.image} alt="" style={{ width: "100%", height: "100%", maxHeight: 320, objectFit: "contain" }} />
+          )}
+        </div>
       </div>
       <div style={{ padding: "1.25rem 1rem 1rem .45rem", minWidth: 0, display: "flex", flexDirection: "column", position: "relative", zIndex: 2 }}>
         <div style={{ textAlign: "right", paddingRight: 7, paddingTop: 32 }}>
@@ -831,7 +833,7 @@ function DeviceCard({ device }) {
             {device.status}
           </span>
         </div>
-        <div style={{ marginTop: "auto" }}>
+        <div style={{ marginTop: "auto", marginBottom: 24 }}>
           <div className="rd-device-card-summary" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, margin: "0 0 8px", padding: "8px 7px", borderRadius: 10, background: "rgba(228,225,218,.32)" }}>
             {[
               ["Mileage", device.miles],
