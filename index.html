@@ -439,6 +439,8 @@ function KpiCard({ gradient, icon, label, value, sub }) {
         height: icon === "race-countdown" || icon === "total-mileage" ? 78 : 94,
         objectFit: "contain",
         display: "block",
+        transform: icon === "race-countdown" ? "scale(2.35)" : icon === "total-mileage" ? "scale(2.15)" : "none",
+        transformOrigin: "center center",
       }}
     />
   ) : <span />;
@@ -448,7 +450,7 @@ function KpiCard({ gradient, icon, label, value, sub }) {
       <div style={{ display: "flex", alignItems: "stretch", height: 110, width: "100%", position: "relative" }}>
         <div style={{ width: 72, flexShrink: 0, height: 110, position: "relative", overflow: "hidden", background: "rgba(255,255,255,0.25)", color: "rgba(61,52,40,0.72)", display: "grid", placeItems: "center", borderRight: "1px solid rgba(61,52,40,0.08)", padding: "3px 2px" }}>
           <span aria-hidden="true" style={{ position: "absolute", width: 48, height: 48, left: -20, bottom: -15, borderRadius: "50%", background: "rgba(255,255,255,0.19)" }} />
-          <span style={{ position: "relative", zIndex: 1, width: 68, height: 102, display: "grid", placeItems: "center" }}>{railGraphic}</span>
+          <span style={{ position: "relative", zIndex: 1, width: 68, height: 102, display: "grid", placeItems: "center", overflow: "hidden" }}>{railGraphic}</span>
         </div>
         <div style={{ padding: "14px 13px 13px", minWidth: 0, minHeight: 110, display: "grid", gridTemplateRows: "auto auto auto", rowGap: 2, alignContent: "center" }}>
           <p style={{ fontSize: 11, lineHeight: "15px", fontWeight: 700, letterSpacing: 0.65, textTransform: "uppercase", margin: 0, opacity: 0.78, alignSelf: "start" }}>{label}</p>
@@ -796,9 +798,9 @@ function DeviceSuperlative({ iconSrc, label, value }) {
   return (
     <div className="rd-device-superlative" style={{ minWidth: 0, minHeight: 112, display: "grid", placeItems: "center" }}>
       <div className="rd-superlative-visual" style={{ width: 142, maxWidth: "100%", display: "grid", justifyItems: "center" }}>
-        <div style={{ position: "relative", width: 128, height: 88, display: "grid", placeItems: "center" }}>
-          <img src={iconSrc} alt="" style={{ width: 120, height: 84, objectFit: "contain", display: "block" }} />
-          <p className="rd-superlative-value" style={{ position: "absolute", left: "50%", top: "43%", transform: "translate(-50%, -50%)", margin: 0, fontSize: 18, lineHeight: 1, fontWeight: 800, color: "#3D3428", whiteSpace: "nowrap", WebkitTextStroke: "2px rgba(248,246,241,.98)", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(255,255,255,.45)" }}>{value}</p>
+        <div style={{ position: "relative", width: 128, height: 92, display: "grid", placeItems: "center", overflow: "hidden" }}>
+          <img src={iconSrc} alt="" style={{ width: 120, height: 84, objectFit: "contain", display: "block", transform: "scale(1.82)", transformOrigin: "center center" }} />
+          <p className="rd-superlative-value" style={{ position: "absolute", left: "50%", top: "42%", transform: "translate(-50%, -50%)", margin: 0, fontSize: 18, lineHeight: 1, fontWeight: 800, color: "#3D3428", whiteSpace: "nowrap", WebkitTextStroke: "2px rgba(248,246,241,.98)", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(255,255,255,.45)" }}>{value}</p>
         </div>
         <p style={{ margin: "-1px 0 0", fontSize: 9.5, lineHeight: 1.05, color: "var(--text-secondary)", fontWeight: 700, letterSpacing: .25, textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</p>
       </div>
