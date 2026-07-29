@@ -237,7 +237,7 @@ const RESPONSIVE_CSS = `
   .rd-device-superlatives { grid-template-columns: 1fr !important; gap: 1px !important; margin-top: 3px !important; }
   .rd-device-superlative { min-height: 116px !important; }
   .rd-device-superlative img { width: 120px !important; height: 84px !important; }
-  .rd-device-superlative .rd-superlative-value { font-size: 14px !important; }
+  .rd-device-superlative .rd-superlative-value { font-size: 18px !important; }
   .rd-run-shoe-thumb { width: 90px !important; height: 58px !important; }
 }
 .rd-scroll-hint, .rd-scroll-fade { display: none; }
@@ -435,8 +435,8 @@ function KpiCard({ gradient, icon, label, value, sub }) {
       src={kpiIconMap[icon]}
       alt=""
       style={{
-        width: 48,
-        height: 84,
+        width: icon === "race-countdown" || icon === "total-mileage" ? 68 : 64,
+        height: icon === "race-countdown" || icon === "total-mileage" ? 78 : 94,
         objectFit: "contain",
         display: "block",
         transform: icon === "race-countdown" ? "scale(2.35)" : icon === "total-mileage" ? "scale(2.15)" : "none",
@@ -448,14 +448,14 @@ function KpiCard({ gradient, icon, label, value, sub }) {
     <div style={{ background: gradient, borderRadius: 16, padding: 0, border: "1px solid rgba(255,255,255,0.55)", boxShadow: "0 6px 18px rgba(55,70,86,0.09)", color: "#3D3428", height: 110, overflow: "hidden", display: "flex", position: "relative" }}>
       <div aria-hidden="true" style={{ position: "absolute", width: 78, height: 78, borderRadius: "50%", top: -44, right: -24, background: "rgba(255,255,255,0.16)", pointerEvents: "none" }} />
       <div style={{ display: "flex", alignItems: "stretch", height: 110, width: "100%", position: "relative" }}>
-        <div style={{ width: 52, flexShrink: 0, height: 110, position: "relative", overflow: "hidden", background: "rgba(255,255,255,0.25)", color: "rgba(61,52,40,0.72)", display: "grid", placeItems: "center", borderRight: "1px solid rgba(61,52,40,0.08)", padding: "3px 1px" }}>
+        <div style={{ width: 72, flexShrink: 0, height: 110, position: "relative", overflow: "hidden", background: "rgba(255,255,255,0.25)", color: "rgba(61,52,40,0.72)", display: "grid", placeItems: "center", borderRight: "1px solid rgba(61,52,40,0.08)", padding: "3px 2px" }}>
           <span aria-hidden="true" style={{ position: "absolute", width: 48, height: 48, left: -20, bottom: -15, borderRadius: "50%", background: "rgba(255,255,255,0.19)" }} />
-          <span style={{ position: "relative", zIndex: 1, width: 50, height: 102, display: "grid", placeItems: "center", overflow: "hidden", transform: "translateX(-2px)" }}>{railGraphic}</span>
+          <span style={{ position: "relative", zIndex: 1, width: 68, height: 102, display: "grid", placeItems: "center", overflow: "hidden" }}>{railGraphic}</span>
         </div>
         <div style={{ padding: "14px 13px 13px", minWidth: 0, minHeight: 110, display: "grid", gridTemplateRows: "auto auto auto", rowGap: 2, alignContent: "center" }}>
           <p style={{ fontSize: 11, lineHeight: "15px", fontWeight: 700, letterSpacing: 0.65, textTransform: "uppercase", margin: 0, opacity: 0.78, alignSelf: "start" }}>{label}</p>
           <p style={{ fontSize: 25, lineHeight: "32px", fontWeight: 700, margin: "3px 0 0", letterSpacing: -0.5, whiteSpace: "nowrap", alignSelf: "start" }}>{value}</p>
-          {sub && <p style={{ fontSize: 11, lineHeight: "16px", margin: 0, opacity: 0.7, alignSelf: "start", whiteSpace: "nowrap" }}>{sub}</p>}
+          {sub && <p style={{ fontSize: 11.5, lineHeight: "17px", margin: 0, opacity: 0.7, alignSelf: "start", whiteSpace: "nowrap" }}>{sub}</p>}
         </div>
       </div>
     </div>
@@ -800,9 +800,9 @@ function DeviceSuperlative({ iconSrc, label, value }) {
       <div className="rd-superlative-visual" style={{ width: 142, maxWidth: "100%", display: "grid", justifyItems: "center" }}>
         <div style={{ position: "relative", width: 128, height: 92, display: "grid", placeItems: "center", overflow: "hidden" }}>
           <img src={iconSrc} alt="" style={{ width: 120, height: 84, objectFit: "contain", display: "block", transform: "scale(1.82)", transformOrigin: "center center" }} />
-          <p className="rd-superlative-value" style={{ position: "absolute", left: "50%", top: "42%", transform: "translate(-50%, -50%)", margin: 0, fontSize: 14, lineHeight: 1, fontWeight: 800, color: "#3D3428", whiteSpace: "nowrap", WebkitTextStroke: "2px rgba(248,246,241,.98)", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(255,255,255,.45)" }}>{value}</p>
+          <p className="rd-superlative-value" style={{ position: "absolute", left: "50%", top: "42%", transform: "translate(-50%, -50%)", margin: 0, fontSize: 18, lineHeight: 1, fontWeight: 800, color: "#3D3428", whiteSpace: "nowrap", WebkitTextStroke: "2px rgba(248,246,241,.98)", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(255,255,255,.45)" }}>{value}</p>
         </div>
-        <p style={{ margin: "-12px 0 0", fontSize: 9.5, lineHeight: 1.05, color: "var(--text-secondary)", fontWeight: 700, letterSpacing: .25, textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</p>
+        <p style={{ margin: "-1px 0 0", fontSize: 9.5, lineHeight: 1.05, color: "var(--text-secondary)", fontWeight: 700, letterSpacing: .25, textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</p>
       </div>
     </div>
   );
@@ -1254,8 +1254,8 @@ function RunningDashboard() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 20 }}>
         <KpiCard gradient={KPI_GRADIENTS.race} icon="race-countdown" label="Race Countdown" value={weeksToRace.weeks + "w " + weeksToRace.days + "d"} sub="Sun, Nov 29" />
-        <KpiCard gradient={KPI_GRADIENTS.mileage} icon="weekly-mileage" label="Weekly Mileage" value={avgFullWeekMileage.toFixed(1) + " mi"} />
-        <KpiCard gradient={KPI_GRADIENTS.cadence} icon="cadence-bunny" label="Cadence" value={avgCadenceOverall + " spm"} />
+        <KpiCard gradient={KPI_GRADIENTS.mileage} icon="weekly-mileage" label="Weekly Mileage" value={avgFullWeekMileage.toFixed(1) + " mi"} sub="avg. of full weeks" />
+        <KpiCard gradient={KPI_GRADIENTS.cadence} icon="cadence-bunny" label="Cadence" value={avgCadenceOverall + " spm"} sub="avg. across all runs" />
         <KpiCard gradient={KPI_GRADIENTS.distance} icon="total-mileage" label="Total Mileage" value={totalMiles.toFixed(2) + " mi"} sub={RUNS.length + " runs logged"} />
       </div>
 
@@ -1661,5 +1661,75 @@ function RunningDashboard() {
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<RunningDashboard />);
 </script>
+
+<style id="runtime-visual-tuning-2026-07-29">
+  /* Safe post-render overrides: does not alter the working React source. */
+  .rd-device-superlative .rd-superlative-value {
+    font-size: 14px !important;
+  }
+  .rd-device-superlative .rd-superlative-visual > p:last-child {
+    margin-top: -12px !important;
+  }
+</style>
+<script id="runtime-visual-tuning-script-2026-07-29">
+(function () {
+  "use strict";
+
+  function tuneKpiCards() {
+    var paragraphs = document.querySelectorAll("p");
+    for (var i = 0; i < paragraphs.length; i += 1) {
+      var title = paragraphs[i];
+      var label = (title.textContent || "").trim().toUpperCase();
+      if (label !== "RACE COUNTDOWN" && label !== "WEEKLY MILEAGE" && label !== "CADENCE" && label !== "TOTAL MILEAGE") {
+        continue;
+      }
+
+      var content = title.parentElement;
+      var row = content && content.parentElement;
+      var rail = row && row.children ? row.children[0] : null;
+      if (!content || !row || !rail) continue;
+
+      rail.style.setProperty("width", "52px", "important");
+      rail.style.setProperty("padding", "3px 1px", "important");
+
+      var railSpans = rail.querySelectorAll("span");
+      var iconHolder = railSpans.length ? railSpans[railSpans.length - 1] : null;
+      if (iconHolder) {
+        iconHolder.style.setProperty("width", "50px", "important");
+        iconHolder.style.setProperty("transform", "translateX(-2px)", "important");
+      }
+
+      var icon = rail.querySelector("img");
+      if (icon) {
+        icon.style.setProperty("width", "48px", "important");
+        icon.style.setProperty("height", "84px", "important");
+      }
+
+      var cardText = content.querySelectorAll(":scope > p");
+      if (label === "WEEKLY MILEAGE" || label === "CADENCE") {
+        if (cardText.length > 2) cardText[2].style.setProperty("display", "none", "important");
+      } else if (cardText.length > 2) {
+        cardText[2].style.setProperty("font-size", "11px", "important");
+        cardText[2].style.setProperty("line-height", "16px", "important");
+      }
+    }
+  }
+
+  function applyTuning() {
+    tuneKpiCards();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", applyTuning, { once: true });
+  } else {
+    applyTuning();
+  }
+
+  window.addEventListener("load", applyTuning, { once: true });
+  window.setTimeout(applyTuning, 250);
+  window.setTimeout(applyTuning, 1000);
+})();
+</script>
+
 </body>
 </html>
