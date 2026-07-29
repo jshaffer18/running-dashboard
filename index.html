@@ -822,7 +822,7 @@ function DeviceCard({ device }) {
         }}
       >
         <div className="rd-device-art" style={{ minHeight: 320, display: "grid", placeItems: "center", padding: "24px 6px 0 12px", position: "relative", overflow: "visible", pointerEvents: "none", zIndex: 1 }}>
-          <div className="rd-device-watch-scale" style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", transform: "translate(6px, 2px) scale(1.14)", transformOrigin: "center center" }}>
+          <div className="rd-device-watch-scale" style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", transform: isFenix ? "translate(6px, 2px) scale(1.14)" : is630 ? "translate(6px, 4px) scale(1.08)" : "translate(6px, 4px) scale(1.07)", transformOrigin: "center center" }}>
             {isFenix ? (
               <FenixWatchGraphic device={device} />
             ) : isApple ? (
@@ -860,7 +860,7 @@ function DeviceCard({ device }) {
             </div>
             <div className="rd-device-records" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 4, margin: 0, padding: "7px 6px", borderRadius: 10, background: "rgba(228,225,218,.32)" }}>
               {[
-                ["Furthest run", device.furthest],
+                ["Longest run", device.furthest],
                 ["Max ascent", device.maxAscent],
                 ["Total ascent", device.totalAscent],
               ].map(([label, value]) => (
@@ -1637,7 +1637,7 @@ function RunningDashboard() {
           <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 16, padding: "0.9rem 1.2rem", marginBottom: 14 }}>
             <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-secondary)" }}>Your running history, organized by watch.</p>
             <div className="rd-device-summary" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 16 }}>
-              {[["TOTAL RUNS", "653"], ["TOTAL MILES", "3,498.89"], ["RECORDED TIME", "547h 36m"]].map(([label, value]) => (
+              {[["TOTAL MILEAGE", "3,498.89"], ["TOTAL TIME", "547h 36m"], ["TOTAL RUNS", "653"]].map(([label, value]) => (
                 <div key={label}>
                   <p style={{ margin: 0, fontSize: 9, color: "var(--text-secondary)", fontWeight: 700, letterSpacing: 1.1 }}>{label}</p>
                   <p style={{ margin: "3px 0 0", fontSize: 20, fontWeight: 700 }}>{value}</p>
