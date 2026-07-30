@@ -579,7 +579,7 @@ function GearCard({ shoe }) {
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 7 }}>
         <div style={{ minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.2, fontWeight: 600 }}>{shoe.shoe}</p>
+          <p style={{ margin: 0, fontSize: 18, lineHeight: 1.2, fontWeight: 600 }}>{shoe.shoe}</p>
           <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--text-secondary)" }}>{meta.model} · {meta.weight} · {meta.stack} stack · {meta.drop} drop</p>
         </div>
         <div aria-label="Shoe colors" style={{ display: "flex", gap: 5, paddingTop: 3, flexShrink: 0 }}>
@@ -917,7 +917,7 @@ function DeviceCard({ device }) {
       <div className="rd-device-bottom" style={{ padding: "0 12px 0 12px", position: "relative", zIndex: 2 }}>
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 7 }}>
-            <p style={{ margin: 0, minWidth: 0, fontSize: 15, lineHeight: 1.14, fontWeight: 650 }}>{device.name}</p>
+            <p style={{ margin: 0, minWidth: 0, fontSize: 18, lineHeight: 1.14, fontWeight: 650 }}>{device.name}</p>
             <div aria-label="Device colors" style={{ display: "flex", gap: 6, flexShrink: 0 }}>
               {(device.swatches || [device.accent]).map((color, i) => (
                 <span key={i} style={{ width: 12, height: 12, borderRadius: "50%", background: color, border: "1px solid rgba(61,52,40,.18)" }} />
