@@ -905,6 +905,15 @@ function DeviceCard({ device }) {
         </div>
       </div>
 
+      <div className="rd-device-metric-strip" style={{ padding: "0 12px", position: "relative", zIndex: 2 }}>
+        <div className="rd-device-superlatives" style={{ marginTop: 0, marginBottom: 0, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 0, justifyContent: "stretch", alignItems: "start" }}>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_LONGEST_RUN} label="Longest run" value={device.furthest} /></div>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_MAX_ASCENT} label="Max ascent" value={device.maxAscent} /></div>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_FASTEST_MILE} label="Fastest mile" value={device.fastestMile} imageScale={2.08} /></div>
+        </div>
+        <div aria-hidden="true" style={{ height: 1, background: "var(--border)", margin: "8px 0" }} />
+      </div>
+
       <div className="rd-device-bottom" style={{ padding: "0 12px 0 12px", position: "relative", zIndex: 2 }}>
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 7 }}>
@@ -919,7 +928,7 @@ function DeviceCard({ device }) {
         </div>
       </div>
 
-      <div className="rd-device-metrics-bottom" style={{ padding: "0 12px 8px 12px", position: "relative", zIndex: 2 }}>
+      <div className="rd-device-metrics-bottom" style={{ padding: "0 12px 12.6px 12px", position: "relative", zIndex: 2 }}>
         <div style={{ height: 1, background: "var(--border)", margin: "10px 0 0" }} />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", margin: "0" }}>
           <div style={{ minWidth: 0, textAlign: "left", padding: "8px 10px 1px 0" }}>
@@ -934,14 +943,6 @@ function DeviceCard({ device }) {
             <p style={{ margin: 0, fontSize: 10, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>Runs</p>
             <p style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 500, whiteSpace: "nowrap" }}>{device.runs}</p>
           </div>
-        </div>
-      </div>
-
-      <div className="rd-device-metric-strip" style={{ padding: "0 12px 13.6px", position: "relative", zIndex: 2 }}>
-        <div className="rd-device-superlatives" style={{ marginTop: 0, marginBottom: 0, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 0, justifyContent: "stretch", alignItems: "start" }}>
-          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_LONGEST_RUN} label="Longest run" value={device.furthest} /></div>
-          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_MAX_ASCENT} label="Max ascent" value={device.maxAscent} /></div>
-          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_FASTEST_MILE} label="Fastest mile" value={device.fastestMile} imageScale={2.08} /></div>
         </div>
       </div>
     </article>
