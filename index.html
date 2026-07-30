@@ -833,6 +833,7 @@ function DeviceCard({ device }) {
   const isFenix = device.name === "fēnix 6S Pro";
   const is630 = device.name === "Forerunner 630";
   const is220 = device.name === "Forerunner 220";
+  const superlativeAccent = (isFenix || isApple) ? ((device.swatches && device.swatches[1]) || device.accent) : device.accent;
   const watchTransform = isFenix
     ? "translate(6px, 17px) scale(1.14)"
     : is630
@@ -907,9 +908,9 @@ function DeviceCard({ device }) {
 
       <div className="rd-device-metric-strip" style={{ padding: "0 12px", position: "relative", zIndex: 2 }}>
         <div className="rd-device-superlatives" style={{ marginTop: 5, marginBottom: 0, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 0, justifyContent: "stretch", alignItems: "start" }}>
-          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_LONGEST_RUN} label="Longest run" value={device.furthest} accent={device.accent} /></div>
-          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_MAX_ASCENT} label="Max ascent" value={device.maxAscent} accent={device.accent} /></div>
-          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_FASTEST_MILE} label="Fastest mile" value={device.fastestMile} accent={device.accent} imageScale={2.08} /></div>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_LONGEST_RUN} label="Longest run" value={device.furthest} accent={superlativeAccent} /></div>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_MAX_ASCENT} label="Max ascent" value={device.maxAscent} accent={superlativeAccent} /></div>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_FASTEST_MILE} label="Fastest mile" value={device.fastestMile} accent={superlativeAccent} imageScale={2.08} /></div>
         </div>
         <div aria-hidden="true" style={{ height: 10 }} />
       </div>
