@@ -246,11 +246,11 @@ const RESPONSIVE_CSS = `
   .rd-device-art { width: auto !important; }
   .rd-device-content { margin-left: 0 !important; }
   .rd-device-card-summary-main { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0 !important; }
-  .rd-device-race-bibs-top { gap: 6px !important; }
-  .rd-device-superlatives { grid-template-columns: 1fr !important; gap: 1px !important; margin-top: 3px !important; }
-  .rd-device-superlative { min-height: 116px !important; }
-  .rd-device-superlative img { width: 120px !important; height: 84px !important; }
-  .rd-device-superlative .rd-superlative-value { font-size: 18px !important; }
+  .rd-device-race-bibs-top { gap: 6px !important; justify-items: end !important; }
+  .rd-device-superlatives { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0 !important; margin-top: 0 !important; margin-bottom: 4px !important; }
+  .rd-device-superlative { min-height: 84px !important; }
+  .rd-device-superlative img { width: 96px !important; height: 66px !important; }
+  .rd-device-superlative .rd-superlative-value { font-size: 14px !important; }
   .rd-run-shoe-thumb { width: 90px !important; height: 58px !important; }
 }
 .rd-scroll-hint, .rd-scroll-fade { display: none; }
@@ -809,13 +809,13 @@ function compactDeviceTime(value) {
 
 function DeviceSuperlative({ iconSrc, label, value }) {
   return (
-    <div className="rd-device-superlative" style={{ minWidth: 0, minHeight: 112, display: "grid", placeItems: "center" }}>
-      <div className="rd-superlative-visual" style={{ width: 142, maxWidth: "100%", display: "grid", justifyItems: "center" }}>
-        <div style={{ position: "relative", width: 128, height: 92, display: "grid", placeItems: "center", overflow: "hidden" }}>
-          <img src={iconSrc} alt="" style={{ width: 120, height: 84, objectFit: "contain", display: "block", transform: "scale(1.82)", transformOrigin: "center center" }} />
-          <p className="rd-superlative-value" style={{ position: "absolute", left: "50%", top: "42%", transform: "translate(-50%, -50%)", margin: 0, fontSize: 18, lineHeight: 1, fontWeight: 800, color: "#3D3428", whiteSpace: "nowrap", WebkitTextStroke: "2px rgba(248,246,241,.98)", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(255,255,255,.45)" }}>{value}</p>
+    <div className="rd-device-superlative" style={{ minWidth: 0, minHeight: 82, display: "grid", placeItems: "center", padding: "0 2px" }}>
+      <div className="rd-superlative-visual" style={{ width: "100%", maxWidth: 122, display: "grid", justifyItems: "center" }}>
+        <div style={{ position: "relative", width: 104, height: 74, display: "grid", placeItems: "center", overflow: "hidden" }}>
+          <img src={iconSrc} alt="" style={{ width: 96, height: 66, objectFit: "contain", display: "block", transform: "scale(1.82)", transformOrigin: "center center" }} />
+          <p className="rd-superlative-value" style={{ position: "absolute", left: "50%", top: "42%", transform: "translate(-50%, -50%)", margin: 0, fontSize: 14, lineHeight: 1, fontWeight: 800, color: "#3D3428", whiteSpace: "nowrap", WebkitTextStroke: "2.3px rgba(248,246,241,.98)", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(255,255,255,.45)" }}>{value}</p>
         </div>
-        <p style={{ margin: "-1px 0 0", fontSize: 9.5, lineHeight: 1.05, color: "var(--text-secondary)", fontWeight: 700, letterSpacing: .25, textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</p>
+        <p style={{ margin: "-3px 0 0", fontSize: 9.5, lineHeight: 1.05, color: "var(--text-secondary)", fontWeight: 700, letterSpacing: .25, textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</p>
       </div>
     </div>
   );
@@ -866,31 +866,31 @@ function DeviceCard({ device }) {
             <span style={{ display: "inline-block", marginTop: 7, padding: "4px 9px", borderRadius: 999, background: device.accent + "18", color: device.accent, fontSize: 10, fontWeight: 650 }}>{device.status}</span>
           </div>
 
-          <div className="rd-device-race-bibs-top" style={{ marginTop: 8, display: "grid", gridTemplateColumns: "1fr", gap: 7, alignItems: "start" }}>
+          <div className="rd-device-race-bibs-top" style={{ marginTop: 8, display: "grid", gridTemplateColumns: "1fr", gap: 8, alignItems: "start", justifyItems: "end" }}>
             {[
               { label: "5K", value: device.race5k },
               { label: "13.1", value: device.raceHalf },
               { label: "26.2", value: device.raceMarathon },
             ].map((race) => (
-              <div key={race.label} style={{ minWidth: 0 }}>
+              <div key={race.label} style={{ minWidth: 0, width: 98, maxWidth: "100%" }}>
                 <div style={{
                   position: "relative",
                   borderRadius: "8px 8px 12px 12px",
                   border: `1px solid ${device.accent}3b`,
                   background: `linear-gradient(180deg, rgba(255,255,255,0.99) 0%, ${device.accent}10 100%)`,
-                  padding: "0 10px 10px",
+                  padding: "0 8px 8px",
                   boxShadow: "0 1px 0 rgba(255,255,255,0.82) inset, 0 2px 6px rgba(61,52,40,0.05)",
                   overflow: "hidden",
-                  minHeight: 54,
+                  minHeight: 76,
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "flex-start"
                 }}>
-                  <div aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: 18, background: `${device.accent}14`, borderBottom: `1px dashed ${device.accent}44` }} />
+                  <div aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: 22, background: `${device.accent}14`, borderBottom: `1px dashed ${device.accent}44` }} />
                   <span aria-hidden="true" style={{ position: "absolute", top: 7, left: 9, width: 8, height: 8, borderRadius: "50%", background: "#fff", border: `1px solid ${device.accent}38`, boxShadow: "0 0 0 1px rgba(255,255,255,0.55) inset" }} />
                   <span aria-hidden="true" style={{ position: "absolute", top: 7, right: 9, width: 8, height: 8, borderRadius: "50%", background: "#fff", border: `1px solid ${device.accent}38`, boxShadow: "0 0 0 1px rgba(255,255,255,0.55) inset" }} />
-                  <p style={{ position: "relative", zIndex: 1, margin: "4px 0 0", fontSize: 9, lineHeight: 1.05, color: "var(--text-secondary)", fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", whiteSpace: "nowrap", textAlign: "center" }}>{race.label}</p>
-                  <p style={{ margin: "16px 0 0", fontSize: 18, lineHeight: 1, fontWeight: 650, color: "var(--text-primary)", whiteSpace: "nowrap", textAlign: "center" }}>{race.value}</p>
+                  <p style={{ position: "relative", zIndex: 1, margin: "5px 0 0", fontSize: 10, lineHeight: 1.05, color: "var(--text-secondary)", fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", whiteSpace: "nowrap", textAlign: "center" }}>{race.label}</p>
+                  <p style={{ margin: "26px 0 0", fontSize: 18, lineHeight: 1, fontWeight: 650, color: "var(--text-primary)", whiteSpace: "nowrap", textAlign: "center" }}>{race.value}</p>
                 </div>
               </div>
             ))}
@@ -898,8 +898,8 @@ function DeviceCard({ device }) {
         </div>
       </div>
 
-      <div className="rd-device-metric-strip" style={{ padding: "0 .72rem 10px", position: "relative", zIndex: 2 }}>
-        <div className="rd-device-superlatives" style={{ marginTop: 2, marginBottom: 8, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 2, alignItems: "center" }}>
+      <div className="rd-device-metric-strip" style={{ padding: "0 .5rem 8px", position: "relative", zIndex: 2 }}>
+        <div className="rd-device-superlatives" style={{ marginTop: 0, marginBottom: 4, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 0, alignItems: "start" }}>
           <DeviceSuperlative iconSrc={DEVICE_ICON_LONGEST_RUN} label="Longest run" value={device.furthest} />
           <DeviceSuperlative iconSrc={DEVICE_ICON_MAX_ASCENT} label="Max ascent" value={device.maxAscent} />
         </div>
