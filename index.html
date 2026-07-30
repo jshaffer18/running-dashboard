@@ -254,7 +254,7 @@ const RESPONSIVE_CSS = `
   .rd-device-content { margin-left: 0 !important; }
   .rd-device-card-summary-main { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0 !important; }
   .rd-device-race-bibs-top { gap: 6px !important; justify-items: end !important; }
-  .rd-device-superlatives { grid-template-columns: repeat(3, 92px) !important; justify-content: start !important; gap: 6px !important; margin-top: 0 !important; margin-bottom: 0 !important; }
+  .rd-device-superlatives { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; justify-content: stretch !important; gap: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; }
   .rd-device-superlative { min-height: 76px !important; }
   .rd-device-superlative img { width: 96px !important; height: 66px !important; }
   .rd-device-superlative .rd-superlative-value { font-size: 14px !important; }
@@ -906,10 +906,10 @@ function DeviceCard({ device }) {
       </div>
 
       <div className="rd-device-metric-strip" style={{ padding: "0 12px 8px", position: "relative", zIndex: 2 }}>
-        <div className="rd-device-superlatives" style={{ marginTop: 0, marginBottom: 0, display: "grid", gridTemplateColumns: "repeat(3, 92px)", gap: 6, justifyContent: "start", alignItems: "start" }}>
-          <DeviceSuperlative iconSrc={DEVICE_ICON_LONGEST_RUN} label="Longest run" value={device.furthest} />
-          <DeviceSuperlative iconSrc={DEVICE_ICON_MAX_ASCENT} label="Max ascent" value={device.maxAscent} />
-          <DeviceSuperlative iconSrc={DEVICE_ICON_FASTEST_MILE} label="Fastest mile" value={device.fastestMile} imageScale={2.08} />
+        <div className="rd-device-superlatives" style={{ marginTop: 0, marginBottom: 0, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 0, justifyContent: "stretch", alignItems: "start" }}>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_LONGEST_RUN} label="Longest run" value={device.furthest} /></div>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_MAX_ASCENT} label="Max ascent" value={device.maxAscent} /></div>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_FASTEST_MILE} label="Fastest mile" value={device.fastestMile} imageScale={2.08} /></div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", margin: "0" }}>
           <div style={{ minWidth: 0, textAlign: "left", padding: "8px 10px 8px 0" }}>
