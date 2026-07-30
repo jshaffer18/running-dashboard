@@ -577,7 +577,7 @@ function GearCard({ shoe }) {
           </React.Fragment>
         )}
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 7 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 7, marginTop: 10 }}>
         <div style={{ minWidth: 0 }}>
           <p style={{ margin: 0, fontSize: 17, lineHeight: 1.2, fontWeight: 600 }}>{shoe.shoe}</p>
           <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--text-secondary)" }}>{meta.model} · {meta.weight} · {meta.stack} stack · {meta.drop} drop</p>
@@ -906,12 +906,12 @@ function DeviceCard({ device }) {
       </div>
 
       <div className="rd-device-metric-strip" style={{ padding: "0 12px", position: "relative", zIndex: 2 }}>
-        <div className="rd-device-superlatives" style={{ marginTop: 0, marginBottom: 0, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 0, justifyContent: "stretch", alignItems: "start" }}>
+        <div className="rd-device-superlatives" style={{ marginTop: 5, marginBottom: 0, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 0, justifyContent: "stretch", alignItems: "start" }}>
           <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_LONGEST_RUN} label="Longest run" value={device.furthest} /></div>
           <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_MAX_ASCENT} label="Max ascent" value={device.maxAscent} /></div>
           <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={DEVICE_ICON_FASTEST_MILE} label="Fastest mile" value={device.fastestMile} imageScale={2.08} /></div>
         </div>
-        <div aria-hidden="true" style={{ height: 15 }} />
+        <div aria-hidden="true" style={{ height: 10 }} />
       </div>
 
       <div className="rd-device-bottom" style={{ padding: "0 12px 0 12px", position: "relative", zIndex: 2 }}>
