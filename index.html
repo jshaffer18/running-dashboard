@@ -54,6 +54,62 @@
 <div id="root"></div>
 
 <script type="text/babel" data-presets="react">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Running Dashboard</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/dist/tabler-icons.min.css" />
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/prop-types@15/prop-types.min.js" crossorigin></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js" crossorigin></script>
+
+<style>
+  :root {
+    --surface-1: #F7F6F3;
+    --surface-2: #FFFFFF;
+    --border: #E4E1DA;
+    --text-primary: #26241F;
+    --text-secondary: #74716A;
+    --radius: 10px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #FCFBF9;
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+  }
+  #root {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+    box-sizing: border-box;
+  }
+  select {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 0.5px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-primary);
+  }
+  table { font-family: var(--font-sans); }
+  button { font-family: var(--font-sans); }
+  * { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
 const { useState, useMemo } = React;
 const { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Legend, PieChart, Pie, Cell } = Recharts;
 
@@ -92,6 +148,27 @@ function weatherIconClass(condition) {
   if (value.includes("cloud")) return "ti-cloud";
   if (value.includes("sun") || value.includes("clear")) return "ti-sun";
   return "ti-cloud-question";
+}
+
+function weatherIconColor(condition) {
+  const value = String(condition || "").toLowerCase();
+  if (value.includes("rain")) return "#7E94A8";
+  if (value.includes("snow")) return "#92A9BE";
+  if (value.includes("cloud")) return "#939A97";
+  if (value.includes("partly")) return "#B39A69";
+  if (value.includes("sun") || value.includes("clear")) return "#D6A24D";
+  return "#8D9691";
+}
+
+const WIND_DIRECTION_DEGREES = {
+  N: 0, NNE: 22.5, NE: 45, ENE: 67.5,
+  E: 90, ESE: 112.5, SE: 135, SSE: 157.5,
+  S: 180, SSW: 202.5, SW: 225, WSW: 247.5,
+  W: 270, WNW: 292.5, NW: 315, NNW: 337.5,
+};
+
+function windRotation(direction) {
+  return WIND_DIRECTION_DEGREES[String(direction || "").toUpperCase()] ?? 0;
 }
 const PLAN = [{"weekLabel": "Week 1", "weekStart": "2026-07-06", "days": [{"day": "Mon", "date": "2026-07-06", "planned": {"type": "Rest", "distance": 0}}, {"day": "Tue", "date": "2026-07-07", "planned": {"type": "Easy + 4 striders", "distance": 4}}, {"day": "Wed", "date": "2026-07-08", "planned": {"type": "Hill workout (2mi warmup + 6x45-60s repeats + 2mi cooldown)", "distance": 5}}, {"day": "Thu", "date": "2026-07-09", "planned": {"type": "Rest", "distance": 0}}, {"day": "Fri", "date": "2026-07-10", "planned": {"type": "Rest", "distance": 0}, "note": "Easy run swapped to Saturday"}, {"day": "Sat", "date": "2026-07-11", "planned": {"type": "Easy", "distance": 3}, "note": "Moved from Friday; long slow run pushed to Sunday"}, {"day": "Sun", "date": "2026-07-12", "planned": {"type": "Long slow", "distance": 4.5}, "note": "Moved from Saturday"}]}, {"weekLabel": "Week 2", "weekStart": "2026-07-13", "days": [{"day": "Mon", "date": "2026-07-13", "planned": {"type": "Rest", "distance": 0}}, {"day": "Tue", "date": "2026-07-14", "planned": {"type": "Easy", "distance": 3.5}}, {"day": "Wed", "date": "2026-07-15", "planned": {"type": "Rest", "distance": 0}, "note": "Recovery run swapped to Thursday"}, {"day": "Thu", "date": "2026-07-16", "planned": {"type": "Recovery", "distance": 3}, "note": "Moved from Wednesday"}, {"day": "Fri", "date": "2026-07-17", "planned": {"type": "Easy", "distance": 3.5}}, {"day": "Sat", "date": "2026-07-18", "planned": {"type": "Long slow", "distance": 5}}, {"day": "Sun", "date": "2026-07-19", "planned": {"type": "Rest", "distance": 0}}]}, {"weekLabel": "Week 3", "weekStart": "2026-07-20", "days": [{"day": "Mon", "date": "2026-07-20", "planned": {"type": "Easy", "distance": 3.5, "paceTarget": "11:15\u201312:00"}, "note": "Moved here from Tuesday"}, {"day": "Tue", "date": "2026-07-21", "planned": {"type": "Rest", "distance": 0}, "note": "Swapped with Monday because of temps"}, {"day": "Wed", "date": "2026-07-22", "planned": {"type": "Recovery", "distance": 3, "paceTarget": "12:00\u201313:00"}}, {"day": "Thu", "date": "2026-07-23", "planned": {"type": "Rest", "distance": 0}}, {"day": "Fri", "date": "2026-07-24", "planned": {"type": "Easy", "distance": 3.75, "paceTarget": "11:15\u201312:00"}}, {"day": "Sat", "date": "2026-07-25", "planned": {"type": "Long slow", "distance": 5, "paceTarget": "11:30\u201312:30"}}, {"day": "Sun", "date": "2026-07-26", "planned": {"type": "Rest", "distance": 0}, "note": "Was going to do easy 3.75 but ankle tight."}]}, {"weekLabel": "Week 4", "weekStart": "2026-07-27", "days": [{"day": "Mon", "date": "2026-07-27", "planned": {"type": "Rest", "distance": 0}}, {"day": "Tue", "date": "2026-07-28", "planned": {"type": "Easy", "distance": 3.5, "paceTarget": "11:15\u201312:00"}}, {"day": "Wed", "date": "2026-07-29", "planned": {"type": "Recovery", "distance": 3, "paceTarget": "12:00\u201313:00"}}, {"day": "Thu", "date": "2026-07-30", "planned": {"type": "Rest", "distance": 0}}, {"day": "Fri", "date": "2026-07-31", "planned": {"type": "Easy", "distance": 3.75, "paceTarget": "11:15\u201312:00"}}, {"day": "Sat", "date": "2026-08-01", "planned": {"type": "Long slow", "distance": 5, "paceTarget": "11:30\u201312:30"}}, {"day": "Sun", "date": "2026-08-02", "planned": {"type": "Rest", "distance": 0}}]}]
 
@@ -469,7 +546,7 @@ function projectRoute(route, size) {
 function RouteSvg({ route, routeShape, color }) {
   if (!route && !routeShape) {
     return (
-      <div style={{ width: 100, height: 100, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-1)", borderRadius: 10, fontSize: 11, color: "var(--text-secondary)", textAlign: "center", padding: 8 }}>
+      <div style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-1)", borderRadius: 10, fontSize: 11, color: "var(--text-secondary)", textAlign: "center", padding: 8, overflow: "hidden" }}>
         No GPS data
       </div>
     );
@@ -478,7 +555,7 @@ function RouteSvg({ route, routeShape, color }) {
     ? routeShape.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ")
     : projectRoute(route, 100);
   return (
-    <svg viewBox="0 0 100 100" width="100" height="100" style={{ background: "var(--surface-1)", borderRadius: 10 }}>
+    <svg viewBox="0 0 100 100" width="100%" height="100%" style={{ display: "block", width: "100%", height: "100%", background: "var(--surface-1)", borderRadius: 10, overflow: "hidden" }}>
       <polyline points={points} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
       <circle cx={points.split(" ")[0].split(",")[0]} cy={points.split(" ")[0].split(",")[1]} r="2.5" fill={color} />
     </svg>
@@ -507,15 +584,45 @@ function routeToWatchPath(run) {
   return coords.map(([x,y], i) => `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
 }
 
+function WindBadge({ speed, direction, compact = false }) {
+  const size = compact ? 28 : 32;
+  const arrowSize = compact ? 10 : 11;
+  const speedLabel = speed == null ? "—" : String(speed);
+  return (
+    <div aria-label={speed == null ? "Wind unavailable" : `${speed} mph ${direction} wind`} title={speed == null ? "Wind unavailable" : `${speed} mph ${direction} wind`} style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <div style={{ width: size, height: size, borderRadius: "50%", border: "1.5px solid var(--text-primary)", background: "var(--surface-2)", position: "relative", display: "grid", placeItems: "center" }}>
+        <span style={{ fontSize: compact ? 12 : 13, fontWeight: 700, lineHeight: 1 }}>{speedLabel}</span>
+        <i className="ti ti-arrow-up" aria-hidden="true" style={{ position: "absolute", top: compact ? -4 : -5, left: "50%", transform: `translateX(-50%) rotate(${windRotation(direction)}deg)`, transformOrigin: "50% calc(100% + 4px)", fontSize: arrowSize, lineHeight: 1, color: "var(--text-primary)" }}></i>
+      </div>
+    </div>
+  );
+}
+
 function WeatherSummary({ run, compact = false }) {
   const w = weatherForRun(run);
-  const wind = w.wind_speed_mph == null ? "—" : `${w.wind_speed_mph} mph ${w.wind_direction}`;
+  const tempLabel = w.weather_temp_f == null ? "—" : `${w.weather_temp_f}°F`;
   return (
-    <div className="rd-weather-summary" title={w.humidity_pct == null ? undefined : `Humidity ${w.humidity_pct}%`} style={{ display: "flex", alignItems: "center", gap: compact ? 5 : 7, minWidth: compact ? 92 : 112, padding: compact ? "5px 7px" : "7px 9px", borderRadius: 10, background: "var(--surface-2)", border: "0.5px solid var(--border)", flexShrink: 0 }}>
-      <i className={`ti ${weatherIconClass(w.weather_condition)}`} aria-hidden="true" style={{ fontSize: compact ? 22 : 26, color: "#6F7D83" }}></i>
-      <div style={{ lineHeight: 1.08 }}>
-        <div style={{ fontSize: compact ? 13 : 14, fontWeight: 700, whiteSpace: "nowrap" }}>{w.weather_temp_f == null ? "—" : `${w.weather_temp_f}°F`}</div>
-        <div style={{ marginTop: 2, fontSize: compact ? 9 : 10, color: "var(--text-secondary)", whiteSpace: "nowrap" }}><i className="ti ti-wind" aria-hidden="true" style={{ marginRight: 3 }}></i>{wind}</div>
+    <div className="rd-weather-summary" title={w.weather_condition ? `${w.weather_condition}${w.humidity_pct == null ? "" : ` · ${w.humidity_pct}% humidity`}` : undefined} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: compact ? 7 : 8, minWidth: compact ? 112 : 126, minHeight: compact ? 54 : 60, flexShrink: 0 }}>
+      <i className={`ti ${weatherIconClass(w.weather_condition)}`} aria-hidden="true" style={{ fontSize: compact ? 24 : 28, color: weatherIconColor(w.weather_condition), lineHeight: 1 }}></i>
+      <div style={{ fontSize: compact ? 17 : 18, fontWeight: 700, lineHeight: 1, whiteSpace: "nowrap" }}>{tempLabel}</div>
+      <WindBadge speed={w.wind_speed_mph} direction={w.wind_direction} compact={compact} />
+    </div>
+  );
+}
+
+function RunHeaderVisuals({ run, color, compact = false }) {
+  return (
+    <div className="rd-splits-header-visuals" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: compact ? 14 : 16, flexWrap: "wrap", rowGap: 8 }}>
+      {SHOE_META[run.shoe] && (
+        <div style={{ width: compact ? 108 : 118, height: compact ? 58 : 62, display: "grid", placeItems: "center", flex: "0 0 auto" }}>
+          <img className="rd-run-shoe-thumb" src={SHOE_META[run.shoe].image} alt={run.shoe} title={run.shoe} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+        </div>
+      )}
+      <div style={{ width: compact ? 62 : 70, height: compact ? 62 : 70, display: "grid", placeItems: "center", flex: "0 0 auto" }}>
+        <RouteSvg route={run.route} routeShape={run.route_shape} color={color} />
+      </div>
+      <div style={{ minWidth: compact ? 118 : 128, minHeight: compact ? 58 : 62, display: "grid", placeItems: "center", flex: "0 0 auto" }}>
+        <WeatherSummary run={run} compact={compact} />
       </div>
     </div>
   );
@@ -578,19 +685,28 @@ function LastActivityOverview({ run }) {
   const elevScale = niceScale(run.detail_trace.map((p) => p.elev_ft), 25);
   const lapPaceValues = run.splits.filter((s)=>s.pace!=null).flatMap((s)=>[-s.pace-30,-s.pace+30]);
   const lapPaceScale = niceScale(lapPaceValues,60);
-  const card = { background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:16, padding:"1rem 1.2rem" };
-  return <section className="rd-last-activity-overview" style={{ display:"grid", gridTemplateColumns:"minmax(370px,.95fr) minmax(0,1.25fr)", gap:16, marginBottom:16 }}>
-    <div style={card}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:6}}><p style={{margin:0,fontSize:13,fontWeight:500,color:"var(--text-secondary)"}}>Last recorded activity</p><span style={{background:c.solid,color:"#3D3428",fontSize:12,padding:"3px 9px",borderRadius:8,fontWeight:500}}>{displayWorkoutType(run.type)}</span></div>
-      <p style={{margin:"0 0 12px",fontSize:18,fontWeight:600}}>{fmtDate(run.date)}</p>
-      <div className="rd-overview-watch-metrics" style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:12,alignItems:"center"}}><div style={{display:"grid",placeItems:"center"}}><LastActivityWatch run={run} scale={1.12}/></div><RunMetricGrid run={run} overview /></div>
-    </div>
-    <div style={{display:"flex",flexDirection:"column",gap:16}}>
-      <div style={card}>
-        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:10,flexWrap:"wrap",marginBottom:8}}><div><p style={{fontSize:13,fontWeight:500,color:"var(--text-secondary)",margin:"0 0 3px"}}>Elevation, pace, HR and cadence</p><p style={{fontSize:11,color:"var(--text-secondary)",margin:0}}>{run.distance_mi} mi · {fmtDuration(run.duration_s)} · {fmtPace(run.duration_s/run.distance_mi)}/mi</p></div><div style={{display:"flex",alignItems:"center",gap:7}}>{SHOE_META[run.shoe] && <img src={SHOE_META[run.shoe].image} alt={run.shoe} style={{width:92,height:58,objectFit:"contain"}}/>}<div style={{width:64,height:64}}><RouteSvg route={run.route} routeShape={run.route_shape} color={c.solid}/></div><WeatherSummary run={run} compact /></div></div>
-        <div style={{height:190}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={run.detail_trace.map((p)=>({...p,paceNeg:p.pace!=null?-p.pace:null}))} margin={{top:4,right:4,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],run.distance_mi]} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:9,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={30}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={paceScale.ticks} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:9,fill:"#77807A"}} axisLine={false} tickLine={false} width={40}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} formatter={(value,name,item)=>{const k=item&&item.dataKey;if(k==="elev_ft")return[Math.round(value)+" ft","Elevation"];if(k==="paceNeg")return[fmtPace(-value)+"/mi","Pace"];if(k==="hr")return[value+" bpm","HR"];if(k==="cad")return[value+" spm","Cadence"];return[value,name]}}/><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls/><Line yAxisId="cad" dataKey="cad" stroke={TYPE_COLOR.Tempo.solid} strokeOpacity={0} dot={{r:1.6,fill:TYPE_COLOR.Tempo.solid}} isAnimationActive={false}/></ComposedChart></ResponsiveContainer></div>
+  const outerCard = { background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:16, padding:"1rem 1.2rem" };
+  const innerCard = { background:"rgba(255,255,255,0.72)", border:"1px solid rgba(228,225,218,0.95)", borderRadius:14, padding:"0.95rem 1rem" };
+  return <section className="rd-last-activity-overview" style={{ ...outerCard, marginBottom:16 }}>
+    <div style={{ display:"grid", gridTemplateColumns:"minmax(360px,.95fr) minmax(0,1.25fr)", gap:16 }}>
+      <div style={innerCard}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:6}}><p style={{margin:0,fontSize:13,fontWeight:500,color:"var(--text-secondary)"}}>Last recorded activity</p><span style={{background:c.solid,color:"#3D3428",fontSize:12,padding:"3px 9px",borderRadius:8,fontWeight:500}}>{displayWorkoutType(run.type)}</span></div>
+        <p style={{margin:"0 0 12px",fontSize:18,fontWeight:600}}>{fmtDate(run.date)}</p>
+        <div className="rd-overview-watch-metrics" style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:12,alignItems:"center"}}><div style={{display:"grid",placeItems:"center"}}><LastActivityWatch run={run} scale={1.1}/></div><RunMetricGrid run={run} overview /></div>
       </div>
-      <div style={card}><p style={{fontSize:13,fontWeight:500,color:"var(--text-secondary)",margin:"0 0 6px"}}>Pace by mile and lap table</p><div style={{height:100}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={run.splits.map((s)=>({...s,paceNeg:s.pace!=null?-s.pace:null}))} margin={{top:8,right:4,left:0,bottom:0}}><XAxis dataKey="mile" tickFormatter={(v)=>"Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceScale.ticks} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={38}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} formatter={(value)=>[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div><div style={{overflowX:"auto",marginTop:8}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr>{["Mi","Pace","HR","Elevation","Cadence"].map(h=><th key={h} style={{padding:"5px 6px",textAlign:"center",color:"var(--text-secondary)",fontWeight:500,borderBottom:".5px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{run.splits.map(s=><tr key={s.mile}><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.mile}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.pace==null?"—":fmtPace(s.pace)}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_hr??"—"}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.elev_net_ft??"—"} ft</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_cadence??"—"}</td></tr>)}</tbody></table></div></div>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <div style={innerCard}>
+          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:10,flexWrap:"wrap",marginBottom:8}}>
+            <div>
+              <p style={{fontSize:13,fontWeight:500,color:"var(--text-secondary)",margin:"0 0 3px"}}>Elevation, pace, HR and cadence</p>
+              <p style={{fontSize:11,color:"var(--text-secondary)",margin:0}}>{run.distance_mi} mi · {fmtDuration(run.duration_s)} · {fmtPace(run.duration_s/run.distance_mi)}/mi · {run.avg_hr}/{run.max_hr} bpm · {run.elev_gain_ft} ft gain</p>
+            </div>
+            <RunHeaderVisuals run={run} color={c.solid} compact />
+          </div>
+          <div style={{height:190}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={run.detail_trace.map((p)=>({...p,paceNeg:p.pace!=null?-p.pace:null}))} margin={{top:4,right:4,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],run.distance_mi]} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:9,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={30}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={paceScale.ticks} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:9,fill:"#77807A"}} axisLine={false} tickLine={false} width={40}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} formatter={(value,name,item)=>{const k=item&&item.dataKey;if(k==="elev_ft")return[Math.round(value)+" ft","Elevation"];if(k==="paceNeg")return[fmtPace(-value)+"/mi","Pace"];if(k==="hr")return[value+" bpm","HR"];if(k==="cad")return[value+" spm","Cadence"];return[value,name]}}/><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls/><Line yAxisId="cad" dataKey="cad" stroke={TYPE_COLOR.Tempo.solid} strokeOpacity={0} dot={{r:1.6,fill:TYPE_COLOR.Tempo.solid}} isAnimationActive={false}/></ComposedChart></ResponsiveContainer></div>
+        </div>
+        <div style={innerCard}><p style={{fontSize:13,fontWeight:500,color:"var(--text-secondary)",margin:"0 0 6px"}}>Pace by mile and lap table</p><div style={{height:100}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={run.splits.map((s)=>({...s,paceNeg:s.pace!=null?-s.pace:null}))} margin={{top:8,right:4,left:0,bottom:0}}><XAxis dataKey="mile" tickFormatter={(v)=>"Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceScale.ticks} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={38}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} formatter={(value)=>[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div><div style={{overflowX:"auto",marginTop:8}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr>{["Mi","Pace","HR","Elevation","Cadence"].map(h=><th key={h} style={{padding:"5px 6px",textAlign:"center",color:"var(--text-secondary)",fontWeight:500,borderBottom:".5px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{run.splits.map(s=><tr key={s.mile}><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.mile}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.pace==null?"—":fmtPace(s.pace)}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_hr??"—"}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.elev_net_ft??"—"} ft</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_cadence??"—"}</td></tr>)}</tbody></table></div></div>
+      </div>
     </div>
   </section>;
 }
@@ -1128,7 +1244,7 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
             <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>{fmtDate(r.date)}</p>
           </div>
           <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>
-            {r.distance_mi} mi &middot; {fmtDuration(r.duration_s)} &middot; {fmtPace(r.duration_s / r.distance_mi)}/mi &middot; {r.avg_hr}/{r.max_hr} bpm &middot; {r.elev_gain_ft} ft gain &middot; {cToF(r.avg_temp_c)}°F{r.shoe ? " · " + r.shoe : ""}
+            {r.distance_mi} mi &middot; {fmtDuration(r.duration_s)} &middot; {fmtPace(r.duration_s / r.distance_mi)}/mi &middot; {r.avg_hr}/{r.max_hr} bpm &middot; {r.elev_gain_ft} ft gain
           </p>
           {r.type === "Hill" && r.repeat_count && (
             <p style={{ margin: "4px 0 0", fontSize: 12, color: c.text }}>
@@ -1136,15 +1252,7 @@ function RunDetailCard({ r, expanded, onToggleExpand }) {
             </p>
           )}
         </div>
-        <div className="rd-splits-header-visuals" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 7, flexWrap: "wrap" }}>
-          {SHOE_META[r.shoe] && (
-            <span style={{ width: 108, height: 70, position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <img className="rd-run-shoe-thumb" src={SHOE_META[r.shoe].image} alt={r.shoe} title={r.shoe} style={{ width: 108, height: 70, objectFit: "contain", position: "relative" }} />
-            </span>
-          )}
-          <div style={{ width: 70, height: 70 }}><RouteSvg route={r.route} routeShape={r.route_shape} color={c.solid} /></div>
-          <WeatherSummary run={r} compact />
-        </div>
+        <RunHeaderVisuals run={r} color={c.solid} compact />
       </div>
 
       <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>Elevation, pace, HR and cadence</p>
@@ -1881,6 +1989,50 @@ function RunningDashboard() {
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<RunningDashboard />);
+</script>
+
+<style id="runtime-visual-tuning-2026-07-29">
+  /* Safe post-render overrides: does not alter the working React source. */
+</style>
+<script id="runtime-visual-tuning-script-2026-07-29">
+(function () {
+  "use strict";
+
+  function tuneKpiCards() {
+    var paragraphs = document.querySelectorAll("p");
+    for (var i = 0; i < paragraphs.length; i += 1) {
+      var title = paragraphs[i];
+      var label = (title.textContent || "").trim().toUpperCase();
+      if (label !== "RACE COUNTDOWN" && label !== "WEEKLY MILEAGE" && label !== "CADENCE" && label !== "TOTAL MILEAGE") continue;
+      var content = title.parentElement;
+      if (!content) continue;
+      var cardText = content.querySelectorAll(":scope > p");
+      if (label === "WEEKLY MILEAGE" || label === "CADENCE") {
+        if (cardText.length > 2) cardText[2].style.setProperty("display", "none", "important");
+      } else if (cardText.length > 2) {
+        cardText[2].style.setProperty("font-size", "11px", "important");
+        cardText[2].style.setProperty("line-height", "16px", "important");
+      }
+    }
+  }
+
+  function applyTuning() {
+    tuneKpiCards();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", applyTuning, { once: true });
+  } else {
+    applyTuning();
+  }
+
+  window.addEventListener("load", applyTuning, { once: true });
+})();
+</script>
+
+</body>
+</html>
+
 </script>
 
 <style id="runtime-visual-tuning-2026-07-29">
