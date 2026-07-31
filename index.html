@@ -816,15 +816,15 @@ function compactDeviceTime(value) {
   return match ? match[1] + "h " + match[2] + "m" : String(value || "");
 }
 
-function DeviceSuperlative({ iconSrc, label, value, accent, imageScale = 1.82, visualOffsetX = 0 }) {
+function DeviceSuperlative({ iconSrc, label, value, accent, imageScale = 1.82, groupShiftX = 0 }) {
   return (
     <div className="rd-device-superlative" style={{ width: 92, minWidth: 92, minHeight: 76, display: "grid", placeItems: "start", padding: 0 }}>
-      <div className="rd-superlative-visual" style={{ width: 92, display: "grid", justifyItems: "center" }}>
-        <div style={{ position: "relative", width: 92, height: 64, display: "grid", placeItems: "center", overflow: "hidden", transform: `translateX(${visualOffsetX}px)` }}>
+      <div className="rd-superlative-visual" style={{ width: 92, display: "grid", justifyItems: "center", transform: groupShiftX ? `translateX(${groupShiftX}px)` : undefined }}>
+        <div style={{ position: "relative", width: 92, height: 64, display: "grid", placeItems: "center", overflow: "hidden" }}>
           <img src={iconSrc} alt="" aria-hidden="true" style={{ width: 96, height: 66, display: "block", objectFit: "contain", transform: `scale(${imageScale})`, transformOrigin: "center center", userSelect: "none", pointerEvents: "none" }} />
           <p className="rd-superlative-value" style={{ position: "absolute", left: "50%", top: "75%", transform: "translate(-50%, -50%)", margin: 0, fontSize: 14, lineHeight: 1, fontWeight: 800, color: "var(--text-primary)", whiteSpace: "nowrap", WebkitTextStroke: "2.75px rgba(248,246,241,.99)", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(255,255,255,.55), 0 0 1px rgba(255,255,255,.85)" }}>{value}</p>
         </div>
-        <p style={{ margin: "-5px 0 0", fontSize: 10, lineHeight: 1.05, color: "var(--text-secondary)", fontWeight: 700, letterSpacing: .25, textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</p>
+        <p style={{ margin: "-5px 0 0", fontSize: 10, lineHeight: 1.05, color: accent || "var(--text-secondary)", fontWeight: 700, letterSpacing: .25, textTransform: "uppercase", whiteSpace: "nowrap" }}>{label}</p>
       </div>
     </div>
   );
@@ -911,9 +911,9 @@ function DeviceCard({ device }) {
 
       <div className="rd-device-metric-strip" style={{ padding: "0 16px", position: "relative", zIndex: 2 }}>
         <div className="rd-device-superlatives" style={{ marginTop: 10, marginBottom: 0, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 0, justifyContent: "stretch", alignItems: "start" }}>
-          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={superlativeIcons.longestRun} label="Longest run" value={device.furthest} accent={superlativeAccent} visualOffsetX={3} /></div>
-          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={superlativeIcons.maxAscent} label="Max ascent" value={device.maxAscent} accent={superlativeAccent} /></div>
-          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={superlativeIcons.fastestMile} label="Fastest mile" value={device.fastestMile} accent={superlativeAccent} imageScale={2.08} /></div>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={superlativeIcons.longestRun} label="Longest run" value={device.furthest} accent={superlativeAccent} groupShiftX={3} /></div>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={superlativeIcons.maxAscent} label="Max ascent" value={device.maxAscent} accent={superlativeAccent} groupShiftX={2} /></div>
+          <div style={{ minWidth: 0, display: "grid", justifyItems: "center" }}><DeviceSuperlative iconSrc={superlativeIcons.fastestMile} label="Fastest mile" value={device.fastestMile} accent={superlativeAccent} imageScale={2.08} groupShiftX={2} /></div>
         </div>
         <div aria-hidden="true" style={{ height: 10 }} />
       </div>
