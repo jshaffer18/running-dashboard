@@ -1,60 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Running Dashboard</title>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/dist/tabler-icons.min.css" />
-
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/prop-types@15/prop-types.min.js" crossorigin></script>
-<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js" crossorigin></script>
-<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js" crossorigin></script>
-
-<style>
-  :root {
-    --surface-1: #F7F6F3;
-    --surface-2: #FFFFFF;
-    --border: #E4E1DA;
-    --text-primary: #26241F;
-    --text-secondary: #74716A;
-    --radius: 10px;
-    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  }
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: #FCFBF9;
-    font-family: var(--font-sans);
-    color: var(--text-primary);
-  }
-  #root {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 24px 20px 60px;
-    box-sizing: border-box;
-  }
-  select {
-    font-family: var(--font-sans);
-    font-size: 14px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 0.5px solid var(--border);
-    background: var(--surface-2);
-    color: var(--text-primary);
-  }
-  table { font-family: var(--font-sans); }
-  button { font-family: var(--font-sans); }
-  * { box-sizing: border-box; }
-</style>
-</head>
-<body>
-<div id="root"></div>
-
-<script type="text/babel" data-presets="react">
-<!DOCTYPE html>
+<!-- BUILD: WEATHER-HEADER-OVERVIEW-MAP-FIX-2026-07-31-0725 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -641,7 +586,7 @@ function LastActivityWatch({ run, scale = 1 }) {
         <img src={fenix.image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
         <div style={{ position: "absolute", left: "25.8%", top: "29.6%", width: "50.2%", height: "38.8%", color: "white", fontFamily: '"Segoe UI", Arial, sans-serif', textAlign: "center", fontWeight: 700, textTransform: "uppercase" }}>
           <div style={{ position: "absolute", top: "1%", left: 0, width: "100%", fontSize: 7, letterSpacing: .4 }}>Last Activity</div>
-          <div style={{ position: "absolute", left: "3%", top: "22%", width: "25%", height: "34%" }}>
+          <div style={{ position: "absolute", left: "8%", top: "19%", width: "31%", height: "40%" }}>
             <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%", overflow: "visible" }}><path d={routePath} fill="none" stroke="#E15F55" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </div>
           <div style={{ position: "absolute", top: "22%", right: "4%", width: "65%", textAlign: "right" }}>
@@ -688,25 +633,19 @@ function LastActivityOverview({ run }) {
   const outerCard = { background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:16, padding:"1rem 1.2rem" };
   const innerCard = { background:"rgba(255,255,255,0.72)", border:"1px solid rgba(228,225,218,0.95)", borderRadius:14, padding:"0.95rem 1rem" };
   return <section className="rd-last-activity-overview" style={{ ...outerCard, marginBottom:16 }}>
-    <div style={{ display:"grid", gridTemplateColumns:"minmax(360px,.95fr) minmax(0,1.25fr)", gap:16 }}>
+    <div style={{ display:"grid", gridTemplateColumns:"minmax(370px,.95fr) minmax(0,1.25fr)", gap:16 }}>
+    <div style={innerCard}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:6}}><p style={{margin:0,fontSize:13,fontWeight:500,color:"var(--text-secondary)"}}>Last recorded activity</p><span style={{background:c.solid,color:"#3D3428",fontSize:12,padding:"3px 9px",borderRadius:8,fontWeight:500}}>{displayWorkoutType(run.type)}</span></div>
+      <p style={{margin:"0 0 12px",fontSize:18,fontWeight:600}}>{fmtDate(run.date)}</p>
+      <div className="rd-overview-watch-metrics" style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:12,alignItems:"center"}}><div style={{display:"grid",placeItems:"center"}}><LastActivityWatch run={run} scale={1.12}/></div><RunMetricGrid run={run} overview /></div>
+    </div>
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
       <div style={innerCard}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:6}}><p style={{margin:0,fontSize:13,fontWeight:500,color:"var(--text-secondary)"}}>Last recorded activity</p><span style={{background:c.solid,color:"#3D3428",fontSize:12,padding:"3px 9px",borderRadius:8,fontWeight:500}}>{displayWorkoutType(run.type)}</span></div>
-        <p style={{margin:"0 0 12px",fontSize:18,fontWeight:600}}>{fmtDate(run.date)}</p>
-        <div className="rd-overview-watch-metrics" style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:12,alignItems:"center"}}><div style={{display:"grid",placeItems:"center"}}><LastActivityWatch run={run} scale={1.1}/></div><RunMetricGrid run={run} overview /></div>
+        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:10,flexWrap:"wrap",marginBottom:8}}><div><p style={{fontSize:13,fontWeight:500,color:"var(--text-secondary)",margin:"0 0 3px"}}>Elevation, pace, HR and cadence</p><p style={{fontSize:11,color:"var(--text-secondary)",margin:0}}>{run.distance_mi} mi · {fmtDuration(run.duration_s)} · {fmtPace(run.duration_s/run.distance_mi)}/mi</p></div><RunHeaderVisuals run={run} color={c.solid} compact /></div>
+        <div style={{height:190}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={run.detail_trace.map((p)=>({...p,paceNeg:p.pace!=null?-p.pace:null}))} margin={{top:4,right:4,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],run.distance_mi]} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:9,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={30}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={paceScale.ticks} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:9,fill:"#77807A"}} axisLine={false} tickLine={false} width={40}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} formatter={(value,name,item)=>{const k=item&&item.dataKey;if(k==="elev_ft")return[Math.round(value)+" ft","Elevation"];if(k==="paceNeg")return[fmtPace(-value)+"/mi","Pace"];if(k==="hr")return[value+" bpm","HR"];if(k==="cad")return[value+" spm","Cadence"];return[value,name]}}/><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls/><Line yAxisId="cad" dataKey="cad" stroke={TYPE_COLOR.Tempo.solid} strokeOpacity={0} dot={{r:1.6,fill:TYPE_COLOR.Tempo.solid}} isAnimationActive={false}/></ComposedChart></ResponsiveContainer></div>
       </div>
-      <div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <div style={innerCard}>
-          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:10,flexWrap:"wrap",marginBottom:8}}>
-            <div>
-              <p style={{fontSize:13,fontWeight:500,color:"var(--text-secondary)",margin:"0 0 3px"}}>Elevation, pace, HR and cadence</p>
-              <p style={{fontSize:11,color:"var(--text-secondary)",margin:0}}>{run.distance_mi} mi · {fmtDuration(run.duration_s)} · {fmtPace(run.duration_s/run.distance_mi)}/mi · {run.avg_hr}/{run.max_hr} bpm · {run.elev_gain_ft} ft gain</p>
-            </div>
-            <RunHeaderVisuals run={run} color={c.solid} compact />
-          </div>
-          <div style={{height:190}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={run.detail_trace.map((p)=>({...p,paceNeg:p.pace!=null?-p.pace:null}))} margin={{top:4,right:4,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],run.distance_mi]} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:9,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={30}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={paceScale.ticks} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:9,fill:"#77807A"}} axisLine={false} tickLine={false} width={40}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} formatter={(value,name,item)=>{const k=item&&item.dataKey;if(k==="elev_ft")return[Math.round(value)+" ft","Elevation"];if(k==="paceNeg")return[fmtPace(-value)+"/mi","Pace"];if(k==="hr")return[value+" bpm","HR"];if(k==="cad")return[value+" spm","Cadence"];return[value,name]}}/><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls/><Line yAxisId="cad" dataKey="cad" stroke={TYPE_COLOR.Tempo.solid} strokeOpacity={0} dot={{r:1.6,fill:TYPE_COLOR.Tempo.solid}} isAnimationActive={false}/></ComposedChart></ResponsiveContainer></div>
-        </div>
-        <div style={innerCard}><p style={{fontSize:13,fontWeight:500,color:"var(--text-secondary)",margin:"0 0 6px"}}>Pace by mile and lap table</p><div style={{height:100}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={run.splits.map((s)=>({...s,paceNeg:s.pace!=null?-s.pace:null}))} margin={{top:8,right:4,left:0,bottom:0}}><XAxis dataKey="mile" tickFormatter={(v)=>"Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceScale.ticks} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={38}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} formatter={(value)=>[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div><div style={{overflowX:"auto",marginTop:8}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr>{["Mi","Pace","HR","Elevation","Cadence"].map(h=><th key={h} style={{padding:"5px 6px",textAlign:"center",color:"var(--text-secondary)",fontWeight:500,borderBottom:".5px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{run.splits.map(s=><tr key={s.mile}><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.mile}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.pace==null?"—":fmtPace(s.pace)}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_hr??"—"}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.elev_net_ft??"—"} ft</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_cadence??"—"}</td></tr>)}</tbody></table></div></div>
-      </div>
+      <div style={innerCard}><p style={{fontSize:13,fontWeight:500,color:"var(--text-secondary)",margin:"0 0 6px"}}>Pace by mile and lap table</p><div style={{height:100}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={run.splits.map((s)=>({...s,paceNeg:s.pace!=null?-s.pace:null}))} margin={{top:8,right:4,left:0,bottom:0}}><XAxis dataKey="mile" tickFormatter={(v)=>"Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceScale.ticks} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={38}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} formatter={(value)=>[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div><div style={{overflowX:"auto",marginTop:8}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr>{["Mi","Pace","HR","Elevation","Cadence"].map(h=><th key={h} style={{padding:"5px 6px",textAlign:"center",color:"var(--text-secondary)",fontWeight:500,borderBottom:".5px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{run.splits.map(s=><tr key={s.mile}><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.mile}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.pace==null?"—":fmtPace(s.pace)}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_hr??"—"}</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.elev_net_ft??"—"} ft</td><td style={{padding:"5px 6px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_cadence??"—"}</td></tr>)}</tbody></table></div></div>
+    </div>
     </div>
   </section>;
 }
@@ -1989,50 +1928,6 @@ function RunningDashboard() {
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<RunningDashboard />);
-</script>
-
-<style id="runtime-visual-tuning-2026-07-29">
-  /* Safe post-render overrides: does not alter the working React source. */
-</style>
-<script id="runtime-visual-tuning-script-2026-07-29">
-(function () {
-  "use strict";
-
-  function tuneKpiCards() {
-    var paragraphs = document.querySelectorAll("p");
-    for (var i = 0; i < paragraphs.length; i += 1) {
-      var title = paragraphs[i];
-      var label = (title.textContent || "").trim().toUpperCase();
-      if (label !== "RACE COUNTDOWN" && label !== "WEEKLY MILEAGE" && label !== "CADENCE" && label !== "TOTAL MILEAGE") continue;
-      var content = title.parentElement;
-      if (!content) continue;
-      var cardText = content.querySelectorAll(":scope > p");
-      if (label === "WEEKLY MILEAGE" || label === "CADENCE") {
-        if (cardText.length > 2) cardText[2].style.setProperty("display", "none", "important");
-      } else if (cardText.length > 2) {
-        cardText[2].style.setProperty("font-size", "11px", "important");
-        cardText[2].style.setProperty("line-height", "16px", "important");
-      }
-    }
-  }
-
-  function applyTuning() {
-    tuneKpiCards();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", applyTuning, { once: true });
-  } else {
-    applyTuning();
-  }
-
-  window.addEventListener("load", applyTuning, { once: true });
-})();
-</script>
-
-</body>
-</html>
-
 </script>
 
 <style id="runtime-visual-tuning-2026-07-29">
