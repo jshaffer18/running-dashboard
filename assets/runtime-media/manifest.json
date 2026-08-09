@@ -1,0 +1,230 @@
+{
+  "policy": "Runtime image media is externalized from JSX/HTML to reduce iOS/WebKit peak memory use. Do not data-URI-inline runtime image assets. Retain useful reusable icons/future-facing graphics, but remove explicitly deprecated or superseded full-device/watch artwork that is no longer used.",
+  "assets": [
+    {
+      "file": "assets/runtime-media/asset-01-c10e8a9692.png",
+      "sha256": "c10e8a96929840576017fded926907640f8c718a2f60b2ac7ac52d37af1cd855",
+      "bytes": 1380647
+    },
+    {
+      "file": "assets/runtime-media/asset-02-a656132a53.png",
+      "sha256": "a656132a534c0e54186dca0485e325ec508559094ee559192d754e27d347cf8e",
+      "bytes": 1426945
+    },
+    {
+      "file": "assets/runtime-media/asset-03-bbf056c042.png",
+      "sha256": "bbf056c042d4560fa08daaa7b823845b92301af4aaa8ac9e2d05c950310bdb80",
+      "bytes": 1411309
+    },
+    {
+      "file": "assets/runtime-media/asset-04-3a12a4c1c3.png",
+      "sha256": "3a12a4c1c3091a09a4c90001d12b2ed445ee35df8dbcd0c18b3888c2e3d322dc",
+      "bytes": 1405782
+    },
+    {
+      "file": "assets/runtime-media/asset-05-6b6a01c5ec.png",
+      "sha256": "6b6a01c5ecce52c8651a63572a9437d5f1c6aca776d50fee0d8233007eadf869",
+      "bytes": 1438504
+    },
+    {
+      "file": "assets/runtime-media/asset-06-0940e174ce.png",
+      "sha256": "0940e174ce0f6e2ea4fdbb650095a6af633fd600bc8b286ae75619bd9006d719",
+      "bytes": 1386794
+    },
+    {
+      "file": "assets/runtime-media/asset-07-d3b46f1140.png",
+      "sha256": "d3b46f11402027fc5df27dbb7ce37929fabbcfe9a87f92460d8763265817da38",
+      "bytes": 1368377
+    },
+    {
+      "file": "assets/runtime-media/asset-08-df35209e9f.png",
+      "sha256": "df35209e9ff41aea98ffa38b2cef36bf0c236ad5e538281f79f09146d2b10082",
+      "bytes": 202743
+    },
+    {
+      "file": "assets/runtime-media/asset-09-ccd1417e97.png",
+      "sha256": "ccd1417e97b568daede39358d6fbf49f129cf794dce4c96cc85329bb6021ba11",
+      "bytes": 206044
+    },
+    {
+      "file": "assets/runtime-media/asset-10-47f7201444.png",
+      "sha256": "47f720144409b5c9e68971393273ca1aa13581be5e20cbb808b8d12ca2a47dd3",
+      "bytes": 198384
+    },
+    {
+      "file": "assets/runtime-media/asset-11-074259282b.png",
+      "sha256": "074259282bc8ffbb6616c4c18140d714411ee3fd518251c24c66acdd4b33b87a",
+      "bytes": 190981
+    },
+    {
+      "file": "assets/runtime-media/asset-12-69cbd09338.png",
+      "sha256": "69cbd0933876b0909e47c10bdbffe1781cb2e108c0295913bb6063d441cdc9ab",
+      "bytes": 213856
+    },
+    {
+      "file": "assets/runtime-media/asset-13-26d38cdc72.png",
+      "sha256": "26d38cdc72ad9008c244064bf6a8a6e3d11cb2583344961e4f5dd0f9ac37b519",
+      "bytes": 210023
+    },
+    {
+      "file": "assets/runtime-media/asset-14-e8b31d8187.png",
+      "sha256": "e8b31d8187e47dd3a27b60ecba7e48b4b83f7fe4f2362679e35d8422b1e404df",
+      "bytes": 222592
+    },
+    {
+      "file": "assets/runtime-media/asset-15-ba4f3b5d11.png",
+      "sha256": "ba4f3b5d1102e0e24784b4af69d5d4923650b17042497f5cbbd48a41d9c2c502",
+      "bytes": 219742
+    },
+    {
+      "file": "assets/runtime-media/asset-16-81976e6e34.png",
+      "sha256": "81976e6e34aad1c140b5175ffcf76e7e4ce342c7e480674e2a0a5fe122ad241a",
+      "bytes": 759951
+    },
+    {
+      "file": "assets/runtime-media/asset-17-99b88a2a97.png",
+      "sha256": "99b88a2a9714216d535cb5d9add75fb45e897f8b7d572fac8f4740d04c30f36d",
+      "bytes": 365536
+    },
+    {
+      "file": "assets/runtime-media/asset-18-bd6041ddb6.png",
+      "sha256": "bd6041ddb691b8c16e12167d8006097a1c189979e97d45c72162e2cb9fa6b4e5",
+      "bytes": 476849
+    },
+    {
+      "file": "assets/runtime-media/asset-19-0aef410f37.png",
+      "sha256": "0aef410f373eb9f4f27033836d79d8653b339807005f110f3e9e41d7f2ef8fcb",
+      "bytes": 766611
+    },
+    {
+      "file": "assets/runtime-media/asset-20-78dbac84c3.png",
+      "sha256": "78dbac84c3f6739a2ac1b0e0a67148d648bf6707f35c45f8d2951d8a45ade0c6",
+      "bytes": 117825
+    },
+    {
+      "file": "assets/runtime-media/asset-21-85bee3ae65.png",
+      "sha256": "85bee3ae65de1b09bfe8cb16478f3680326c7635906e0261b53898721acde43c",
+      "bytes": 238802
+    },
+    {
+      "file": "assets/runtime-media/asset-22-ef643518d7.png",
+      "sha256": "ef643518d790cc9f5035826262f7d40fb65723a96632bd4c750f4a81a2fbf689",
+      "bytes": 433141
+    },
+    {
+      "file": "assets/runtime-media/asset-23-3da92be7ca.png",
+      "sha256": "3da92be7ca3529015613c74302cc9a8cd9de4f945e866c2d1e1ac0abaaef3876",
+      "bytes": 143128
+    },
+    {
+      "file": "assets/runtime-media/asset-24-728faae3d9.png",
+      "sha256": "728faae3d9d2542c98003ec4a6d029925925c490546caddc382b8c9d194887d7",
+      "bytes": 98657
+    },
+    {
+      "file": "assets/runtime-media/asset-25-d40f35baf6.png",
+      "sha256": "d40f35baf6d835cbbbd85ae53f1ae261febb578ad21b1d01ca501075f5b1c8e9",
+      "bytes": 71100
+    },
+    {
+      "file": "assets/runtime-media/asset-26-5dd5614d0c.png",
+      "sha256": "5dd5614d0c98952e857d428ce15e5484b55471eb6e8217eb842db215586b6571",
+      "bytes": 87571
+    },
+    {
+      "file": "assets/runtime-media/asset-27-b62abf53f5.png",
+      "sha256": "b62abf53f56b2793be46b34ee82c8ae6d37737c72815a62b58b961a5fbd8756b",
+      "bytes": 109228
+    },
+    {
+      "file": "assets/runtime-media/asset-28-7460c65c07.png",
+      "sha256": "7460c65c07f7d3a7ac740ee39598ecb1eade37285b29bee5768ebf0677e3a64f",
+      "bytes": 4910
+    },
+    {
+      "file": "assets/runtime-media/asset-29-205555e038.png",
+      "sha256": "205555e0389275cfa4d21294351f6d2e6971392c69c4ed8121c821e3c516488c",
+      "bytes": 4741
+    },
+    {
+      "file": "assets/runtime-media/asset-30-3687d368b1.png",
+      "sha256": "3687d368b1fd5026a312a6bf5b0e9f7c70af03b78aa3303e7b9707541b58fd99",
+      "bytes": 18814
+    },
+    {
+      "file": "assets/runtime-media/asset-31-7e60652740.png",
+      "sha256": "7e606527404642abcef88ce8fad030dfeaede99785e849c4076e660c4438e50e",
+      "bytes": 5065
+    },
+    {
+      "file": "assets/runtime-media/asset-32-0ac7562f33.png",
+      "sha256": "0ac7562f3323d4629f513620d08e112468496c527e66f99d3df9ac9d73e5478d",
+      "bytes": 42139
+    },
+    {
+      "file": "assets/runtime-media/asset-33-c76d154a11.png",
+      "sha256": "c76d154a112f366759725d21e3f492721beee8f9705b4255cee0904b0014be84",
+      "bytes": 50459
+    },
+    {
+      "file": "assets/runtime-media/asset-34-d12c150226.png",
+      "sha256": "d12c150226471c891ee738b327de0298662a817d849a5edb1a99db8b95d5429d",
+      "bytes": 37937
+    },
+    {
+      "file": "assets/runtime-media/asset-35-90dbf537d4.png",
+      "sha256": "90dbf537d40aace563fff68d8cfabdc8a6e7b6c766e2167ea8c0edd92ba84b6f",
+      "bytes": 42093
+    },
+    {
+      "file": "assets/runtime-media/asset-36-cf25ebd1d7.png",
+      "sha256": "cf25ebd1d764b6dce6e71cc57586e549127ae1bf47a5c018a91aa5f23a170d34",
+      "bytes": 50514
+    },
+    {
+      "file": "assets/runtime-media/asset-37-e67e314162.png",
+      "sha256": "e67e314162c6db18c6c017104caca10bef8a51b8386d205d32ab022fecd1e402",
+      "bytes": 37832
+    },
+    {
+      "file": "assets/runtime-media/asset-38-c8170ef3b6.png",
+      "sha256": "c8170ef3b6ffc8764165f52fe9be664eda2da67253760d742a2633140eab3f1e",
+      "bytes": 42036
+    },
+    {
+      "file": "assets/runtime-media/asset-39-a135044b2b.png",
+      "sha256": "a135044b2b281afda1584fb01a05acadb5c2585c7ae32591c3748b440c02a0eb",
+      "bytes": 50454
+    },
+    {
+      "file": "assets/runtime-media/asset-40-1cf41db429.png",
+      "sha256": "1cf41db4298619b3d53a6a00974425b13999105c34135371a9c3032aa209f54e",
+      "bytes": 37835
+    },
+    {
+      "file": "assets/runtime-media/asset-41-3718d1dbe3.png",
+      "sha256": "3718d1dbe39cfa86b2e57df377da214ff507432efcdc27a4f7764e12671a1949",
+      "bytes": 42098
+    },
+    {
+      "file": "assets/runtime-media/asset-42-6670b545cb.png",
+      "sha256": "6670b545cb9f8969e47ac387d152b6541ecc2e3c7a9e4e8603b1d65389d15c5a",
+      "bytes": 50461
+    },
+    {
+      "file": "assets/runtime-media/asset-43-f8e1798c3b.png",
+      "sha256": "f8e1798c3ba1d9eee704a6da2c59d6cebcbf3d4db0c916f1f53a086e733c3203",
+      "bytes": 37864
+    },
+    {
+      "file": "assets/runtime-media/asset-45-73d33211bc.svg",
+      "sha256": "73d33211bc9ed507368e08d6f0891817550423ede223795e69bf163d9e43a30d",
+      "bytes": 2457
+    },
+    {
+      "file": "assets/runtime-media/asset-46-03ce302a40.svg",
+      "sha256": "03ce302a40011dea83107abd7b2fb6022e5c3be70783f07e53d8a766adc26042",
+      "bytes": 2460
+    }
+  ]
+}
