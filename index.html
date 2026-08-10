@@ -3212,7 +3212,8 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
             const c = TYPE_COLOR[type] || TYPE_COLOR.Easy;
             const trendPaceScale = niceScale(points.map((p) => p.pace == null ? null : -p.pace), 30);
             const trendDistanceScale = niceScale(points.map((p) => p.distance), 1, true);
-            const trendCadenceScale = niceScale(points.map((p) => p.avgCadence), 5);
+            const trendCadenceScaleBase = niceScale(points.map((p) => p.avgCadence), 5);
+            const trendCadenceScale = { domain: [trendCadenceScaleBase.domain[0] - 5, trendCadenceScaleBase.domain[1] + 5] };
             const repLengthScale = niceScale(points.map((p) => p.repLength), 0.05, true);
             const repElevScale = elevationScale(points.map((p) => p.repElev), 5);
             return (
