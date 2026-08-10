@@ -2801,6 +2801,7 @@ function RunningDashboard() {
         dateLabel: fmtDateShort(r.date),
         pace: isHill ? r.repeat_avg_pace_sec_per_mi : runAveragePaceSec(r),
         hr: isHill ? r.repeat_avg_hr : r.avg_hr,
+        avgCadence: r.avg_cadence != null ? Number(r.avg_cadence) : null,
         distance: r.distance_mi,
         repLength: isHill ? r.repeat_avg_distance_mi : null,
         repTime: isHill ? r.repeat_avg_time_s : null,
@@ -3211,6 +3212,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
             const c = TYPE_COLOR[type] || TYPE_COLOR.Easy;
             const trendPaceScale = niceScale(points.map((p) => p.pace == null ? null : -p.pace), 30);
             const trendDistanceScale = niceScale(points.map((p) => p.distance), 1, true);
+            const trendCadenceScale = niceScale(points.map((p) => p.avgCadence), 5);
             const repLengthScale = niceScale(points.map((p) => p.repLength), 0.05, true);
             const repElevScale = elevationScale(points.map((p) => p.repElev), 5);
             return (
@@ -3229,7 +3231,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                   </p>
                 ) : (
                   <React.Fragment>
-                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>Pace, mileage &amp; HR</p>
+                    <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>Pace, mileage, HR &amp; cadence</p>
                     <div style={{ height: 150, marginBottom: type === "Hill" ? 14 : 0 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={points.map((p) => ({ ...p, paceNeg: p.pace != null ? -p.pace : null }))} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
@@ -3238,6 +3240,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                           <YAxis yAxisId="pace" tickFormatter={(v) => fmtPace(-v)} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={42} domain={trendPaceScale.domain} ticks={trendPaceScale.ticks} interval={0} />
                           <YAxis yAxisId="distance" orientation="right" domain={trendDistanceScale.domain} ticks={trendDistanceScale.ticks} interval={0} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={34} />
                           <YAxis yAxisId="hr" hide domain={[100, 200]} />
+                          <YAxis yAxisId="cadence" hide domain={trendCadenceScale.domain} />
                           <Tooltip
                             contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                             formatter={(value, name, item) => {
@@ -3245,6 +3248,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                               if (key === "paceNeg") return [fmtPace(-value) + "/mi", "Pace"];
                               if (key === "distance") return [value + " mi", "Mileage"];
                               if (key === "hr") return [value + " bpm", "HR"];
+                              if (key === "avgCadence") return [Math.round(Number(value)) + " spm", "Avg Cadence"];
                               return [value, name];
                             }}
                           />
@@ -3252,6 +3256,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                           <Bar name="Mileage" yAxisId="distance" dataKey="distance" fill={ACTUAL_COLOR} radius={[3, 3, 0, 0]} barSize={18} />
                           <Line name="Pace" yAxisId="pace" type="monotone" dataKey="paceNeg" stroke={c.solid} strokeWidth={2} dot={{ r: 4 }} />
                           <Line name="HR" yAxisId="hr" type="monotone" dataKey="hr" stroke="#A26360" strokeWidth={2} strokeDasharray="4 3" dot={{ r: 4 }} />
+                          <Line name="Avg Cadence" yAxisId="cadence" type="monotone" dataKey="avgCadence" stroke={TYPE_COLOR.Tempo.solid} strokeWidth={1.75} strokeDasharray="4 4" dot={false} activeDot={false} connectNulls />
                         </ComposedChart>
                       </ResponsiveContainer>
                     </div>
@@ -3315,7 +3320,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
             }}
           />
           <Legend verticalAlign="top" align="left" iconType="circle" wrapperStyle={{ fontSize: 11, paddingBottom: 6 }} />
-          <Line yAxisId="trainingLoad" name="Training Load" type="monotone" dataKey="trainingLoad" stroke={TYPE_COLOR.Tempo.solid} strokeOpacity={0.72} strokeWidth={1.75} strokeDasharray="4 4" dot={false} activeDot={{ r: 3, fill: "var(--surface-1)", stroke: TYPE_COLOR.Tempo.solid, strokeWidth: 1.5 }} connectNulls />
+          <Line yAxisId="trainingLoad" name="Training Load" type="monotone" dataKey="trainingLoad" stroke={TYPE_COLOR.MP.solid} strokeOpacity={0.72} strokeWidth={1.75} strokeDasharray="4 4" dot={false} activeDot={{ r: 3, fill: "var(--surface-1)", stroke: TYPE_COLOR.MP.solid, strokeWidth: 1.5 }} connectNulls />
           {showVo2BiometricTrend && <Line yAxisId="vo2" name="VO₂ Max" type="monotone" dataKey="vo2" stroke="#6F8FAA" strokeWidth={2} dot={{ r: 3 }} connectNulls />}
           {showRestingHrBiometricTrend && <Line yAxisId="restingHr" name="Resting HR" type="monotone" dataKey="restingHr" stroke="#A26360" strokeWidth={2} dot={{ r: 3 }} connectNulls />}
         </LineChart>
