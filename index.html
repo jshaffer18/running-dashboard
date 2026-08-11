@@ -434,11 +434,6 @@ const KPI_WEEKLY_MILEAGE_ICON = "assets/runtime-media/asset-29-205555e038.png";
 const KPI_CADENCE_ICON = "assets/runtime-media/asset-30-3687d368b1.png";
 const KPI_TOTAL_MILEAGE_ICON = "assets/runtime-media/asset-31-7e60652740.png";
 
-const KPI_OPTION1_RACE_ICON = "assets/runtime-media/kpi-option1-race-186b831b16.png";
-const KPI_OPTION1_MILEAGE_ICON = "assets/runtime-media/kpi-option1-mileage-95c44236c5.png";
-const KPI_OPTION1_CADENCE_ICON = "assets/runtime-media/kpi-option1-cadence-c907925af0.png";
-const KPI_OPTION1_VO2_ICON = "assets/runtime-media/kpi-option1-vo2-458a658cf8.png";
-
 const RESPONSIVE_CSS = `
 
 .rd-kpi-grid {
@@ -1574,10 +1569,10 @@ function LastActivityOverview({ run }) {
 
 function KpiCard({ icon, label, value }) {
   const config = {
-    "race-countdown": { art: KPI_OPTION1_RACE_ICON, accent: "#A8C2D8", soft: "#EDF4F9", mobileW: 27, mobileH: 27 },
-    "total-mileage": { art: KPI_OPTION1_MILEAGE_ICON, accent: "#A0ACA5", soft: "#EEF2EF", mobileW: 27, mobileH: 27 },
-    "cadence-bunny": { art: KPI_OPTION1_CADENCE_ICON, accent: "#E4C06F", soft: "#FBF3DF", mobileW: 30, mobileH: 30 },
-    "vo2-max": { art: KPI_OPTION1_VO2_ICON, accent: "#BF7E73", soft: "#F6E9E5", mobileW: 30, mobileH: 30 },
+    "race-countdown": { art: KPI_ICON_RACE_COUNTDOWN, accent: "#A8C2D8", soft: "#EDF4F9", mobileW: 27, mobileH: 27 },
+    "total-mileage": { art: KPI_ICON_TOTAL_MILEAGE, accent: "#A0ACA5", soft: "#EEF2EF", mobileW: 27, mobileH: 27 },
+    "cadence-bunny": { art: KPI_ICON_CADENCE, accent: "#E4C06F", soft: "#FBF3DF", mobileW: 30, mobileH: 30 },
+    "vo2-max": { art: KPI_ICON_VO2_MAX, accent: "#BF7E73", soft: "#F6E9E5", mobileW: 30, mobileH: 30 },
   }[icon];
   return (
     <div
