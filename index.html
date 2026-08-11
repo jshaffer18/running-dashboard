@@ -434,7 +434,99 @@ const KPI_WEEKLY_MILEAGE_ICON = "assets/runtime-media/asset-29-205555e038.png";
 const KPI_CADENCE_ICON = "assets/runtime-media/asset-30-3687d368b1.png";
 const KPI_TOTAL_MILEAGE_ICON = "assets/runtime-media/asset-31-7e60652740.png";
 
+const KPI_OPTION1_RACE_ICON = "assets/runtime-media/kpi-option1-race-186b831b16.png";
+const KPI_OPTION1_MILEAGE_ICON = "assets/runtime-media/kpi-option1-mileage-95c44236c5.png";
+const KPI_OPTION1_CADENCE_ICON = "assets/runtime-media/kpi-option1-cadence-c907925af0.png";
+const KPI_OPTION1_VO2_ICON = "assets/runtime-media/kpi-option1-vo2-458a658cf8.png";
+
 const RESPONSIVE_CSS = `
+
+.rd-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 20px;
+}
+.rd-kpi-option1 {
+  position: relative;
+  overflow: hidden;
+  background: #FFFFFF;
+  border: 1px solid #DFDAD0;
+  border-top: 3px solid var(--kpi-accent);
+  border-radius: 16px;
+  padding: 14px 16px 13px;
+  box-shadow: 0 8px 24px rgba(61,52,40,.07);
+  min-height: 108px;
+  color: #312D28;
+}
+.rd-kpi-option1-dot {
+  position: absolute;
+  right: 14px;
+  top: 11px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--kpi-accent);
+}
+.rd-kpi-option1-main {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+.rd-kpi-option1-art {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--kpi-soft) 100%);
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kpi-accent) 18%, #ECE5DB);
+}
+.rd-kpi-option1-art img {
+  display: block;
+  width: 34px;
+  height: 34px;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,.5));
+}
+.rd-kpi-option1-content {
+  min-width: 0;
+}
+.rd-kpi-option1-label {
+  font-size: 11px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  font-weight: 760;
+  color: #655F56;
+  line-height: 1.05;
+  white-space: nowrap;
+  padding-right: 20px;
+}
+.rd-kpi-option1-value {
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 690;
+  letter-spacing: -.035em;
+  margin-top: 8px;
+  white-space: nowrap;
+}
+@media (max-width: 1180px) {
+  .rd-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .rd-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .rd-kpi-option1 { padding: 10px 10px 6px; min-height: 0; border-radius: 14px; }
+  .rd-kpi-option1-dot { right: 10px; top: 9px; width: 7px; height: 7px; }
+  .rd-kpi-option1-main { grid-template-columns: 44px minmax(0, 1fr); gap: 9px; align-items: start; }
+  .rd-kpi-option1-art { width: 44px; height: 44px; border-radius: 12px; }
+  .rd-kpi-option1-art img { width: var(--kpi-mobile-w); height: var(--kpi-mobile-h); }
+  .rd-kpi-option1-content { height: 44px; display: flex; flex-direction: column; justify-content: center; gap: 6px; min-width: 0; }
+  .rd-kpi-option1-label { font-size: 8.5px; letter-spacing: .09em; line-height: 1; padding-right: 12px; white-space: nowrap; }
+  .rd-kpi-option1-value { font-size: 24px; line-height: .95; margin-top: 0; white-space: nowrap; }
+}
 @media (max-width: 1180px) {
   .rd-gear-grid { grid-template-columns: 1fr !important; }
 }
@@ -1480,46 +1572,31 @@ function LastActivityOverview({ run }) {
   </section>;
 }
 
-function KpiCard({ gradient, icon, label, value, sub }) {
-  const kpiIconMap = {
-    "weekly-mileage": KPI_ICON_WEEKLY_MILEAGE,
-    "total-mileage": KPI_ICON_TOTAL_MILEAGE,
-    "race-countdown": KPI_ICON_RACE_COUNTDOWN,
-    "cadence-bunny": KPI_ICON_CADENCE,
-    "vo2-max": KPI_ICON_VO2_MAX,
-  };
-  const railGraphic = kpiIconMap[icon] ? (
-    <img
-      src={kpiIconMap[icon]}
-      alt=""
-      style={{
-        width: 48,
-        height: 74,
-        objectFit: "contain",
-        display: "block",
-        transform: icon === "race-countdown" ? "scale(2.35)" : icon === "total-mileage" ? "scale(2.15)" : "none",
-        transformOrigin: "center center",
-      }}
-    />
-  ) : <span />;
+function KpiCard({ icon, label, value }) {
+  const config = {
+    "race-countdown": { art: KPI_OPTION1_RACE_ICON, accent: "#A8C2D8", soft: "#EDF4F9", mobileW: 27, mobileH: 27 },
+    "total-mileage": { art: KPI_OPTION1_MILEAGE_ICON, accent: "#A0ACA5", soft: "#EEF2EF", mobileW: 27, mobileH: 27 },
+    "cadence-bunny": { art: KPI_OPTION1_CADENCE_ICON, accent: "#E4C06F", soft: "#FBF3DF", mobileW: 30, mobileH: 30 },
+    "vo2-max": { art: KPI_OPTION1_VO2_ICON, accent: "#BF7E73", soft: "#F6E9E5", mobileW: 30, mobileH: 30 },
+  }[icon];
   return (
-    <div style={{ background: gradient, borderRadius: 16, padding: 0, border: "1px solid rgba(255,255,255,0.55)", boxShadow: "0 6px 18px rgba(55,70,86,0.09)", color: "#3D3428", height: 71, overflow: "hidden", display: "flex", position: "relative" }}>
-      <div aria-hidden="true" style={{ position: "absolute", width: 78, height: 78, borderRadius: "50%", top: -44, right: -24, background: "rgba(255,255,255,0.16)", pointerEvents: "none" }} />
-      <div style={{ display: "flex", alignItems: "stretch", height: 71, width: "100%", position: "relative" }}>
-        <div style={{ width: 52, flexShrink: 0, height: 71, position: "relative", overflow: "hidden", background: "rgba(255,255,255,0.25)", color: "rgba(61,52,40,0.72)", display: "grid", placeItems: "center", borderRight: "1px solid rgba(61,52,40,0.08)", padding: "3px 1px" }}>
-          <span aria-hidden="true" style={{ position: "absolute", width: 48, height: 48, left: -20, bottom: -15, borderRadius: "50%", background: "rgba(255,255,255,0.19)" }} />
-          <span style={{ position: "relative", zIndex: 1, width: 50, height: 65, display: "grid", placeItems: "center", overflow: "hidden", transform: "translateX(-2px)" }}>{railGraphic}</span>
+    <div
+      className="rd-kpi-option1"
+      style={{ "--kpi-accent": config.accent, "--kpi-soft": config.soft, "--kpi-mobile-w": config.mobileW + "px", "--kpi-mobile-h": config.mobileH + "px" }}
+    >
+      <span className="rd-kpi-option1-dot" aria-hidden="true" />
+      <div className="rd-kpi-option1-main">
+        <div className="rd-kpi-option1-art">
+          <img src={config.art} alt="" loading="lazy" decoding="async" />
         </div>
-        <div style={{ padding: "0 13px", minWidth: 0, minHeight: 71, display: "grid", gridTemplateRows: "auto auto auto", rowGap: 0, alignContent: "center" }}>
-          <p style={{ fontSize: 11, lineHeight: "15px", fontWeight: 700, letterSpacing: 0.65, textTransform: "uppercase", margin: 0, opacity: 0.78, alignSelf: "start" }}>{label}</p>
-          <p style={{ fontSize: 25, lineHeight: "32px", fontWeight: 700, margin: "-2px 0 0", letterSpacing: -0.5, whiteSpace: "nowrap", alignSelf: "start" }}>{value}</p>
-          {sub && <p style={{ fontSize: 11.5, lineHeight: "17px", margin: "-3px 0 0", opacity: 0.7, alignSelf: "start", whiteSpace: "nowrap" }}>{sub}</p>}
+        <div className="rd-kpi-option1-content">
+          <div className="rd-kpi-option1-label">{label}</div>
+          <div className="rd-kpi-option1-value">{value}</div>
         </div>
       </div>
     </div>
   );
 }
-
 
 function plannedDayForDate(date) {
   for (const week of PLAN) {
@@ -2880,11 +2957,11 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
         Running training dashboard showing calendar, per-run splits, elevation, cadence, heart rate, schedule, and pace/HR trends by run type.
       </h2>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <KpiCard gradient={KPI_GRADIENTS.race} icon="race-countdown" label="SUN · NOV 29" value={weeksToRace.weeks + "w " + weeksToRace.days + "d"} />
-        <KpiCard gradient={KPI_GRADIENTS.mileage} icon="total-mileage" label="Avg Mileage" value={avgFullWeekMileage.toFixed(1) + " mi"} />
-        <KpiCard gradient={KPI_GRADIENTS.cadence} icon="cadence-bunny" label="Avg Cadence" value={String(avgCadenceOverall)} />
-        <KpiCard gradient={KPI_GRADIENTS.distance} icon="vo2-max" label="VO₂ Max" value={latestVo2Max == null ? "—" : latestVo2Max.toFixed(1)} />
+      <div className="rd-kpi-grid">
+        <KpiCard icon="race-countdown" label="SUN · NOV 29" value={weeksToRace.weeks + "w " + weeksToRace.days + "d"} />
+        <KpiCard icon="total-mileage" label="Avg Mileage" value={avgFullWeekMileage.toFixed(1) + " mi"} />
+        <KpiCard icon="cadence-bunny" label="Avg Cadence" value={String(avgCadenceOverall)} />
+        <KpiCard icon="vo2-max" label="VO₂ Max" value={latestVo2Max == null ? "—" : latestVo2Max.toFixed(1)} />
       </div>
 
       <div className="rd-tabs" style={{ display: "flex", gap: 4, borderBottom: "0.5px solid var(--border)", marginBottom: 20, flexWrap: "wrap", maxWidth: "100%" }}>
