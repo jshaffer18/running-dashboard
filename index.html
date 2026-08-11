@@ -476,14 +476,15 @@ const RESPONSIVE_CSS = `
   background: linear-gradient(180deg, #FFFFFF 0%, var(--kpi-soft) 100%);
   display: grid;
   place-items: center;
+  overflow: hidden;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kpi-accent) 18%, #ECE5DB);
 }
 .rd-kpi-option1-art img {
   display: block;
-  width: 34px;
-  height: 34px;
-  max-width: 100%;
-  max-height: 100%;
+  width: var(--kpi-desktop-w);
+  height: var(--kpi-desktop-h);
+  max-width: none;
+  max-height: none;
   object-fit: contain;
   filter: drop-shadow(0 1px 0 rgba(255,255,255,.5));
 }
@@ -1569,15 +1570,15 @@ function LastActivityOverview({ run }) {
 
 function KpiCard({ icon, label, value }) {
   const config = {
-    "race-countdown": { art: KPI_ICON_RACE_COUNTDOWN, accent: "#A8C2D8", soft: "#EDF4F9", mobileW: 27, mobileH: 27 },
-    "total-mileage": { art: KPI_ICON_TOTAL_MILEAGE, accent: "#A0ACA5", soft: "#EEF2EF", mobileW: 27, mobileH: 27 },
-    "cadence-bunny": { art: KPI_ICON_CADENCE, accent: "#E4C06F", soft: "#FBF3DF", mobileW: 30, mobileH: 30 },
-    "vo2-max": { art: KPI_ICON_VO2_MAX, accent: "#BF7E73", soft: "#F6E9E5", mobileW: 30, mobileH: 30 },
+    "race-countdown": { art: KPI_ICON_RACE_COUNTDOWN, accent: "#A8C2D8", soft: "#EDF4F9", desktopW: 116, desktopH: 116, mobileW: 102, mobileH: 102 },
+    "total-mileage": { art: KPI_ICON_TOTAL_MILEAGE, accent: "#A0ACA5", soft: "#EEF2EF", desktopW: 84, desktopH: 84, mobileW: 74, mobileH: 74 },
+    "cadence-bunny": { art: KPI_ICON_CADENCE, accent: "#E4C06F", soft: "#FBF3DF", desktopW: 39, desktopH: 39, mobileW: 34, mobileH: 34 },
+    "vo2-max": { art: KPI_ICON_VO2_MAX, accent: "#BF7E73", soft: "#F6E9E5", desktopW: 34, desktopH: 34, mobileW: 30, mobileH: 30 },
   }[icon];
   return (
     <div
       className="rd-kpi-option1"
-      style={{ "--kpi-accent": config.accent, "--kpi-soft": config.soft, "--kpi-mobile-w": config.mobileW + "px", "--kpi-mobile-h": config.mobileH + "px" }}
+      style={{ "--kpi-accent": config.accent, "--kpi-soft": config.soft, "--kpi-desktop-w": config.desktopW + "px", "--kpi-desktop-h": config.desktopH + "px", "--kpi-mobile-w": config.mobileW + "px", "--kpi-mobile-h": config.mobileH + "px" }}
     >
       <span className="rd-kpi-option1-dot" aria-hidden="true" />
       <div className="rd-kpi-option1-main">
