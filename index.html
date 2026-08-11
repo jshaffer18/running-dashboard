@@ -420,11 +420,11 @@ const DEVICE_META = [
 const RED_RUNNER_IMAGE = "assets/runtime-media/asset-45-73d33211bc.svg";
 const PALE_RUNNER_IMAGE = "assets/runtime-media/asset-46-03ce302a40.svg";
 
-const KPI_ICON_RACE_COUNTDOWN = "assets/runtime-media/asset-20-78dbac84c3.png";
+const KPI_ICON_RACE_COUNTDOWN = "assets/runtime-media/kpi-normalized-race.png";
 const KPI_ICON_WEEKLY_MILEAGE = "assets/runtime-media/asset-21-85bee3ae65.png";
-const KPI_ICON_CADENCE = "assets/runtime-media/asset-22-ef643518d7.png";
-const KPI_ICON_VO2_MAX = "assets/runtime-media/asset-23-3da92be7ca.png";
-const KPI_ICON_TOTAL_MILEAGE = "assets/runtime-media/asset-24-728faae3d9.png";
+const KPI_ICON_CADENCE = "assets/runtime-media/kpi-normalized-cadence.png";
+const KPI_ICON_VO2_MAX = "assets/runtime-media/kpi-normalized-vo2.png";
+const KPI_ICON_TOTAL_MILEAGE = "assets/runtime-media/kpi-normalized-mileage.png";
 const DEVICE_ICON_FASTEST_MILE = "assets/runtime-media/asset-25-d40f35baf6.png";
 const DEVICE_ICON_LONGEST_RUN = "assets/runtime-media/asset-26-5dd5614d0c.png";
 const DEVICE_ICON_MAX_ASCENT = "assets/runtime-media/asset-27-b62abf53f5.png";
@@ -1570,9 +1570,9 @@ function LastActivityOverview({ run }) {
 
 function KpiCard({ icon, label, value }) {
   const config = {
-    "race-countdown": { art: KPI_ICON_RACE_COUNTDOWN, accent: "#A8C2D8", soft: "#EDF4F9", desktopW: 116, desktopH: 116, mobileW: 102, mobileH: 102 },
-    "total-mileage": { art: KPI_ICON_TOTAL_MILEAGE, accent: "#A0ACA5", soft: "#EEF2EF", desktopW: 84, desktopH: 84, mobileW: 74, mobileH: 74 },
-    "cadence-bunny": { art: KPI_ICON_CADENCE, accent: "#E4C06F", soft: "#FBF3DF", desktopW: 39, desktopH: 39, mobileW: 34, mobileH: 34 },
+    "race-countdown": { art: KPI_ICON_RACE_COUNTDOWN, accent: "#A8C2D8", soft: "#EDF4F9", desktopW: 34, desktopH: 34, mobileW: 30, mobileH: 30 },
+    "total-mileage": { art: KPI_ICON_TOTAL_MILEAGE, accent: "#A0ACA5", soft: "#EEF2EF", desktopW: 34, desktopH: 34, mobileW: 30, mobileH: 30 },
+    "cadence-bunny": { art: KPI_ICON_CADENCE, accent: "#E4C06F", soft: "#FBF3DF", desktopW: 34, desktopH: 34, mobileW: 30, mobileH: 30 },
     "vo2-max": { art: KPI_ICON_VO2_MAX, accent: "#BF7E73", soft: "#F6E9E5", desktopW: 34, desktopH: 34, mobileW: 30, mobileH: 30 },
   }[icon];
   return (
