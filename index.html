@@ -1577,7 +1577,10 @@ function LastActivityOverview({ run }) {
   const paceScale = regularPaceScale(run.detail_trace.map((p) => p.pace));
   const overviewDistanceTicks = Array.from(new Set(distanceScale.ticks.filter((_, i) => i % 2 === 0).filter((v) => v < run.distance_mi - 0.08).concat(Number(run.distance_mi.toFixed(2)))));
   const elevScale = elevationScale(run.detail_trace.map((p) => p.elev_ft), 5);
-  const lapPaceScale = regularPaceScale(run.splits.map((s) => s.pace));
+  const overviewLapData = isHillType(run.type) && run.hill_reps?.length
+    ? run.hill_reps.map((rep) => ({ ...rep, mile: rep.rep, pace: rep.pace_sec_per_mi }))
+    : run.splits;
+  const lapPaceScale = regularPaceScale(overviewLapData.map((s) => s.pace));
   const lapPaceTicks = compactAxisTicks(lapPaceScale.ticks, 3);
   const outerCard = { background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:16, padding:"1rem 1.2rem", WebkitTextSizeAdjust:"100%", textSizeAdjust:"100%", containerType:"inline-size" };
   const innerCard = { background:"rgba(255,255,255,0.22)", border:"1px solid rgba(228,225,218,0.56)", borderRadius:14, padding:"0.9rem 0.78rem", backdropFilter:"blur(1px)", WebkitTextSizeAdjust:"100%", textSizeAdjust:"100%", minWidth:0, maxWidth:"100%", overflow:"hidden", boxSizing:"border-box" };
@@ -1585,7 +1588,7 @@ function LastActivityOverview({ run }) {
     <div className="rd-last-activity-overview-grid" style={{ display:"grid", gridTemplateColumns:"minmax(320px,.88fr) minmax(350px,1.12fr)", gap:12, alignItems:"stretch", width:"100%", minWidth:0 }}>
       <div style={{...innerCard,height:"100%",width:"100%"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:6}}><p style={{margin:0,fontSize:13,fontWeight:500,color:"var(--text-secondary)"}}>Last recorded activity</p><span style={{background:c.solid,color:"#3D3428",fontSize:12,padding:"3px 9px",borderRadius:8,fontWeight:500}}>{displayWorkoutType(run.type)}</span></div>
-        <p style={{margin:"0 0 12px",fontSize:18,fontWeight:600}}>{fmtDate(run.date)}</p>
+        <p style={{margin:"0 0 12px",fontSize:isHillType(run.type)?14:18,fontWeight:600,lineHeight:1.25}}>{isHillType(run.type) ? hillHeadingSummary(run, { includeDate: true }) : fmtDate(run.date)}</p>
         <div className="rd-overview-watch-metrics" style={{display:"grid",gridTemplateColumns:"minmax(0,220px) 132px",justifyContent:"start",gap:8,alignItems:"start",minWidth:0,width:"100%"}}><div className="rd-overview-watch-visual" style={{display:"flex",justifyContent:"center",alignItems:"center",minWidth:0,width:"100%",minHeight:300,transform:"translateY(-11px)"}}><LastActivityWatch run={run} scale={1.12} /></div><OverviewWatchMetrics run={run} expanded={showExtendedMetrics} onToggle={() => setShowExtendedMetrics(true)} /></div>
       </div>
       <div className="rd-last-activity-overview-secondary" style={{display:"flex",flexDirection:"column",gap:10,height:"100%",minWidth:0}}>
@@ -1599,8 +1602,25 @@ function LastActivityOverview({ run }) {
           <div style={{flex:"1 1 0",minHeight:130,marginTop:5,marginBottom:-2,width:"calc(100% + 12px)",marginLeft:-8,marginRight:-4}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={run.detail_trace.map((p,i)=>({...p,paceNeg:p.pace!=null?-p.pace:null,cadPlot:i%2===0?p.cad:null}))} margin={{top:8,right:0,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],run.distance_mi]} ticks={distanceTicksForRun(run.distance_mi)} interval={0} tickFormatter={(v)=>formatDistanceAxisTick(v, run.distance_mi)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:10,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={32} tickMargin={0} tickFormatter={(v)=>Math.round(v)}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={paceScale.ticks} interval={0} allowDataOverflow tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={38}/><Tooltip content={<ActivityTraceTooltip />} /><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25} hide={!!overviewHiddenSeries.elev_ft}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.paceNeg}/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.hr}/><Line yAxisId="cad" dataKey="cadPlot" stroke="transparent" strokeOpacity={1} dot={{r:1.8,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.2}} activeDot={{r:3.1,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.4}} isAnimationActive={false} connectNulls={false} hide={!!overviewHiddenSeries.cad}/></ComposedChart></ResponsiveContainer></div>
         </div>
         <div className="rd-overview-lap-card" style={{...innerCard,width:"100%",flex:"0 0 auto"}}>
-          <div style={{height:72}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={run.splits.map((s)=>({...s,paceNeg:s.pace!=null?-s.pace:null}))} margin={{top:4,right:10,left:0,bottom:0}}><XAxis type="number" dataKey="mile" domain={isHillType(run.type) ? [1, Math.max(1, run.splits.length)] : ["dataMin", "dataMax"]} ticks={isHillType(run.type) ? compactOrdinalTicks(run.splits.length, 5) : undefined} interval={0} tickFormatter={(v)=>isHillType(run.type) ? String(v) : "Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={42} tickMargin={2}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} formatter={(value)=>[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div>
-          <div style={{overflowX:"auto",marginTop:4}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr>{["Mi","Pace","Distance","HR","Elevation","Cadence"].map(h=><th key={h} style={{padding:"3px 5px",textAlign:"center",color:"var(--text-secondary)",fontWeight:500,borderBottom:".5px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{(() => { const paces = run.splits.map((s) => s.pace); const minPace = Math.min(...paces); const maxPace = Math.max(...paces); return run.splits.map((s) => { const barPct = maxPace > minPace ? 100 * (1 - (s.pace - minPace) / (maxPace - minPace)) : 100; const barWidth = Math.max(12, barPct); return <tr key={s.mile}><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}><span style={{ position: "relative", display: "inline-block", minWidth: 18 }}>{s.mile}{s.partial && <sup style={{ position: "absolute", left: "100%", top: -2, marginLeft: -2, fontSize: 8 }}>*</sup>}</span></td><td style={{padding:"3px 5px",borderBottom:".5px solid var(--border)"}}><div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}><span style={{ minWidth: 38, textAlign: "center" }}>{s.pace==null?"—":fmtPace(s.pace)}</span><div style={{ flex: 1, minWidth: 32, maxWidth: 78, height: 7, background: "var(--surface-2)", borderRadius: 4, overflow: "hidden" }}><div style={{ width: barWidth + "%", height: "100%", background: "#9DAAA2", borderRadius: 4 }} /></div></div></td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.partial ? Number(s.partial_distance_mi).toFixed(2) : "1.00"} mi</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_hr??"—"}</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.elev_net_ft != null ? (s.elev_net_ft > 0 ? "+" : "") + s.elev_net_ft + " ft" : "—"}</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_cadence??"—"}</td></tr>; }); })()}</tbody></table>{run.splits.some((s) => s.partial) && <p style={{ fontSize: 9.5, color: "var(--text-secondary)", margin: "5px 0 0" }}>* partial mile, pace extrapolated to a per-mile-equivalent</p>}</div>
+          <div style={{height:72}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={overviewLapData.map((s)=>({...s,paceNeg:s.pace!=null?-s.pace:null}))} margin={{top:4,right:10,left:0,bottom:0}}><XAxis type="number" dataKey="mile" domain={isHillType(run.type) ? [1, Math.max(1, overviewLapData.length)] : ["dataMin", "dataMax"]} ticks={isHillType(run.type) ? compactOrdinalTicks(overviewLapData.length, 5) : undefined} interval={0} tickFormatter={(v)=>isHillType(run.type) ? String(v) : "Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={42} tickMargin={2}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} labelFormatter={(v)=>isHillType(run.type) ? "Rep "+v : "Mile "+v} formatter={(value)=>[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div>
+          {isHillType(run.type) && run.hill_reps?.length ? (
+            <div style={{overflowX:"auto",marginTop:4}}>
+              <table style={{width:"100%",minWidth:610,borderCollapse:"collapse",fontSize:11,tableLayout:"auto"}}>
+                <thead><tr>{["Rep","Distance","Time","Pace","Avg HR","Elev gain","Grade"].map(h=><th key={h} style={{padding:"4px 6px",textAlign:"center",whiteSpace:"nowrap",color:"var(--text-secondary)",fontWeight:500,borderBottom:".5px solid var(--border)"}}>{h}</th>)}</tr></thead>
+                <tbody>{run.hill_reps.map((rep)=><tr key={rep.rep}>
+                  <td style={{padding:"4px 6px",textAlign:"center",whiteSpace:"nowrap",borderBottom:".5px solid var(--border)"}}>{rep.rep}</td>
+                  <td style={{padding:"4px 6px",textAlign:"center",whiteSpace:"nowrap",borderBottom:".5px solid var(--border)"}}>{Number(rep.distance_mi).toFixed(3)} mi</td>
+                  <td style={{padding:"4px 6px",textAlign:"center",whiteSpace:"nowrap",borderBottom:".5px solid var(--border)"}}>{Math.round(rep.time_s)}s</td>
+                  <td style={{padding:"4px 6px",textAlign:"center",whiteSpace:"nowrap",borderBottom:".5px solid var(--border)"}}>{fmtPace(rep.pace_sec_per_mi)}/mi</td>
+                  <td style={{padding:"4px 6px",textAlign:"center",whiteSpace:"nowrap",borderBottom:".5px solid var(--border)"}}>{rep.avg_hr ?? "—"}</td>
+                  <td style={{padding:"4px 6px",textAlign:"center",whiteSpace:"nowrap",borderBottom:".5px solid var(--border)"}}>{rep.elev_gain_ft != null ? `${rep.elev_gain_ft} ft` : "—"}</td>
+                  <td style={{padding:"4px 6px",textAlign:"center",whiteSpace:"nowrap",borderBottom:".5px solid var(--border)"}}>{rep.grade_pct != null ? Number(rep.grade_pct).toFixed(1)+"%" : "—"}</td>
+                </tr>)}</tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={{overflowX:"auto",marginTop:4}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr>{["Mi","Pace","Distance","HR","Elevation","Cadence"].map(h=><th key={h} style={{padding:"3px 5px",textAlign:"center",color:"var(--text-secondary)",fontWeight:500,borderBottom:".5px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{(() => { const paces = run.splits.map((s) => s.pace); const minPace = Math.min(...paces); const maxPace = Math.max(...paces); return run.splits.map((s) => { const barPct = maxPace > minPace ? 100 * (1 - (s.pace - minPace) / (maxPace - minPace)) : 100; const barWidth = Math.max(12, barPct); return <tr key={s.mile}><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}><span style={{ position: "relative", display: "inline-block", minWidth: 18 }}>{s.mile}{s.partial && <sup style={{ position: "absolute", left: "100%", top: -2, marginLeft: -2, fontSize: 8 }}>*</sup>}</span></td><td style={{padding:"3px 5px",borderBottom:".5px solid var(--border)"}}><div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}><span style={{ minWidth: 38, textAlign: "center" }}>{s.pace==null?"—":fmtPace(s.pace)}</span><div style={{ flex: 1, minWidth: 32, maxWidth: 78, height: 7, background: "var(--surface-2)", borderRadius: 4, overflow: "hidden" }}><div style={{ width: barWidth + "%", height: "100%", background: "#9DAAA2", borderRadius: 4 }} /></div></div></td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.partial ? Number(s.partial_distance_mi).toFixed(2) : "1.00"} mi</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_hr??"—"}</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.elev_net_ft != null ? (s.elev_net_ft > 0 ? "+" : "") + s.elev_net_ft + " ft" : "—"}</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_cadence??"—"}</td></tr>; }); })()}</tbody></table>{run.splits.some((s) => s.partial) && <p style={{ fontSize: 9.5, color: "var(--text-secondary)", margin: "5px 0 0" }}>* partial mile, pace extrapolated to a per-mile-equivalent</p>}</div>
+          )}
         </div>
       </div>
     </div>
@@ -1796,7 +1816,7 @@ function PlannedRunModal({ date, onClose }) {
           </div>}
           {actual && <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
             <p style={{ margin: 0, fontSize: 10, color: "var(--text-secondary)" }}>Completed</p>
-            <p style={{ margin: "3px 0 0", fontSize: 13, fontWeight: 500 }}>{Number(actual.distance_mi).toFixed(2)} mi · {fmtPace(runAveragePaceSec(actual))}/mi</p>
+            <p style={{ margin: "3px 0 0", fontSize: 13, fontWeight: 500, lineHeight: 1.3 }}>{isHillType(actual.type) ? hillHeadingSummary(actual, { includeDate: true }) : `${Number(actual.distance_mi).toFixed(2)} mi · ${fmtPace(runAveragePaceSec(actual))}/mi`}</p>
             {logNoteLines.length > 0 && <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
               <p style={{ margin: 0, fontSize: 10, color: "var(--text-secondary)" }}>Log Notes</p>
               <div style={{ marginTop: 3, display: "grid", rowGap: 4 }}>
@@ -2525,28 +2545,28 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
         <div style={{ marginTop: 14 }}>
           <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 6px" }}>Hill repeats{r.repeat_avg_grade_pct != null ? ` · ${Number(r.repeat_avg_grade_pct).toFixed(1)}% avg grade` : ""}</p>
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <table style={{ width: "100%", minWidth: 610, borderCollapse: "collapse", fontSize: 12, tableLayout: "auto" }}>
               <thead>
                 <tr style={{ borderBottom: "0.5px solid var(--border)" }}>
-                  <th style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Rep</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Distance</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Time</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Pace</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Avg HR</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Elev gain</th>
-                  <th style={{ textAlign: "center", padding: "6px 8px", color: "var(--text-secondary)", fontWeight: 500 }}>Grade</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", whiteSpace: "nowrap", color: "var(--text-secondary)", fontWeight: 500 }}>Rep</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", whiteSpace: "nowrap", color: "var(--text-secondary)", fontWeight: 500 }}>Distance</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", whiteSpace: "nowrap", color: "var(--text-secondary)", fontWeight: 500 }}>Time</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", whiteSpace: "nowrap", color: "var(--text-secondary)", fontWeight: 500 }}>Pace</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", whiteSpace: "nowrap", color: "var(--text-secondary)", fontWeight: 500 }}>Avg HR</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", whiteSpace: "nowrap", color: "var(--text-secondary)", fontWeight: 500 }}>Elev gain</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px", whiteSpace: "nowrap", color: "var(--text-secondary)", fontWeight: 500 }}>Grade</th>
                 </tr>
               </thead>
               <tbody>
                 {r.hill_reps.map((rep) => (
                   <tr key={rep.rep} style={{ borderBottom: "0.5px solid var(--border)" }}>
-                    <td style={{ padding: "6px 8px", textAlign: "center" }}>{rep.rep}</td>
-                    <td style={{ padding: "6px 8px", textAlign: "center" }}>{rep.distance_mi} mi</td>
-                    <td style={{ padding: "6px 8px", textAlign: "center" }}>{Math.round(rep.time_s)}s</td>
-                    <td style={{ padding: "6px 8px", textAlign: "center" }}>{fmtPace(rep.pace_sec_per_mi)}/mi</td>
-                    <td style={{ padding: "6px 8px", textAlign: "center" }}>{rep.avg_hr}</td>
-                    <td style={{ padding: "6px 8px", textAlign: "center" }}>{rep.elev_gain_ft} ft</td>
-                    <td style={{ padding: "6px 8px", textAlign: "center" }}>{rep.grade_pct != null ? Number(rep.grade_pct).toFixed(1) + "%" : "—"}</td>
+                    <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>{rep.rep}</td>
+                    <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>{rep.distance_mi} mi</td>
+                    <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>{Math.round(rep.time_s)}s</td>
+                    <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>{fmtPace(rep.pace_sec_per_mi)}/mi</td>
+                    <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>{rep.avg_hr}</td>
+                    <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>{rep.elev_gain_ft} ft</td>
+                    <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>{rep.grade_pct != null ? Number(rep.grade_pct).toFixed(1) + "%" : "—"}</td>
                   </tr>
                 ))}
               </tbody>
