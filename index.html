@@ -1157,13 +1157,21 @@ function HillRepeatsTable({ run, compact = false }) {
   const minPace = paces.length ? Math.min(...paces) : 0;
   const maxPace = paces.length ? Math.max(...paces) : 0;
   const fontSize = compact ? 11 : 12;
-  const cellPad = compact ? "4px 6px" : "6px 8px";
+  const cellPad = compact ? "4px 4px" : "6px 5px";
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table className="rd-mile-splits-table" style={{ width: "100%", minWidth: 690, borderCollapse: "collapse", fontSize, tableLayout: "auto" }}>
+    <div style={{ overflowX: "visible", width: "100%" }}>
+      <table className="rd-mile-splits-table" style={{ width: "100%", borderCollapse: "collapse", fontSize, tableLayout: "fixed" }}>
+        <colgroup>
+          <col style={{ width: "13%" }} />
+          <col style={{ width: "24%" }} />
+          <col style={{ width: "16%" }} />
+          <col style={{ width: "11%" }} />
+          <col style={{ width: "22%" }} />
+          <col style={{ width: "14%" }} />
+        </colgroup>
         <thead>
           <tr style={{ borderBottom: "0.5px solid var(--border)" }}>
-            {["Rep", "Pace", "Distance", "Time", "HR", "Elev gain", "Cadence", "Grade"].map((label) => (
+            {["Rep", "Pace", "Distance", "HR", "Elevation", "Cadence"].map((label) => (
               <th key={label} style={{ textAlign: "center", padding: cellPad, whiteSpace: "nowrap", color: "var(--text-secondary)", fontWeight: 500 }}>{label}</th>
             ))}
           </tr>
@@ -1174,23 +1182,25 @@ function HillRepeatsTable({ run, compact = false }) {
             const barPct = Number.isFinite(pace) && maxPace > minPace
               ? 100 * (1 - (pace - minPace) / (maxPace - minPace))
               : 100;
+            const repTime = rep.time_s != null ? `${Math.round(Number(rep.time_s))}s` : "—";
+            const elevationGrade = rep.elev_gain_ft != null
+              ? `${rep.elev_gain_ft} ft${rep.grade_pct != null ? ` · ${Number(rep.grade_pct).toFixed(1)}%` : ""}`
+              : (rep.grade_pct != null ? `${Number(rep.grade_pct).toFixed(1)}%` : "—");
             return (
               <tr key={rep.rep} style={{ borderBottom: "0.5px solid var(--border)" }}>
-                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.rep}</td>
+                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.rep} · {repTime}</td>
                 <td className="rd-mile-splits-pace-cell" style={{ padding: cellPad, whiteSpace: "nowrap" }}>
-                  <div className="rd-mile-splits-pace-inner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, whiteSpace: "nowrap" }}>
-                    <span style={{ minWidth: 44, textAlign: "center", whiteSpace: "nowrap" }}>{Number.isFinite(pace) ? fmtPace(pace) : "—"}</span>
-                    <div className="rd-mile-splits-pace-bar" style={{ flex: 1, minWidth: 32, maxWidth: 78, height: 7, background: "var(--surface-2)", borderRadius: 4, overflow: "hidden" }}>
+                  <div className="rd-mile-splits-pace-inner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, whiteSpace: "nowrap" }}>
+                    <span style={{ minWidth: 39, textAlign: "center", whiteSpace: "nowrap" }}>{Number.isFinite(pace) ? fmtPace(pace) : "—"}</span>
+                    <div className="rd-mile-splits-pace-bar" style={{ flex: 1, minWidth: 18, maxWidth: 58, height: 7, background: "var(--surface-2)", borderRadius: 4, overflow: "hidden" }}>
                       <div style={{ width: Math.max(12, barPct) + "%", height: "100%", background: "#9DAAA2", borderRadius: 4 }} />
                     </div>
                   </div>
                 </td>
                 <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.distance_mi != null ? `${Number(rep.distance_mi).toFixed(3)} mi` : "—"}</td>
-                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.time_s != null ? `${Math.round(Number(rep.time_s))}s` : "—"}</td>
                 <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.avg_hr ?? "—"}</td>
-                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.elev_gain_ft != null ? `${rep.elev_gain_ft} ft` : "—"}</td>
+                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap", fontSize: compact ? 10.5 : 11.5 }}>{elevationGrade}</td>
                 <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.avg_cadence ?? "—"}</td>
-                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.grade_pct != null ? `${Number(rep.grade_pct).toFixed(1)}%` : "—"}</td>
               </tr>
             );
           })}
