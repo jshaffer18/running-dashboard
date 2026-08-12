@@ -780,6 +780,28 @@ function niceScale(values, step, includeZero = false) {
   return { domain: [min, max], ticks };
 }
 
+function compactOrdinalTicks(count, maxTicks = 5) {
+  const n = Math.max(1, Math.round(Number(count) || 1));
+  if (n <= maxTicks) return Array.from({ length: n }, (_, i) => i + 1);
+  const ticks = [1];
+  for (let i = 1; i < maxTicks - 1; i++) {
+    ticks.push(1 + Math.round((i * (n - 1)) / (maxTicks - 1)));
+  }
+  ticks.push(n);
+  return Array.from(new Set(ticks));
+}
+
+function compactAxisTicks(ticks, maxTicks = 3) {
+  if (!Array.isArray(ticks) || ticks.length <= maxTicks) return ticks || [];
+  if (maxTicks <= 2) return [ticks[0], ticks[ticks.length - 1]];
+  const indexes = [0];
+  for (let i = 1; i < maxTicks - 1; i++) {
+    indexes.push(Math.round((i * (ticks.length - 1)) / (maxTicks - 1)));
+  }
+  indexes.push(ticks.length - 1);
+  return Array.from(new Set(indexes)).map((i) => ticks[i]);
+}
+
 function regularPaceScale(values, targetIntervals = 4) {
   // Shared by all pace charts. Keep labels on whole-minute boundaries.
   // Use 1:00 spacing for a tight pace range and 2:00 for a wider spread.
@@ -1556,6 +1578,7 @@ function LastActivityOverview({ run }) {
   const overviewDistanceTicks = Array.from(new Set(distanceScale.ticks.filter((_, i) => i % 2 === 0).filter((v) => v < run.distance_mi - 0.08).concat(Number(run.distance_mi.toFixed(2)))));
   const elevScale = elevationScale(run.detail_trace.map((p) => p.elev_ft), 5);
   const lapPaceScale = regularPaceScale(run.splits.map((s) => s.pace));
+  const lapPaceTicks = compactAxisTicks(lapPaceScale.ticks, 3);
   const outerCard = { background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:16, padding:"1rem 1.2rem", WebkitTextSizeAdjust:"100%", textSizeAdjust:"100%", containerType:"inline-size" };
   const innerCard = { background:"rgba(255,255,255,0.22)", border:"1px solid rgba(228,225,218,0.56)", borderRadius:14, padding:"0.9rem 0.78rem", backdropFilter:"blur(1px)", WebkitTextSizeAdjust:"100%", textSizeAdjust:"100%", minWidth:0, maxWidth:"100%", overflow:"hidden", boxSizing:"border-box" };
   return <section className="rd-last-activity-overview" style={{ ...outerCard, marginBottom:16 }}>
@@ -1576,7 +1599,7 @@ function LastActivityOverview({ run }) {
           <div style={{flex:"1 1 0",minHeight:130,marginTop:5,marginBottom:-2,width:"calc(100% + 12px)",marginLeft:-8,marginRight:-4}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={run.detail_trace.map((p,i)=>({...p,paceNeg:p.pace!=null?-p.pace:null,cadPlot:i%2===0?p.cad:null}))} margin={{top:8,right:0,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],run.distance_mi]} ticks={distanceTicksForRun(run.distance_mi)} interval={0} tickFormatter={(v)=>formatDistanceAxisTick(v, run.distance_mi)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:10,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={32} tickMargin={0} tickFormatter={(v)=>Math.round(v)}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={paceScale.ticks} interval={0} allowDataOverflow tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={38}/><Tooltip content={<ActivityTraceTooltip />} /><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25} hide={!!overviewHiddenSeries.elev_ft}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.paceNeg}/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.hr}/><Line yAxisId="cad" dataKey="cadPlot" stroke="transparent" strokeOpacity={1} dot={{r:1.8,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.2}} activeDot={{r:3.1,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.4}} isAnimationActive={false} connectNulls={false} hide={!!overviewHiddenSeries.cad}/></ComposedChart></ResponsiveContainer></div>
         </div>
         <div className="rd-overview-lap-card" style={{...innerCard,width:"100%",flex:"0 0 auto"}}>
-          <div style={{height:72}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={run.splits.map((s)=>({...s,paceNeg:s.pace!=null?-s.pace:null}))} margin={{top:4,right:10,left:0,bottom:0}}><XAxis dataKey="mile" tickFormatter={(v)=>"Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceScale.ticks} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={38}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} formatter={(value)=>[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div>
+          <div style={{height:72}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={run.splits.map((s)=>({...s,paceNeg:s.pace!=null?-s.pace:null}))} margin={{top:4,right:10,left:0,bottom:0}}><XAxis type="number" dataKey="mile" domain={isHillType(run.type) ? [1, Math.max(1, run.splits.length)] : ["dataMin", "dataMax"]} ticks={isHillType(run.type) ? compactOrdinalTicks(run.splits.length, 5) : undefined} interval={0} tickFormatter={(v)=>isHillType(run.type) ? String(v) : "Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={42} tickMargin={2}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} formatter={(value)=>[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div>
           <div style={{overflowX:"auto",marginTop:4}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr>{["Mi","Pace","Distance","HR","Elevation","Cadence"].map(h=><th key={h} style={{padding:"3px 5px",textAlign:"center",color:"var(--text-secondary)",fontWeight:500,borderBottom:".5px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{(() => { const paces = run.splits.map((s) => s.pace); const minPace = Math.min(...paces); const maxPace = Math.max(...paces); return run.splits.map((s) => { const barPct = maxPace > minPace ? 100 * (1 - (s.pace - minPace) / (maxPace - minPace)) : 100; const barWidth = Math.max(12, barPct); return <tr key={s.mile}><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}><span style={{ position: "relative", display: "inline-block", minWidth: 18 }}>{s.mile}{s.partial && <sup style={{ position: "absolute", left: "100%", top: -2, marginLeft: -2, fontSize: 8 }}>*</sup>}</span></td><td style={{padding:"3px 5px",borderBottom:".5px solid var(--border)"}}><div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}><span style={{ minWidth: 38, textAlign: "center" }}>{s.pace==null?"—":fmtPace(s.pace)}</span><div style={{ flex: 1, minWidth: 32, maxWidth: 78, height: 7, background: "var(--surface-2)", borderRadius: 4, overflow: "hidden" }}><div style={{ width: barWidth + "%", height: "100%", background: "#9DAAA2", borderRadius: 4 }} /></div></div></td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.partial ? Number(s.partial_distance_mi).toFixed(2) : "1.00"} mi</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_hr??"—"}</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.elev_net_ft != null ? (s.elev_net_ft > 0 ? "+" : "") + s.elev_net_ft + " ft" : "—"}</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_cadence??"—"}</td></tr>; }); })()}</tbody></table>{run.splits.some((s) => s.partial) && <p style={{ fontSize: 9.5, color: "var(--text-secondary)", margin: "5px 0 0" }}>* partial mile, pace extrapolated to a per-mile-equivalent</p>}</div>
         </div>
       </div>
@@ -2439,6 +2462,7 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
   const detailPaceScale = regularPaceScale(r.detail_trace.map((p) => p.pace));
   const detailElevScale = elevationScale(r.detail_trace.map((p) => p.elev_ft), 5);
   const lapPaceScale = regularPaceScale(r.splits.map((s) => s.pace));
+  const lapPaceTicks = compactAxisTicks(lapPaceScale.ticks, 3);
   const roundedRepeatSeconds = Math.round(Number(r.repeat_avg_time_s) || 0);
   const detailDateLabel = r.is_superlative ? fmtDateWithYear(r.date) : fmtDate(r.date);
   const raceName = r.is_superlative && r.type === "Race" && r.activity_title && !/^Recorded activity$/i.test(r.activity_title) ? r.activity_title : null;
@@ -2516,7 +2540,7 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
               <tbody>
                 {r.hill_reps.map((rep) => (
                   <tr key={rep.rep} style={{ borderBottom: "0.5px solid var(--border)" }}>
-                    <td style={{ padding: "6px 8px", textAlign: "center" }}>{rep.rep}{rep.rep === 1 ? " *" : ""}</td>
+                    <td style={{ padding: "6px 8px", textAlign: "center" }}>{rep.rep}</td>
                     <td style={{ padding: "6px 8px", textAlign: "center" }}>{rep.distance_mi} mi</td>
                     <td style={{ padding: "6px 8px", textAlign: "center" }}>{Math.round(rep.time_s)}s</td>
                     <td style={{ padding: "6px 8px", textAlign: "center" }}>{fmtPace(rep.pace_sec_per_mi)}/mi</td>
@@ -2559,9 +2583,9 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
             <div style={{ height: 100 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={r.splits.map((s) => ({ ...s, paceNeg: s.pace != null ? -s.pace : null }))} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
-                  <XAxis type="number" dataKey="mile" domain={[1, Math.max(1, Math.ceil(Number(r.distance_mi) || 1))]} ticks={mileTicksForRun(r.distance_mi)} interval={0} tickFormatter={(v) => String(v)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
-                  <YAxis domain={lapPaceScale.domain} ticks={lapPaceScale.ticks} interval={0} tickFormatter={(v) => fmtPace(-v)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={38} />
-                  <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(value, _, item) => [fmtPace(-value) + "/mi" + (item.payload.partial ? " (extrapolated)" : ""), "Pace"]} labelFormatter={(v) => "Mile " + v} />
+                  <XAxis type="number" dataKey="mile" domain={isHillType(r.type) ? [1, Math.max(1, r.splits.length)] : [1, Math.max(1, Math.ceil(Number(r.distance_mi) || 1))]} ticks={isHillType(r.type) ? compactOrdinalTicks(r.splits.length, 5) : mileTicksForRun(r.distance_mi)} interval={0} tickFormatter={(v) => String(v)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
+                  <YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v) => fmtPace(-v)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={42} tickMargin={2} />
+                  <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(value, _, item) => [fmtPace(-value) + "/mi" + (item.payload.partial ? " (extrapolated)" : ""), "Pace"]} labelFormatter={(v) => (isHillType(r.type) ? "Lap " : "Mile ") + v} />
                   <Area type="step" dataKey="paceNeg" stroke="#77807A" strokeWidth={1.5} fill="#9DAAA2" fillOpacity={0.75} baseValue="dataMin" />
                 </AreaChart>
               </ResponsiveContainer>
