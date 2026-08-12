@@ -891,6 +891,10 @@ function displayWorkoutType(type) {
   return type === "Hill" ? "Hills" : type;
 }
 
+function typeColorFor(type) {
+  return TYPE_COLOR[displayWorkoutType(type)] || TYPE_COLOR.Easy;
+}
+
 
 function isHillType(type) {
   return type === "Hill" || type === "Hills";
@@ -1405,7 +1409,7 @@ function ActivityStatsBlock({ title, groups }) {
 
 function ActivityStatsTab({ run, showHeader = true }) {
   if (!run) return null;
-  const typeColor = TYPE_COLOR[run.type] || TYPE_COLOR.Easy;
+  const typeColor = typeColorFor(run.type);
   const avgPace = runAveragePaceSec(run);
   const bestPace = Number.isFinite(Number(run.best_pace_sec_per_mi)) ? Number(run.best_pace_sec_per_mi) : null;
   const avgSpeedMph = run.distance_mi && run.duration_s ? (Number(run.distance_mi) / (Number(run.duration_s) / 3600)) : null;
@@ -1627,7 +1631,7 @@ function RunMetricGrid({ run, overview = false, initiallyExpanded = false, hideW
 
 function LastActivityOverview({ run }) {
   if (!run) return null;
-  const c = TYPE_COLOR[run.type] || TYPE_COLOR.Easy;
+  const c = typeColorFor(run.type);
   const w = weatherForRun(run);
   const weatherLine = weatherLineForRun(run);
   const [overviewHiddenSeries, setOverviewHiddenSeries] = useState({});
@@ -1785,7 +1789,7 @@ function ScheduleCalendar({ monthDate, setMonthDate, onDayClick }) {
           const typeKey = plannedTypeKey(planned);
           const actual = runForDate(iso);
           const actualTypeKey = actual ? plannedTypeKey({ type: actual.type }) : null;
-          const color = TYPE_COLOR[actualTypeKey || typeKey] || TYPE_COLOR.Easy;
+          const color = typeColorFor(actualTypeKey || typeKey);
           const isWorkout = planned && typeKey !== "Rest" && Number(planned.distance || 0) > 0;
           const milesValue = planned?.distanceRange || (planned?.distance != null && Number(planned.distance) > 0 ? `${planned.distance}` : "");
           const fullTypeLabel = planned ? getScheduleWorkoutDisplay(planned).main : "";
@@ -1829,7 +1833,7 @@ function PlannedRunModal({ date, onClose }) {
   const details = splitWorkoutDetail(display.detail);
   const actual = runForDate(date);
   const typeKey = plannedTypeKey(planned);
-  const color = TYPE_COLOR[typeKey] || TYPE_COLOR.Easy;
+  const color = typeColorFor(typeKey);
   const distance = planned.distanceRange || (planned.distance != null ? `${planned.distance} mi` : "—");
   const workoutDetailText = planned.details || [details.warmupCooldown, details.intervals].filter(Boolean).join(" · ");
   const workoutDetailLines = workoutDetailText ? workoutDetailText.split("·").map((part) => part.trim()).filter(Boolean) : [];
@@ -1932,7 +1936,7 @@ function CalendarMonth({ monthDate, setMonthDate, onDayClick }) {
         {cells.map((cell) => {
           const iso = dayISO(cell.date);
           const run = runForDate(iso);
-          const c = run ? TYPE_COLOR[run.type] || TYPE_COLOR.Easy : null;
+          const c = run ? typeColorFor(run.type) : null;
           return (
             <div
               key={iso}
@@ -2526,7 +2530,7 @@ function mileTicksForRun(distance) {
 }
 
 function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detailWatchDeviceName = null, hideExpandToggle = false }) {
-  const c = TYPE_COLOR[r.type] || TYPE_COLOR.Easy;
+  const c = typeColorFor(r.type);
   const weather = weatherForRun(r);
   const [hiddenSeries, setHiddenSeries] = useState({});
   const toggleSeries = (entryOrKey) => { const key = typeof entryOrKey === "string" ? entryOrKey : entryOrKey && entryOrKey.dataKey; if (key) setHiddenSeries((h) => ({ ...h, [key]: !h[key] })); };
@@ -2952,7 +2956,7 @@ function RunningDashboard() {
     const map = {};
     RUNS.forEach((r) => { map[r.type] = (map[r.type] || 0) + r.distance_mi; });
     return Object.entries(map).map(([type, miles]) => ({
-      type, miles: Math.round(miles * 100) / 100, color: (TYPE_COLOR[type] || TYPE_COLOR.Easy).solid,
+      type, miles: Math.round(miles * 100) / 100, color: typeColorFor(type).solid,
     }));
   }, []);
 
@@ -3177,7 +3181,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
             {RUNS.filter((r) => (runFilter === "All" || r.type === runFilter) && (!dateFrom || r.date >= dateFrom) && (!dateTo || r.date <= dateTo)).slice().reverse().map((r) => {
-              const c = TYPE_COLOR[r.type] || TYPE_COLOR.Easy;
+              const c = typeColorFor(r.type);
               return (
                 <button key={r.date} onClick={() => { setModalExpanded(false); setActiveRunDate(r.date); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 12, padding: "12px 16px", cursor: "pointer", textAlign: "left" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -3325,8 +3329,8 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                           minHeight: 48,
                           padding: "6px 8px",
                           borderRadius: 10,
-                          background: (TYPE_COLOR[r.type] || TYPE_COLOR.Easy).bg,
-                          boxShadow: "inset 0 0 0 1px " + (TYPE_COLOR[r.type] || TYPE_COLOR.Easy).solid,
+                          background: (typeColorFor(r.type)).bg,
+                          boxShadow: "inset 0 0 0 1px " + (typeColorFor(r.type)).solid,
                           alignItems: "center",
                           justifyContent: "center",
                           flexDirection: "column"
@@ -3383,7 +3387,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
             Pace and heart rate over time, by run type. For hills, this uses only the detected climb-repeat segments &mdash; not the recovery jogs between them &mdash; so it's not diluted by the easy portions.
           </p>
           {Object.entries(trendsByType).map(([type, points]) => {
-            const c = TYPE_COLOR[type] || TYPE_COLOR.Easy;
+            const c = typeColorFor(type);
             const trendPaceScale = niceScale(points.map((p) => p.pace == null ? null : -p.pace), 30);
             const trendDistanceScale = niceScale(points.map((p) => p.distance), 1, true);
             const trendCadenceScaleBase = niceScale(points.map((p) => p.avgCadence), 5);
