@@ -869,6 +869,30 @@ function displayWorkoutType(type) {
   return type === "Hill" ? "Hills" : type;
 }
 
+
+function isHillType(type) {
+  return type === "Hill" || type === "Hills";
+}
+
+function formatHillRepeatTimeLabel(seconds) {
+  const rounded = Math.round(Number(seconds) || 0);
+  if (rounded <= 0) return "—";
+  return rounded < 60 ? `:${String(rounded).padStart(2, "0")}` : fmtDuration(rounded);
+}
+
+function hillHeadingSummary(run, { includeDate = true } = {}) {
+  if (!run) return "—";
+  const parts = [];
+  if (includeDate) parts.push(fmtDate(run.date));
+  parts.push(run.distance_mi == null ? "—" : `${Number(run.distance_mi).toFixed(2)} mi`);
+  const repeatLabel = `${run.repeat_count ?? "—"} x ${formatHillRepeatTimeLabel(run.repeat_avg_time_s)}`;
+  parts.push(repeatLabel);
+  if (run.repeat_avg_grade_pct != null && isFinite(Number(run.repeat_avg_grade_pct))) {
+    parts.push(`${Number(run.repeat_avg_grade_pct).toFixed(1)}%`);
+  }
+  return parts.join(" · ");
+}
+
 function getScheduleWorkoutDisplay(planned) {
   const raw = planned && planned.type ? planned.type : "—";
   if (raw === "—") return { main: raw, detail: "" };
@@ -1307,7 +1331,7 @@ function ActivityStatsTab({ run, showHeader = true }) {
   const vo2 = run.user_vo2_max ?? run.activity_vo2_max ?? run.vo2_max;
   const w = weatherForRun(run);
   const weatherLine = weatherLineForRun(run);
-  const headerMeta = `${fmtDate(run.date)} · ${run.distance_mi == null ? "—" : `${Number(run.distance_mi).toFixed(2)} mi`} · ${avgPace == null ? "—" : `${fmtPace(avgPace)}/mi`}`;
+  const headerMeta = isHillType(run.type) ? hillHeadingSummary(run, { includeDate: true }) : `${fmtDate(run.date)} · ${run.distance_mi == null ? "—" : `${Number(run.distance_mi).toFixed(2)} mi`} · ${avgPace == null ? "—" : `${fmtPace(avgPace)}/mi`}`;
 
   const runStatsGroups = [
     [
@@ -2426,9 +2450,7 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
   if (r.avg_hr != null && r.max_hr != null) detailSubParts.push(`${Math.round(Number(r.avg_hr))}/${Math.round(Number(r.max_hr))} bpm`);
   else if (r.avg_hr != null) detailSubParts.push(`${Math.round(Number(r.avg_hr))} bpm`);
   if (r.elev_gain_ft != null) detailSubParts.push(`${Math.round(Number(r.elev_gain_ft))} ft gain`);
-  const repeatTimeLabel = roundedRepeatSeconds > 0
-    ? (roundedRepeatSeconds < 60 ? `:${String(roundedRepeatSeconds).padStart(2, "0")}` : fmtDuration(roundedRepeatSeconds))
-    : "—";
+  const repeatTimeLabel = formatHillRepeatTimeLabel(roundedRepeatSeconds);
   return (
     <div style={{ background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 16, padding: "1rem 1.2rem", WebkitTextSizeAdjust: "100%", textSizeAdjust: "100%" }}>
       <div className="rd-detail-header-row" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 7 }}>
@@ -2439,9 +2461,9 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
               <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 600, lineHeight: 1.15 }}>{raceName}</p>
               <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 500, minWidth: 0 }}>{detailDateLabel}{detailTimeRange && detailTimeRange !== "—" ? <> &middot; {detailTimeRange}</> : null}</p>
               <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{Number(r.distance_mi).toFixed(2)} mi &middot; {fmtPace(runAveragePaceSec(r))}/mi &middot; {fmtDuration(r.duration_s)}{r.elev_gain_ft != null ? ` · ${Math.round(Number(r.elev_gain_ft))} ft gain` : ""}</p>
-            </React.Fragment> : <React.Fragment>
+            </React.Fragment> : isHillType(r.type) ? <p style={{ margin: 0, fontSize: 13, fontWeight: 500, minWidth: 0 }}>{hillHeadingSummary(r, { includeDate: true })}</p> : <React.Fragment>
               <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 500, minWidth: 0 }}>{detailDateLabel}{detailTimeRange && detailTimeRange !== "—" ? <> &middot; {detailTimeRange}</> : null}</p>
-              <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{Number(r.distance_mi).toFixed(2)} mi &middot; {(r.type === "Hill" || r.type === "Hills") ? <>{r.repeat_count ?? "—"}×{repeatTimeLabel}{r.repeat_avg_grade_pct != null ? <> &middot; {Number(r.repeat_avg_grade_pct).toFixed(1)}% grade</> : null}</> : <>{fmtPace(runAveragePaceSec(r))}/mi</>} &middot; {fmtDuration(r.duration_s)}{r.elev_gain_ft != null ? ` · ${Math.round(Number(r.elev_gain_ft))} ft gain` : ""}</p>
+              <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{Number(r.distance_mi).toFixed(2)} mi &middot; {fmtPace(runAveragePaceSec(r))}/mi &middot; {fmtDuration(r.duration_s)}{r.elev_gain_ft != null ? ` · ${Math.round(Number(r.elev_gain_ft))} ft gain` : ""}</p>
             </React.Fragment>}
           </div>
         </div>
@@ -3085,8 +3107,8 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ background: c.solid, color: "#3D3428", fontSize: 12, padding: "4px 10px", borderRadius: 8, fontWeight: 500 }}>{displayWorkoutType(r.type)}</span>
                     <div>
-                      <p className="rd-mobile-link-accent" style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>{fmtDate(r.date)}</p>
-                      <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>{r.distance_mi} mi &middot; {fmtDuration(r.duration_s)} &middot; {fmtPace(runAveragePaceSec(r))}/mi</p>
+                      <p className="rd-mobile-link-accent" style={{ margin: 0, fontSize: isHillType(r.type) ? 13 : 14, fontWeight: 500, lineHeight: 1.25 }}>{isHillType(r.type) ? hillHeadingSummary(r, { includeDate: true }) : fmtDate(r.date)}</p>
+                      <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>{isHillType(r.type) ? `${fmtDuration(r.duration_s)}${r.elev_gain_ft != null ? ` · ${Math.round(Number(r.elev_gain_ft))} ft gain` : ""}` : `${r.distance_mi} mi · ${fmtDuration(r.duration_s)} · ${fmtPace(runAveragePaceSec(r))}/mi`}</p>
                     </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
