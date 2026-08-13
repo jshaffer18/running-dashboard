@@ -1436,6 +1436,151 @@ function primaryBenefitDescriptor(value) {
   return null;
 }
 
+const PRIMARY_BENEFIT_INFO = {
+  "Recovery": {
+    group: "Low Aerobic",
+    color: "#0EA95A",
+    description: "Low-intensity work that supports recovery while adding only a small training load. It is useful for easy movement, stress relief, and staying active between harder sessions.",
+  },
+  "Base": {
+    group: "Low Aerobic",
+    color: "#0EA95A",
+    description: "Steady low-aerobic work that develops and maintains your aerobic endurance foundation. It supports the fitness needed to handle longer efforts and more demanding training.",
+  },
+  "Tempo": {
+    group: "High Aerobic",
+    color: "#F57A0B",
+    description: "Sustained moderate-to-hard aerobic work that improves your ability to hold a stronger pace for longer and increases high-aerobic training load.",
+  },
+  "Threshold": {
+    group: "High Aerobic",
+    color: "#F57A0B",
+    description: "Work near your lactate threshold that improves your ability to sustain a hard pace before fatigue from accumulating lactate rises quickly.",
+  },
+  "VO₂ Max": {
+    group: "High Aerobic",
+    color: "#F57A0B",
+    description: "High-intensity aerobic work aimed at improving maximal oxygen uptake and your ability to sustain very hard efforts.",
+  },
+  "Anaerobic Capacity": {
+    group: "Anaerobic",
+    color: "#7B58F6",
+    description: "Short, high-intensity efforts that develop anaerobic energy production, repeated high-power efforts, and fatigue resistance when demand exceeds what aerobic metabolism can supply.",
+  },
+  "Sprint": {
+    group: "Anaerobic",
+    color: "#7B58F6",
+    description: "Very short, maximal efforts that develop top-end speed, explosive power, and the immediate anaerobic energy system used for brief bursts.",
+  },
+};
+
+const PRIMARY_BENEFIT_GROUPS = [
+  { group: "Anaerobic", items: ["Sprint", "Anaerobic Capacity"] },
+  { group: "High Aerobic", items: ["VO₂ Max", "Threshold", "Tempo"] },
+  { group: "Low Aerobic", items: ["Base", "Recovery"] },
+];
+
+function normalizePrimaryBenefit(value) {
+  const raw = String(value || "").trim();
+  const key = raw.toLowerCase().replace(/₂/g, "2").replace(/\s+/g, " ");
+  if (key === "vo2 max" || key === "vo2max") return "VO₂ Max";
+  if (key === "sprinting") return "Sprint";
+  if (key === "anaerobic" || key === "anaerobic capacity") return "Anaerobic Capacity";
+  if (key === "threshold") return "Threshold";
+  if (key === "tempo") return "Tempo";
+  if (key === "base") return "Base";
+  if (key === "recovery") return "Recovery";
+  return raw;
+}
+
+function PrimaryBenefitInfoModal({ value, onClose }) {
+  const normalized = normalizePrimaryBenefit(value);
+  const current = PRIMARY_BENEFIT_INFO[normalized] || null;
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Garmin primary benefit definitions"
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(31,27,22,.34)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18 }}
+    >
+      <div
+        onClick={(event) => event.stopPropagation()}
+        style={{ width: "min(430px, 100%)", maxHeight: "min(82vh, 680px)", overflowY: "auto", background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 18, boxShadow: "0 22px 60px rgba(31,27,22,.22)", padding: "18px 18px 16px" }}
+      >
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <p style={{ margin: 0, fontSize: 10, color: "var(--text-secondary)", fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>Garmin Primary Benefit</p>
+            <h3 style={{ margin: "4px 0 0", fontSize: 20, lineHeight: 1.15, fontWeight: 650 }}>{normalized || "Primary Benefit"}</h3>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close primary benefit definitions" style={{ border: "1px solid var(--border)", background: "rgba(255,255,255,.55)", width: 30, height: 30, borderRadius: 999, cursor: "pointer", fontSize: 18, lineHeight: 1, color: "var(--text-secondary)" }}>×</button>
+        </div>
+
+        {current ? (
+          <div style={{ marginTop: 14, padding: "12px 13px", borderRadius: 13, background: "rgba(255,255,255,.34)", border: "1px solid rgba(228,225,218,.68)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 999, background: current.color, flex: "0 0 auto" }} />
+              <span style={{ fontSize: 11, fontWeight: 700 }}>{current.group}</span>
+            </div>
+            <p style={{ margin: "8px 0 0", fontSize: 12.5, lineHeight: 1.5, color: "var(--text-secondary)" }}>{current.description}</p>
+          </div>
+        ) : null}
+
+        <div style={{ marginTop: 16 }}>
+          <p style={{ margin: "0 0 9px", fontSize: 11, fontWeight: 700 }}>Other Garmin primary benefits</p>
+          {PRIMARY_BENEFIT_GROUPS.map((section) => (
+            <div key={section.group} style={{ marginTop: 11 }}>
+              <p style={{ margin: "0 0 6px", fontSize: 10, color: "var(--text-secondary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em" }}>{section.group}</p>
+              <div style={{ display: "grid", gap: 5 }}>
+                {section.items.map((name) => {
+                  const info = PRIMARY_BENEFIT_INFO[name];
+                  const selected = name === normalized;
+                  return (
+                    <div key={name} style={{ display: "grid", gridTemplateColumns: "12px minmax(0,1fr)", gap: 8, alignItems: "start", padding: selected ? "7px 8px" : "5px 8px", borderRadius: 9, background: selected ? "rgba(255,255,255,.6)" : "transparent", border: selected ? "1px solid var(--border)" : "1px solid transparent" }}>
+                      <span aria-hidden="true" style={{ width: 9, height: 9, borderRadius: 999, background: info.color, marginTop: 3 }} />
+                      <div>
+                        <div style={{ fontSize: 11.5, fontWeight: selected ? 700 : 600 }}>{name}{selected ? " · current" : ""}</div>
+                        <div style={{ marginTop: 1, fontSize: 10.5, lineHeight: 1.35, color: "var(--text-secondary)" }}>{info.description}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p style={{ margin: "14px 0 0", fontSize: 9.5, lineHeight: 1.35, color: "var(--text-secondary)" }}>Definitions are concise dashboard summaries based on Garmin Training Effect / Primary Benefit guidance and Firstbeat workout-label physiology.</p>
+      </div>
+    </div>
+  );
+}
+
+function PrimaryBenefitValue({ value, style = {}, className = "", stopPropagation = false }) {
+  const [open, setOpen] = useState(false);
+  const normalized = normalizePrimaryBenefit(value);
+  const available = !!PRIMARY_BENEFIT_INFO[normalized];
+  if (!available || !value || value === "—") return <span className={className} style={style}>{value || "—"}</span>;
+  const openInfo = (event) => {
+    if (stopPropagation) event.stopPropagation();
+    setOpen(true);
+  };
+  return (
+    <>
+      <button
+        type="button"
+        className={className}
+        onClick={openInfo}
+        title="Tap for Garmin primary benefit definition"
+        aria-label={`${normalized}. Tap for Garmin primary benefit definition.`}
+        style={{ ...style, appearance: "none", border: 0, padding: 0, background: "transparent", color: "inherit", font: "inherit", lineHeight: "inherit", cursor: "pointer", textDecorationLine: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 3, textDecorationColor: "rgba(99,94,84,.42)" }}
+      >
+        {value}
+      </button>
+      {open ? <PrimaryBenefitInfoModal value={normalized} onClose={() => setOpen(false)} /> : null}
+    </>
+  );
+}
+
 function formatActivityStatsRecovery(hours, rawHours) {
   const value = Number.isFinite(Number(hours)) ? Number(hours) : Number(rawHours);
   if (!Number.isFinite(value)) return "—";
@@ -1482,7 +1627,7 @@ function ActivityStatsMetric({ item }) {
   return (
     <div className="rd-activity-stats-metric" style={{ minWidth: 0, width: "100%", textAlign: "left" }}>
       <p className="rd-activity-stats-metric-label" style={{ margin: 0, fontSize: 10, color: "var(--text-secondary)", lineHeight: 1.15, whiteSpace: "nowrap", textAlign: "left" }}>{item.label}</p>
-      <p className="rd-activity-stats-metric-value" style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 500, lineHeight: 1.15, whiteSpace: "normal", overflowWrap: "anywhere", textAlign: "left" }}>{item.value}</p>
+      <p className="rd-activity-stats-metric-value" style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 500, lineHeight: 1.15, whiteSpace: "normal", overflowWrap: "anywhere", textAlign: "left" }}>{item.primaryBenefit ? <PrimaryBenefitValue value={item.value} /> : item.value}</p>
       {item.sub ? <p className="rd-activity-stats-metric-sub" style={{ margin: "1px 0 0", fontSize: 8.5, color: "var(--text-secondary)", lineHeight: 1.05, whiteSpace: "nowrap", textAlign: "left" }}>({item.sub})</p> : null}
     </div>
   );
@@ -1566,7 +1711,7 @@ function ActivityStatsTab({ run, showHeader = true }) {
 
   const trainingGroups = [
     [
-      { label: "Benefit", value: run.primary_benefit || "—", sub: primaryBenefitDescriptor(run.primary_benefit) },
+      { label: "Benefit", value: run.primary_benefit || "—", sub: primaryBenefitDescriptor(run.primary_benefit), primaryBenefit: true },
       { label: "Aerobic", value: formatActivityStatNumber(run.aerobic_training_effect), sub: trainingEffectDescriptor(run.aerobic_training_effect) },
       { label: "Anaerobic", value: formatActivityStatNumber(run.anaerobic_training_effect), sub: trainingEffectDescriptor(run.anaerobic_training_effect) },
       { label: "Exercise Load", value: run.exercise_load == null ? "—" : `${Math.round(Number(run.exercise_load))}` },
@@ -1708,7 +1853,7 @@ function OverviewExtendedMetrics({ run, showHeader = true }) {
         <p style={{ margin: 0, fontSize: 9.5, color: "var(--text-secondary)" }}>— = not recorded for this activity</p>
       </div>}
       <div className="rd-overview-extended-metrics" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", border: "1px solid rgba(228,225,218,0.68)", borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.24)" }}>
-        {metrics.map(([label, value, descriptor]) => <div key={label} style={{ minWidth: 0, padding: descriptor ? "13px 10px 16px" : "13px 10px", textAlign: "center", borderRight: "1px solid rgba(228,225,218,0.58)", borderBottom: "1px solid rgba(228,225,218,0.58)", position: "relative" }}><div style={{ fontSize: 10, color: "var(--text-secondary)", lineHeight: 1.15 }}>{label}</div><div style={{ marginTop: 2, fontSize: 14, fontWeight: 500, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>{descriptor && <div style={{ position: "absolute", left: 5, right: 5, bottom: 3, fontSize: 8.5, lineHeight: 1, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{descriptor}</div>}</div>)}
+        {metrics.map(([label, value, descriptor]) => <div key={label} style={{ minWidth: 0, padding: descriptor ? "13px 10px 16px" : "13px 10px", textAlign: "center", borderRight: "1px solid rgba(228,225,218,0.58)", borderBottom: "1px solid rgba(228,225,218,0.58)", position: "relative" }}><div style={{ fontSize: 10, color: "var(--text-secondary)", lineHeight: 1.15 }}>{label}</div><div style={{ marginTop: 2, fontSize: 14, fontWeight: 500, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label === "Benefits" ? <PrimaryBenefitValue value={value} /> : value}</div>{descriptor && <div style={{ position: "absolute", left: 5, right: 5, bottom: 3, fontSize: 8.5, lineHeight: 1, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{descriptor}</div>}</div>)}
       </div>
     </div>
   );
@@ -1740,7 +1885,7 @@ function RunMetricGrid({ run, overview = false, initiallyExpanded = false, hideW
     <div style={{ minWidth: 0 }}>
       {!overview && !hideWeatherLine && <p className="rd-detail-activity-summary" style={{ margin: "0 0 8px", fontSize: 11, color: "var(--text-secondary)", textAlign: "center", whiteSpace: "normal" }}>{weatherLine}</p>}
       <div className={overview ? "rd-overview-metric-grid" : "rd-detail-metric-grid"} role="button" tabIndex={0} aria-expanded={showExtendedMetrics} aria-label={showExtendedMetrics ? "Hide extended activity metrics" : "Show extended activity metrics"} onClick={() => setShowExtendedMetrics((value) => !value)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setShowExtendedMetrics((value) => !value); } }} style={{ display: "grid", gridTemplateColumns: overview ? "repeat(2, minmax(0,1fr))" : "repeat(3, minmax(0,1fr))", border: "1px solid rgba(228,225,218,0.58)", borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.24)", backdropFilter: "blur(1px)", cursor: "pointer", outlineOffset: 3 }}>
-        {visibleMetrics.map(([label,value,descriptor], i) => <div key={label} style={{ padding: descriptor ? "13px 10px 16px" : "13px 10px", minWidth: 0, textAlign: "center", borderRight: (i % 3) !== 2 ? "1px solid rgba(228,225,218,0.58)" : "none", borderBottom: "1px solid rgba(228,225,218,0.58)", position: "relative" }}><div style={{ fontSize: 10, color: "var(--text-secondary)", lineHeight: 1.15 }}>{label}</div><div style={{ marginTop: 2, fontSize: 14, fontWeight: 500, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>{descriptor && <div style={{ position: "absolute", left: 5, right: 5, bottom: 3, fontSize: 8.5, lineHeight: 1, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{descriptor}</div>}</div>)}
+        {visibleMetrics.map(([label,value,descriptor], i) => <div key={label} style={{ padding: descriptor ? "13px 10px 16px" : "13px 10px", minWidth: 0, textAlign: "center", borderRight: (i % 3) !== 2 ? "1px solid rgba(228,225,218,0.58)" : "none", borderBottom: "1px solid rgba(228,225,218,0.58)", position: "relative" }}><div style={{ fontSize: 10, color: "var(--text-secondary)", lineHeight: 1.15 }}>{label}</div><div style={{ marginTop: 2, fontSize: 14, fontWeight: 500, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label === "Benefits" ? <PrimaryBenefitValue value={value} stopPropagation /> : value}</div>{descriptor && <div style={{ position: "absolute", left: 5, right: 5, bottom: 3, fontSize: 8.5, lineHeight: 1, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{descriptor}</div>}</div>)}
         <div style={{ gridColumn: "1 / -1", padding: "6px 8px", textAlign: "center", fontSize: 9.5, color: "var(--text-secondary)", fontWeight: 600, borderTop: "1px solid rgba(228,225,218,0.58)" }}>{showExtendedMetrics ? "Hide extra stats −" : "More stats +"}</div>
       </div>
     </div>
@@ -2782,7 +2927,7 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
               <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>Performance Condition</p>
               <div style={{ height: 100 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={conditionPoints} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                  <AreaChart data={conditionPoints} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
                     <XAxis type="number" dataKey="distance_mi" domain={[0, distanceEnd]} ticks={distanceTicksForRun(distanceEnd)} interval={0} tickFormatter={(value) => formatDistanceAxisTick(value, distanceEnd)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
                     <YAxis domain={conditionScale.domain} ticks={conditionScale.ticks} interval={0} allowDecimals={false} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={38} />
                     <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(value) => [Number(value).toFixed(0), "Performance condition"]} labelFormatter={(_, payload) => {
@@ -2792,8 +2937,8 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
                       return `${Number(point.distance_mi).toFixed(2)} mi · ${time}`;
                     }} />
                     <ReferenceLine y={0} stroke="var(--border)" strokeDasharray="3 3" />
-                    <Line type="stepAfter" dataKey="value" stroke="#7F9EAE" strokeWidth={1.8} dot={{ r: 2.3, fill: "#7F9EAE", stroke: "#7F9EAE" }} activeDot={{ r: 3.5 }} connectNulls={false} isAnimationActive={false} />
-                  </LineChart>
+                    <Area type="stepAfter" dataKey="value" stroke="#7F9EAE" strokeWidth={1.5} fill="#AFC8D5" fillOpacity={0.7} dot={{ r: 2.1, fill: "#7F9EAE", stroke: "#7F9EAE" }} activeDot={{ r: 3.5 }} connectNulls={false} isAnimationActive={false} />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>;
