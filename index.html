@@ -2767,26 +2767,32 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
           </div>
 
           {Array.isArray(r.performance_condition_trace) && r.performance_condition_trace.length > 0 && (() => {
-            const conditionByMile = r.splits.map((split) => {
-              const mileNumber = Number(split.mile);
-              const values = r.performance_condition_trace
-                .filter((point) => Math.ceil(Number(point.distance_mi)) === mileNumber)
-                .map((point) => Number(point.value))
-                .filter(Number.isFinite);
-              return { mile: split.mile, value: values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0, partial: !!split.partial };
-            });
-            const recordedValues = conditionByMile.map((point) => point.value).filter(Number.isFinite);
+            const conditionPoints = r.performance_condition_trace
+              .map((point) => ({
+                distance_mi: Number(point.distance_mi),
+                elapsed_s: Number(point.elapsed_s),
+                value: Number(point.value),
+              }))
+              .filter((point) => Number.isFinite(point.distance_mi) && Number.isFinite(point.value))
+              .sort((a, b) => a.distance_mi - b.distance_mi);
+            const recordedValues = conditionPoints.map((point) => point.value);
             const conditionScale = performanceConditionScale(recordedValues, 5);
+            const distanceEnd = Math.max(Number(r.distance_mi) || 0, ...conditionPoints.map((point) => point.distance_mi));
             return <div>
               <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>Performance Condition</p>
               <div style={{ height: 100 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={conditionByMile} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
-                    <XAxis type="number" dataKey="mile" domain={[1, Math.max(1, Math.ceil(Number(r.distance_mi) || 1))]} ticks={mileTicksForRun(r.distance_mi)} interval={0} tickFormatter={(value) => String(value)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
-                    <YAxis domain={conditionScale.domain} ticks={conditionScale.ticks} interval={0} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={38} />
-                    <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(value) => [Number(value).toFixed(1), "Performance condition"]} labelFormatter={(value) => "Mile " + value} />
+                  <AreaChart data={conditionPoints} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                    <XAxis type="number" dataKey="distance_mi" domain={[0, distanceEnd]} ticks={distanceTicksForRun(distanceEnd)} interval={0} tickFormatter={(value) => formatDistanceAxisTick(value, distanceEnd)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
+                    <YAxis domain={conditionScale.domain} ticks={conditionScale.ticks} interval={0} allowDecimals={false} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={38} />
+                    <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(value) => [Number(value).toFixed(0), "Performance condition"]} labelFormatter={(_, payload) => {
+                      const point = payload?.[0]?.payload;
+                      if (!point) return "";
+                      const time = Number.isFinite(point.elapsed_s) ? fmtDuration(point.elapsed_s) : "—";
+                      return `${Number(point.distance_mi).toFixed(2)} mi · ${time}`;
+                    }} />
                     <ReferenceLine y={0} stroke="var(--border)" strokeDasharray="3 3" />
-                    <Area type="step" dataKey="value" stroke="#7F9EAE" strokeWidth={1.5} fill="#AFC8D5" fillOpacity={0.7} connectNulls={true} />
+                    <Line type="stepAfter" dataKey="value" stroke="#7F9EAE" strokeWidth={1.8} dot={{ r: 2.3, fill: "#7F9EAE", stroke: "#7F9EAE" }} activeDot={{ r: 3.5 }} connectNulls={false} isAnimationActive={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
