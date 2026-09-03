@@ -2967,7 +2967,7 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
         </div>
       )}
 
-      {!(r.type === "Hill" || r.type === "Hills") && <MileSplitsTable run={r} />}
+      {!usesHillRepeatCharts(r) && <MileSplitsTable run={r} />}
 
       {!hideExpandToggle && <button
         onClick={onToggleExpand}
@@ -3319,7 +3319,10 @@ function RunningDashboard() {
 
   const typeBreakdown = useMemo(() => {
     const map = {};
-    RUNS.forEach((r) => { map[r.type] = (map[r.type] || 0) + r.distance_mi; });
+    RUNS.forEach((r) => {
+      const breakdownType = r.type === "Rehab" ? "Recovery" : r.type;
+      map[breakdownType] = (map[breakdownType] || 0) + r.distance_mi;
+    });
     return Object.entries(map).map(([type, miles]) => ({
       type, miles: Math.round(miles * 100) / 100, color: typeColorFor(type).solid,
     }));
