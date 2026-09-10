@@ -4323,7 +4323,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
             </section>
             <section className="rd-device-totals-races" style={{ minWidth: 0, paddingLeft: 18, borderLeft: "1px solid var(--border)" }}>
               <p className="rd-device-header-title rd-device-header-title-races" style={{ margin: "0 0 10px", fontSize: 11, color: "var(--text-primary)", fontWeight: 700, letterSpacing: 1.6, textTransform: "uppercase" }}>Races</p>
-              <div className="rd-grand-bib-row rd-device-top-bibs" style={{ display: "flex", flexWrap: "nowrap", justifyContent: "center", alignItems: "stretch", gap: 6, minWidth: 0, width: "100%" }}>
+              <div className="rd-grand-bib-row rd-device-top-bibs" style={{ display: "grid", gridTemplateColumns: "repeat(4,88px)", gap: 7, alignItems: "stretch", justifyContent: "center", minWidth: 0, width: "100%" }}>
                 <GrandRaceBib label="26.2" value={deviceDerived.races.raceMarathon} />
                 <GrandRaceBib label="13.1" value={deviceDerived.races.raceHalf} />
                 <GrandRaceBib label="10–30K" value={deviceDerived.races.raceOther} />
