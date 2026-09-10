@@ -573,15 +573,15 @@ const RESPONSIVE_CSS = `
   .rd-race-summary-bibs,
   .rd-device-top-bibs {
     display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 84px)) !important;
-    gap: 6px !important;
+    grid-template-columns: repeat(4, minmax(76px, 96px)) !important;
+    gap: 7px !important;
     justify-content: center !important;
     width: 100% !important;
   }
   .rd-race-summary-bibs .rd-grand-race-bib,
   .rd-device-top-bibs .rd-grand-race-bib {
     width: 100% !important;
-    max-width: 84px !important;
+    max-width: 96px !important;
   }
 }
 @media (max-width: 640px) {
@@ -595,6 +595,48 @@ const RESPONSIVE_CSS = `
     max-width: none !important;
   }
 }
+@media (min-width: 641px) {
+  .rd-kpi-option1 {
+    min-height: 86px !important;
+    padding: 8px 12px 7px !important;
+  }
+  .rd-kpi-option1-main {
+    grid-template-columns: 54px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  .rd-kpi-option1-art {
+    width: 54px !important;
+    height: 54px !important;
+    transform: translateY(-1px) !important;
+  }
+  .rd-kpi-option1-art img {
+    width: 84% !important;
+    height: 84% !important;
+    object-fit: contain !important;
+    transform: translateY(-1px) !important;
+  }
+  .rd-kpi-option1[data-kpi="race-countdown"] .rd-kpi-option1-art img {
+    width: calc(84% + 3px) !important;
+    height: calc(84% + 3px) !important;
+  }
+  .rd-kpi-option1-content {
+    transform: translateY(-1px) !important;
+  }
+  .rd-kpi-option1-label {
+    margin-bottom: 3px !important;
+    line-height: 1 !important;
+  }
+  .rd-kpi-option1-value {
+    margin-top: 1px !important;
+    line-height: .94 !important;
+  }
+  .rd-kpi-option1-dot {
+    top: 8px !important;
+    right: 8px !important;
+  }
+}
+
 @media (max-width: 640px) {
   /* Locked reference: four compact portrait KPI cards in one row. */
   .rd-kpi-grid {
@@ -4099,12 +4141,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                 {type === "Hill" && (
                   <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 10px" }}>Based on the individual hill-repeat laps (not the recovery jogs between them).</p>
                 )}
-                {points.length < 2 ? (
-                  <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>
-                    Need at least 2 runs of this type to show a trend. So far: {fmtPace(points[0].pace)}/mi at {points[0].hr} bpm on {fmtDate(points[0].date)}
-                    {points[0].repLength ? ` (avg rep: ${points[0].repLength} mi, ${Math.round(points[0].repTime)}s, ${points[0].repElev} ft gain${points[0].hillGrade != null ? `, ${points[0].hillGrade.toFixed(1)}% grade` : ""}, ${points[0].repCount} reps)` : ""}.
-                  </p>
-                ) : (
+                {points.length > 0 && (
                   <React.Fragment>
                     <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>
                       Pace, mileage, HR &amp; cadence{zoneTrendVisible[type] ? " · zone distribution shown as the narrow 100% stacked column beside mileage" : ""}
@@ -4152,11 +4189,11 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                           />
                           <Legend wrapperStyle={{ fontSize: 11 }} />
                           <Bar name="Mileage" yAxisId="distance" dataKey="distance" fill={ACTUAL_COLOR} radius={[3, 3, 0, 0]} barSize={18} />
-                          {zoneTrendVisible[type] && <Bar name="Zone 1" legendType="none" yAxisId="zones" dataKey="zone1Pct" stackId="zones" fill="#C9C5BA" fillOpacity={0.48} barSize={10} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
-                          {zoneTrendVisible[type] && <Bar name="Zone 2" legendType="none" yAxisId="zones" dataKey="zone2Pct" stackId="zones" fill="#9DAAA2" fillOpacity={0.48} barSize={10} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
-                          {zoneTrendVisible[type] && <Bar name="Zone 3" legendType="none" yAxisId="zones" dataKey="zone3Pct" stackId="zones" fill="#BDD1C5" fillOpacity={0.48} barSize={10} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
-                          {zoneTrendVisible[type] && <Bar name="Zone 4" legendType="none" yAxisId="zones" dataKey="zone4Pct" stackId="zones" fill="#E8B298" fillOpacity={0.48} barSize={10} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
-                          {zoneTrendVisible[type] && <Bar name="Zone 5" legendType="none" yAxisId="zones" dataKey="zone5Pct" stackId="zones" fill="#A26360" fillOpacity={0.48} barSize={10} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
+                          {zoneTrendVisible[type] && <Bar name="Zone 1" legendType="none" yAxisId="zones" dataKey="zone1Pct" stackId="zones" fill="#C9C5BA" fillOpacity={0.48} barSize={typeof window !== "undefined" && window.innerWidth <= 640 ? 6 : 10} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
+                          {zoneTrendVisible[type] && <Bar name="Zone 2" legendType="none" yAxisId="zones" dataKey="zone2Pct" stackId="zones" fill="#9DAAA2" fillOpacity={0.48} barSize={typeof window !== "undefined" && window.innerWidth <= 640 ? 6 : 10} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
+                          {zoneTrendVisible[type] && <Bar name="Zone 3" legendType="none" yAxisId="zones" dataKey="zone3Pct" stackId="zones" fill="#BDD1C5" fillOpacity={0.48} barSize={typeof window !== "undefined" && window.innerWidth <= 640 ? 6 : 10} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
+                          {zoneTrendVisible[type] && <Bar name="Zone 4" legendType="none" yAxisId="zones" dataKey="zone4Pct" stackId="zones" fill="#E8B298" fillOpacity={0.48} barSize={typeof window !== "undefined" && window.innerWidth <= 640 ? 6 : 10} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
+                          {zoneTrendVisible[type] && <Bar name="Zone 5" legendType="none" yAxisId="zones" dataKey="zone5Pct" stackId="zones" fill="#A26360" fillOpacity={0.48} barSize={typeof window !== "undefined" && window.innerWidth <= 640 ? 6 : 10} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
                           <Line name="Pace" yAxisId="pace" type="monotone" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={2} dot={{ r: 4 }} />
                           <Line name="HR" yAxisId="hr" type="monotone" dataKey="hr" stroke="#A26360" strokeWidth={2} dot={{ r: 4 }} />
                           <Line name="Avg Cadence" yAxisId="cadence" type="monotone" dataKey="avgCadence" stroke={TYPE_COLOR.Tempo.solid} strokeWidth={1.75} strokeDasharray="4 4" dot={false} activeDot={false} connectNulls />
