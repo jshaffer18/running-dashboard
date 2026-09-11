@@ -1961,22 +1961,30 @@ function ActivityStatsMetric({ item }) {
   );
 }
 
-function ActivityStatsGroup({ items }) {
+function ActivityStatsGroup({ items, compact = false }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: 12 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: compact ? 8 : 12 }}>
       {items.map((item) => <ActivityStatsMetric key={item.label} item={item} />)}
     </div>
   );
 }
 
-function ActivityStatsMetricGroups({ groups }) {
+function ActivityStatsMetricGroups({ groups, compact = false, distribute = false }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr", paddingTop: 8 }}>
+    <div style={{
+      display: distribute ? "flex" : "grid",
+      flexDirection: distribute ? "column" : undefined,
+      justifyContent: distribute ? "space-between" : undefined,
+      flex: distribute ? "1 1 auto" : undefined,
+      minHeight: 0,
+      gridTemplateColumns: "1fr",
+      paddingTop: 8
+    }}>
       {groups.map((group, groupIndex) => (
         <div key={groupIndex}>
-          <ActivityStatsGroup items={group} />
+          <ActivityStatsGroup items={group} compact={compact} />
           {groupIndex < groups.length - 1 ? (
-            <div style={{ display: "flex", justifyContent: "flex-start", padding: "10px 0" }}>
+            <div style={{ display: "flex", justifyContent: "flex-start", padding: compact ? "8px 0" : "10px 0" }}>
               <div aria-hidden="true" style={{ width: 66, height: 1, background: "var(--border)" }} />
             </div>
           ) : null}
@@ -1986,14 +1994,14 @@ function ActivityStatsMetricGroups({ groups }) {
   );
 }
 
-function ActivityStatsBlock({ title, groups }) {
+function ActivityStatsBlock({ title, groups, compact = false, distribute = false }) {
   return (
-    <section className="rd-activity-stats-block" style={{ minWidth: 0 }}>
+    <section className="rd-activity-stats-block" style={{ minWidth: 0, alignSelf: distribute ? "stretch" : undefined, display: distribute ? "flex" : undefined, flexDirection: distribute ? "column" : undefined }}>
       <div style={{ marginBottom: 0 }}>
         <p className="rd-activity-stats-title" style={{ margin: "0 0 4px", fontSize: 11, lineHeight: 1.15, fontWeight: 600, color: "var(--text-primary)", textAlign: "left", letterSpacing: 0 }}>{title}</p>
         <div aria-hidden="true" style={{ width: "100%", height: 1, background: "var(--border)" }} />
       </div>
-      <ActivityStatsMetricGroups groups={groups} />
+      <ActivityStatsMetricGroups groups={groups} compact={compact} distribute={distribute} />
     </section>
   );
 }
@@ -2002,6 +2010,7 @@ function ActivityStatsTab({ run, showHeader = true }) {
   if (!run) return null;
   const typeColor = typeColorFor(run.type);
   const avgPace = runAveragePaceSec(run);
+  const tempo = tempoSegmentSummary(run);
   const bestPace = Number.isFinite(Number(run.best_pace_sec_per_mi)) ? Number(run.best_pace_sec_per_mi) : null;
   const avgSpeedMph = run.distance_mi && run.duration_s ? (Number(run.distance_mi) / (Number(run.duration_s) / 3600)) : null;
   const maxSpeedMph = getMaxSpeedMph(run, bestPace);
@@ -2019,6 +2028,7 @@ function ActivityStatsTab({ run, showHeader = true }) {
     ],
     [
       { label: "Avg Pace", value: avgPace == null ? "—" : `${fmtPace(avgPace)}/mi` },
+      ...(tempo ? [{ label: "Tempo Pace", value: `${fmtPace(tempo.pace_sec_per_mi)}/mi` }] : []),
       { label: "Best Pace", value: bestPace == null ? "—" : `${fmtPace(bestPace)}/mi` },
     ],
     [
@@ -2082,7 +2092,7 @@ function ActivityStatsTab({ run, showHeader = true }) {
       </div>}
       <div style={{ background: "rgba(255,255,255,0.22)", border: "1px solid rgba(228,225,218,0.56)", borderRadius: 14, padding: "0.9rem 0.78rem", backdropFilter: "blur(1px)" }}>
         <div className="rd-activity-stats-layout" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 15, alignItems: "start" }}>
-          <ActivityStatsBlock title="Run Summary" groups={runStatsGroups} />
+          <ActivityStatsBlock title="Run Summary" groups={runStatsGroups} compact={!!tempo} distribute={!!tempo} />
           <div className="rd-activity-stats-block" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 15, minWidth: 0, alignSelf: "stretch" }}>
             <ActivityStatsBlock title="Running Dynamics" groups={dynamicsGroups} />
             <ActivityStatsBlock title="Training Effect" groups={trainingGroups} />
@@ -2154,9 +2164,11 @@ function OverviewWatchMetrics({ run, expanded = false, onToggle }) {
   return (
     <div className="rd-overview-metrics-list" role="button" tabIndex={0} aria-expanded={expanded} aria-label={expanded ? "Hide extended last activity metrics" : "Show extended last activity metrics"} title={expanded ? "Hide extended metrics" : "Tap for more metrics"} onClick={() => onToggle?.()} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onToggle?.(); } }} style={{ display: "grid", gridTemplateColumns: "1fr", gap: 0, alignContent: "start", width: 132, maxWidth: 132, justifySelf: "stretch", textAlign: "center", cursor: "pointer", borderRadius: 10, outlineOffset: 3 }}>
       {metrics.map(([label, value], i) => {
-        const compactTempoPaceSpacing = !!tempo && ["Avg Pace", "Tempo Pace", "Best Pace"].includes(label);
+        const tempoMetricPadding = tempo
+          ? (i === 0 ? "0 0 4px 0" : i === metrics.length - 1 ? "4px 0 0" : "4px 0")
+          : (i === 0 ? "0 0 6px 0" : "6px 0");
         return (
-        <div key={label} style={{ minWidth: 0, width: "100%", padding: i === 0 ? "0 0 6px 0" : compactTempoPaceSpacing ? "3px 0" : "6px 0", position: "relative" }}>
+        <div key={label} style={{ minWidth: 0, width: "100%", padding: tempoMetricPadding, position: "relative" }}>
           {i > 0 && <span aria-hidden="true" style={{ position: "absolute", top: 0, left: "50%", width: 66, height: 1, background: "var(--border)", transform: "translateX(-50%)" }} />}
           <p style={{ margin: 0, fontSize: 10, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{label}</p>
           <p style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 500, whiteSpace: "nowrap", lineHeight: 1.15 }}>{value}</p>
