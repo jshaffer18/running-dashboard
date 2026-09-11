@@ -1181,6 +1181,55 @@ function intervalHeadingSummary(run, { includeDate = true } = {}) {
   return parts.join(" · ");
 }
 
+function tempoSegmentSummary(run) {
+  if (!run || displayWorkoutType(run.type) !== "Tempo" || !Array.isArray(run.tempo_miles) || !run.tempo_miles.length) return null;
+  const tempoMiles = new Set(run.tempo_miles.map((mile) => Number(mile)));
+  const splits = (run.splits || []).filter((split) => tempoMiles.has(Number(split.mile)) && Number(split.time_s) > 0 && Number(split.distance_mi) > 0);
+  if (!splits.length) return null;
+  const time_s = splits.reduce((sum, split) => sum + Number(split.time_s || 0), 0);
+  const distance_mi = splits.reduce((sum, split) => sum + Number(split.distance_mi || 0), 0);
+  return {
+    time_s,
+    distance_mi,
+    pace_sec_per_mi: distance_mi > 0 ? time_s / distance_mi : null,
+  };
+}
+
+function tempoHeadingSummary(run, { includeDate = true } = {}) {
+  const tempo = tempoSegmentSummary(run);
+  if (!tempo) return includeDate ? fmtDate(run.date) : "Tempo";
+  const parts = [];
+  if (includeDate) parts.push(fmtDate(run.date));
+  const distanceLabel = Math.abs(tempo.distance_mi - Math.round(tempo.distance_mi)) < 0.01
+    ? `${Math.round(tempo.distance_mi)} mi`
+    : `${tempo.distance_mi.toFixed(2)} mi`;
+  parts.push(distanceLabel);
+  parts.push(`${fmtPace(tempo.pace_sec_per_mi)} Tempo Pace`);
+  return parts.join(" · ");
+}
+
+function runTotalSummary(run) {
+  if (!run) return "—";
+  const parts = [];
+  if (run.distance_mi != null) parts.push(`${Number(run.distance_mi).toFixed(2)} mi`);
+  const pace = runAveragePaceSec(run);
+  if (pace != null && Number.isFinite(Number(pace))) parts.push(`${fmtPace(pace)}/mi`);
+  if (run.duration_s != null) parts.push(fmtDuration(run.duration_s));
+  if (run.elev_gain_ft != null) parts.push(`${Math.round(Number(run.elev_gain_ft))} ft gain`);
+  return parts.join(" · ");
+}
+
+function specialRunHeading(run, { includeDate = true } = {}) {
+  if (isHillType(run.type)) return hillHeadingSummary(run, { includeDate });
+  if (usesIntervalRepeatCharts(run)) return intervalHeadingSummary(run, { includeDate });
+  if (displayWorkoutType(run.type) === "Tempo" && tempoSegmentSummary(run)) return tempoHeadingSummary(run, { includeDate });
+  return includeDate ? fmtDate(run.date) : "";
+}
+
+function usesSpecialRunHeading(run) {
+  return !!(run && (isHillType(run.type) || usesIntervalRepeatCharts(run) || (displayWorkoutType(run.type) === "Tempo" && tempoSegmentSummary(run))));
+}
+
 function getScheduleWorkoutDisplay(planned) {
   const raw = planned && planned.type ? planned.type : "—";
   if (raw === "—") return { main: raw, detail: "" };
@@ -1959,11 +2008,9 @@ function ActivityStatsTab({ run, showHeader = true }) {
   const vo2 = run.user_vo2_max ?? run.activity_vo2_max ?? run.vo2_max;
   const w = weatherForRun(run);
   const weatherLine = weatherLineForRun(run);
-  const headerMeta = isHillType(run.type)
-    ? hillHeadingSummary(run, { includeDate: true })
-    : usesIntervalRepeatCharts(run)
-      ? intervalHeadingSummary(run, { includeDate: true })
-      : `${fmtDate(run.date)} · ${run.distance_mi == null ? "—" : `${Number(run.distance_mi).toFixed(2)} mi`} · ${avgPace == null ? "—" : `${fmtPace(avgPace)}/mi`}`;
+  const headerMeta = usesSpecialRunHeading(run)
+    ? specialRunHeading(run, { includeDate: true })
+    : `${fmtDate(run.date)} · ${run.distance_mi == null ? "—" : `${Number(run.distance_mi).toFixed(2)} mi`} · ${avgPace == null ? "—" : `${fmtPace(avgPace)}/mi`}`;
 
   const runStatsGroups = [
     [
@@ -2028,7 +2075,8 @@ function ActivityStatsTab({ run, showHeader = true }) {
             <span style={{ background: typeColor.solid, color: "#3D3428", fontSize: 12, fontWeight: 500, padding: "3px 9px", borderRadius: 8, lineHeight: 1.1 }}>{displayWorkoutType(run.type)}</span>
             <p style={{ margin: 0, fontSize: 14, fontWeight: 500, textAlign: "left" }}>{headerMeta}</p>
           </div>
-          <p className="rd-detail-activity-summary" style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)", textAlign: "left", whiteSpace: "normal" }}>{weatherLine}</p>
+          {usesSpecialRunHeading(run) && <p className="rd-detail-activity-summary" style={{ margin: "1px 0 0", fontSize: 12, color: "var(--text-secondary)", textAlign: "left", whiteSpace: "normal" }}>{runTotalSummary(run)}</p>}
+          <p className="rd-detail-activity-summary" style={{ margin: usesSpecialRunHeading(run) ? "1px 0 0" : 0, fontSize: 12, color: "var(--text-secondary)", textAlign: "left", whiteSpace: "normal" }}>{weatherLine}</p>
         </div>
         <div style={{ alignSelf: "start", justifySelf: "end", width: 49, minWidth: 49 }}><RunHeaderVisuals run={run} color={typeColor.solid} compact showShoe={false} showWeather={false} /></div>
       </div>}
@@ -2091,10 +2139,12 @@ function OverviewWatchMetrics({ run, expanded = false, onToggle }) {
   const avgPace = runAveragePaceSec(run);
   const bestPace = run.best_pace_sec_per_mi ?? null;
   const avgStride = run.avg_stride_length_m ?? (run.avg_cadence ? (((Number(run.distance_mi)||0)*1609.344) / Math.max((Number(run.duration_s)||0)/60, .01) / Number(run.avg_cadence)) : null);
+  const tempo = tempoSegmentSummary(run);
   const metrics = [
     ["Distance", `${Number(run.distance_mi || 0).toFixed(2)} mi`],
     ["Time", fmtDuration(run.duration_s)],
     ["Avg Pace", `${fmtPace(avgPace)}/mi`],
+    ...(tempo ? [["Tempo Pace", `${fmtPace(tempo.pace_sec_per_mi)}/mi`]] : []),
     ["Best Pace", bestPace == null ? "—" : `${fmtPace(bestPace)}/mi`],
     ["Ascent", run.elev_gain_ft == null ? "—" : `${Math.round(run.elev_gain_ft)} ft`],
     ["Cadence", run.avg_cadence == null ? "—" : `${run.avg_cadence}`],
@@ -2103,13 +2153,16 @@ function OverviewWatchMetrics({ run, expanded = false, onToggle }) {
   ];
   return (
     <div className="rd-overview-metrics-list" role="button" tabIndex={0} aria-expanded={expanded} aria-label={expanded ? "Hide extended last activity metrics" : "Show extended last activity metrics"} title={expanded ? "Hide extended metrics" : "Tap for more metrics"} onClick={() => onToggle?.()} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onToggle?.(); } }} style={{ display: "grid", gridTemplateColumns: "1fr", gap: 0, alignContent: "start", width: 132, maxWidth: 132, justifySelf: "stretch", textAlign: "center", cursor: "pointer", borderRadius: 10, outlineOffset: 3 }}>
-      {metrics.map(([label, value], i) => (
-        <div key={label} style={{ minWidth: 0, width: "100%", padding: i === 0 ? "0 0 6px 0" : "6px 0", position: "relative" }}>
+      {metrics.map(([label, value], i) => {
+        const compactTempoPaceSpacing = !!tempo && ["Avg Pace", "Tempo Pace", "Best Pace"].includes(label);
+        return (
+        <div key={label} style={{ minWidth: 0, width: "100%", padding: i === 0 ? "0 0 6px 0" : compactTempoPaceSpacing ? "3px 0" : "6px 0", position: "relative" }}>
           {i > 0 && <span aria-hidden="true" style={{ position: "absolute", top: 0, left: "50%", width: 66, height: 1, background: "var(--border)", transform: "translateX(-50%)" }} />}
           <p style={{ margin: 0, fontSize: 10, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{label}</p>
           <p style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 500, whiteSpace: "nowrap", lineHeight: 1.15 }}>{value}</p>
         </div>
-      ))}
+        );
+      })}
       <span style={{ marginTop: 5, fontSize: 9.5, color: "var(--text-secondary)", fontWeight: 600 }}>{expanded ? "Hide extra stats −" : "More stats +"}</span>
     </div>
   );
@@ -2200,7 +2253,7 @@ function LastActivityOverview({ run }) {
     <div className="rd-last-activity-overview-grid" style={{ display:"grid", gridTemplateColumns:"minmax(320px,.88fr) minmax(350px,1.12fr)", gap:12, alignItems:"stretch", width:"100%", minWidth:0 }}>
       <div style={{...innerCard,height:"100%",width:"100%"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:6}}><p style={{margin:0,fontSize:13,fontWeight:500,color:"var(--text-secondary)"}}>Last recorded activity</p><span style={{background:c.solid,color:"#3D3428",fontSize:12,padding:"3px 9px",borderRadius:8,fontWeight:500}}>{displayWorkoutType(run.type)}</span></div>
-        <p style={{margin:"0 0 12px",fontSize:usesStructuredRepeatCharts(run) ?14:18,fontWeight:600,lineHeight:1.25}}>{isHillType(run.type) ? hillHeadingSummary(run, { includeDate: true }) : usesIntervalRepeatCharts(run) ? intervalHeadingSummary(run, { includeDate: true }) : fmtDate(run.date)}</p>
+        <p style={{margin:"0 0 12px",fontSize:usesSpecialRunHeading(run) ?14:18,fontWeight:600,lineHeight:1.25}}>{usesSpecialRunHeading(run) ? specialRunHeading(run, { includeDate: true }) : fmtDate(run.date)}</p>
         <div className="rd-overview-watch-metrics" style={{display:"grid",gridTemplateColumns:"minmax(0,220px) 132px",justifyContent:"start",gap:8,alignItems:"start",minWidth:0,width:"100%"}}><div className="rd-overview-watch-visual" style={{display:"flex",justifyContent:"center",alignItems:"center",minWidth:0,width:"100%",minHeight:300,transform:"translateY(-11px)"}}><LastActivityWatch run={run} scale={1.12} /></div><OverviewWatchMetrics run={run} expanded={showExtendedMetrics} onToggle={() => setShowExtendedMetrics(true)} /></div>
       </div>
       <div className="rd-last-activity-overview-secondary" style={{display:"flex",flexDirection:"column",gap:10,height:"100%",minWidth:0}}>
@@ -3121,9 +3174,12 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
               <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 600, lineHeight: 1.15 }}>{raceName}</p>
               <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 500, minWidth: 0 }}>{detailDateLabel}{detailTimeRange && detailTimeRange !== "—" ? <> &middot; {detailTimeRange}</> : null}</p>
               <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{Number(r.distance_mi).toFixed(2)} mi &middot; {fmtPace(runAveragePaceSec(r))}/mi &middot; {fmtDuration(r.duration_s)}{r.elev_gain_ft != null ? ` · ${Math.round(Number(r.elev_gain_ft))} ft gain` : ""}</p>
-            </React.Fragment> : usesHillRepeatCharts(r) ? <p style={{ margin: 0, fontSize: 13, fontWeight: 500, minWidth: 0 }}>{hillHeadingSummary(r, { includeDate: true })}</p> : usesIntervalRepeatCharts(r) ? <p style={{ margin: 0, fontSize: 13, fontWeight: 500, minWidth: 0 }}>{intervalHeadingSummary(r, { includeDate: true })}</p> : <React.Fragment>
+            </React.Fragment> : usesSpecialRunHeading(r) ? <React.Fragment>
+              <p style={{ margin: "0 0 3px", fontSize: 13, fontWeight: 500, minWidth: 0 }}>{specialRunHeading(r, { includeDate: true })}</p>
+              <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{runTotalSummary(r)}</p>
+            </React.Fragment> : <React.Fragment>
               <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 500, minWidth: 0 }}>{detailDateLabel}{detailTimeRange && detailTimeRange !== "—" ? <> &middot; {detailTimeRange}</> : null}</p>
-              <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{Number(r.distance_mi).toFixed(2)} mi &middot; {fmtPace(runAveragePaceSec(r))}/mi &middot; {fmtDuration(r.duration_s)}{r.elev_gain_ft != null ? ` · ${Math.round(Number(r.elev_gain_ft))} ft gain` : ""}</p>
+              <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{runTotalSummary(r)}</p>
             </React.Fragment>}
           </div>
         </div>
@@ -4019,8 +4075,8 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ background: c.solid, color: "#3D3428", fontSize: 12, padding: "4px 10px", borderRadius: 8, fontWeight: 500 }}>{displayWorkoutType(r.type)}</span>
                     <div>
-                      <p className="rd-mobile-link-accent" style={{ margin: 0, fontSize: usesStructuredRepeatCharts(r) ? 13 : 14, fontWeight: 500, lineHeight: 1.25 }}>{isHillType(r.type) ? hillHeadingSummary(r, { includeDate: true }) : usesIntervalRepeatCharts(r) ? intervalHeadingSummary(r, { includeDate: true }) : fmtDate(r.date)}</p>
-                      <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>{usesStructuredRepeatCharts(r) ? `${fmtDuration(r.duration_s)}${r.elev_gain_ft != null ? ` · ${Math.round(Number(r.elev_gain_ft))} ft gain` : ""}` : `${r.distance_mi} mi · ${fmtDuration(r.duration_s)} · ${fmtPace(runAveragePaceSec(r))}/mi`}</p>
+                      <p className="rd-mobile-link-accent" style={{ margin: 0, fontSize: usesSpecialRunHeading(r) ? 13 : 14, fontWeight: 500, lineHeight: 1.25 }}>{usesSpecialRunHeading(r) ? specialRunHeading(r, { includeDate: true }) : fmtDate(r.date)}</p>
+                      <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>{runTotalSummary(r)}</p>
                     </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
