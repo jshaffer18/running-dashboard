@@ -4232,7 +4232,10 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                   const plannedMi = d.planned ? d.planned.distance : null;
                   const plannedMiDisplay = d.planned && d.planned.distanceRange ? d.planned.distanceRange : plannedMi;
                   const actualMi = r ? r.distance_mi : null;
-                  const actualPace = r ? fmtPace(runAveragePaceSec(r)) : "\u2014";
+                  const tempoLogSummary = r ? tempoSegmentSummary(r) : null;
+                  const actualPace = r
+                    ? fmtPace(tempoLogSummary ? tempoLogSummary.pace_sec_per_mi : runAveragePaceSec(r))
+                    : "\u2014";
                   const dayLetter = { Mon: "M", Tue: "T", Wed: "W", Thu: "T", Fri: "F", Sat: "S", Sun: "S" }[d.day] || d.day;
                   let deltaColor = "var(--text-secondary)";
                   if (plannedMi != null && actualMi != null) deltaColor = Math.abs(actualMi - plannedMi) < 0.3 ? "#666C64" : "#795E4F";
