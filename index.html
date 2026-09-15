@@ -3466,85 +3466,115 @@ function RaceExpandedCharts({ race }) {
     cumulativeElevation += Number(split.elev_net_ft) || 0;
     return {
       ...split,
-      chartIndex: index + 1,
+      mile: index + 1,
       distanceEnd: cumulativeDistance,
       paceNeg: Number.isFinite(Number(split.pace)) ? -Number(split.pace) : null,
       elevation: cumulativeElevation,
       cadence: split.avg_cadence != null ? Number(split.avg_cadence) : null,
+      cadPlot: index % 2 === 0 && split.avg_cadence != null ? Number(split.avg_cadence) : null,
     };
   });
 
-  const paceScale = regularPaceScale(chartData.map((point) => point.pace), 4);
-  const paceTicks = compactAxisTicks(paceScale.ticks, 4);
-  const elevationValues = chartData.map((point) => point.elevation).filter(Number.isFinite);
-  const elevationDomain = elevationValues.length
-    ? [Math.min(...elevationValues) - 20, Math.max(...elevationValues) + 20]
-    : [0, 1];
-  const cadenceValues = chartData.map((point) => point.cadence).filter(Number.isFinite);
-  const cadenceBase = cadenceValues.length ? niceScale(cadenceValues, 5) : { domain: [150, 200] };
+  const raceDistance = Number(race.recorded_distance_mi) || cumulativeDistance || 1;
+
+  // Match the Splits-tab chart scales/interval rules.
+  const comboPaceScale = regularPaceScale(chartData.map((point) => point.pace));
+  const comboElevScale = elevationScale(chartData.map((point) => point.elevation), 5);
+  const lapPaceScale = regularPaceScale(chartData.map((point) => point.pace));
+  const lapPaceTicks = compactAxisTicks(lapPaceScale.ticks, 4);
 
   return (
     <div style={{ marginTop: 14 }}>
       <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>Race overview · pace, elevation &amp; cadence</p>
-      <div style={{ height: 185 }}>
+      <div style={{ display: "flex", gap: 6, fontSize: 11, color: "var(--text-secondary)", flexWrap: "nowrap", alignItems: "center", marginBottom: 4, minWidth: 0, whiteSpace: "nowrap" }}>
+        {[{ label: "Elevation", swatch: { background: "#BDD1C5", opacity: 0.5, borderRadius: 2 } }, { label: "Pace", swatch: { background: "#9DAAA2", borderRadius: 2 } }, { label: "Cadence", swatch: { background: TYPE_COLOR.Tempo.solid, borderRadius: "50%" } }].map((item) => (
+          <span key={item.label} style={{ whiteSpace: "nowrap" }}>
+            <span style={{ display: "inline-block", width: 9, height: 9, marginRight: 4, ...item.swatch }}></span>{item.label}
+          </span>
+        ))}
+      </div>
+      <div style={{ height: 190, width: "calc(100% + 12px)", marginLeft: -8, marginRight: -4 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+          <ComposedChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 4 }}>
             <XAxis
               type="number"
               dataKey="distanceEnd"
-              domain={[0, Number(race.recorded_distance_mi) || "dataMax"]}
-              ticks={distanceTicksForRun(Number(race.recorded_distance_mi) || 1)}
+              domain={[0, raceDistance]}
+              ticks={distanceTicksForRun(raceDistance)}
               interval={0}
-              tickFormatter={(value) => formatDistanceAxisTick(value, Number(race.recorded_distance_mi) || 1)}
+              tickFormatter={(value) => formatDistanceAxisTick(value, raceDistance)}
               tick={{ fontSize: 10, fill: "var(--text-secondary)" }}
               axisLine={{ stroke: "var(--border)" }}
               tickLine={false}
             />
             <YAxis
-              yAxisId="pace"
-              domain={paceScale.domain}
-              ticks={paceTicks}
+              yAxisId="elev"
+              orientation="right"
+              domain={comboElevScale.domain}
+              ticks={comboElevScale.ticks}
               interval={0}
-              tickFormatter={(value) => fmtPace(-value)}
+              tick={{ fontSize: 10, fill: "#8FA88F" }}
+              axisLine={false}
+              tickLine={false}
+              width={32}
+              tickMargin={0}
+              tickFormatter={(value) => Math.round(value)}
+            />
+            <YAxis yAxisId="cad" hide domain={[130, 220]} />
+            <YAxis
+              yAxisId="pace"
+              orientation="left"
+              domain={comboPaceScale.domain}
+              ticks={comboPaceScale.ticks}
+              interval={0}
+              allowDataOverflow
               tick={{ fontSize: 10, fill: "var(--text-secondary)" }}
               axisLine={false}
               tickLine={false}
-              width={42}
+              width={38}
+              tickFormatter={(value) => fmtPace(-value)}
             />
-            <YAxis yAxisId="elevation" orientation="right" domain={elevationDomain} hide />
-            <YAxis yAxisId="cadence" domain={cadenceBase.domain} hide />
             <Tooltip
+              cursor={{ fill: "transparent" }}
               contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 11 }}
               formatter={(value, name, item) => {
                 const key = item && item.dataKey;
                 if (key === "paceNeg") return [fmtPace(-Number(value)) + "/mi", "Pace"];
                 if (key === "elevation") return [Math.round(Number(value)) + " ft net", "Elevation"];
-                if (key === "cadence") return [Math.round(Number(value)) + " spm", "Cadence"];
+                if (key === "cadPlot") return [Math.round(Number(value)) + " spm", "Cadence"];
                 return [value, name];
               }}
               labelFormatter={(_, payload) => {
                 const point = payload?.[0]?.payload;
-                return point ? `${Number(point.distanceEnd).toFixed(2)} mi · Lap ${point.lap}` : "";
+                return point ? `${Number(point.distanceEnd).toFixed(2)} mi · Lap ${point.mile}` : "";
               }}
             />
-            <Legend wrapperStyle={{ fontSize: 10.5 }} />
-            <Area name="Elevation" yAxisId="elevation" type="monotone" dataKey="elevation" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={0.28} strokeWidth={1.25} />
-            <Line name="Pace" yAxisId="pace" type="monotone" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.8} dot={{ r: 3 }} connectNulls />
-            <Line name="Cadence" yAxisId="cadence" type="monotone" dataKey="cadence" stroke="#EDCC8B" strokeWidth={1.4} dot={false} connectNulls />
+            <Area name="Elevation" yAxisId="elev" type="monotone" dataKey="elevation" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={0.25} strokeWidth={1.2} />
+            <Line name="Pace" yAxisId="pace" type="monotone" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls />
+            <Line
+              name="Cadence"
+              yAxisId="cad"
+              dataKey="cadPlot"
+              stroke="transparent"
+              strokeOpacity={1}
+              dot={{ r: 1.8, fill: "transparent", fillOpacity: 0, stroke: TYPE_COLOR.Tempo.solid, strokeOpacity: 1, strokeWidth: 0.8 }}
+              activeDot={{ r: 3.1, fill: "transparent", fillOpacity: 0, stroke: TYPE_COLOR.Tempo.solid, strokeOpacity: 1, strokeWidth: 1.4 }}
+              isAnimationActive={false}
+              connectNulls={false}
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
 
       <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "12px 0 4px" }}>Lap average pace</p>
-      <div style={{ height: 105 }}>
+      <div style={{ height: 100 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 8, right: 10, left: 0, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
             <XAxis
               type="number"
-              dataKey="chartIndex"
-              domain={[1, Math.max(1, chartData.length)]}
-              ticks={compactOrdinalTicks(chartData.length, 6)}
+              dataKey="mile"
+              domain={[1, Math.max(1, Math.ceil(raceDistance))]}
+              ticks={mileTicksForRun(raceDistance)}
               interval={0}
               tickFormatter={(value) => String(value)}
               tick={{ fontSize: 10, fill: "var(--text-secondary)" }}
@@ -3552,19 +3582,20 @@ function RaceExpandedCharts({ race }) {
               tickLine={false}
             />
             <YAxis
-              domain={paceScale.domain}
-              ticks={paceTicks}
+              domain={lapPaceScale.domain}
+              ticks={lapPaceTicks}
               interval={0}
               tickFormatter={(value) => fmtPace(-value)}
               tick={{ fontSize: 10, fill: "var(--text-secondary)" }}
               axisLine={false}
               tickLine={false}
               width={42}
+              tickMargin={2}
             />
             <Tooltip
-              contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 11 }}
+              contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }}
               formatter={(value, _, item) => [fmtPace(-Number(value)) + "/mi" + (item?.payload?.partial ? " (extrapolated)" : ""), "Pace"]}
-              labelFormatter={(value) => `Lap ${value}`}
+              labelFormatter={(value) => `Mile ${value}`}
             />
             <Area type="step" dataKey="paceNeg" stroke="#77807A" strokeWidth={1.5} fill="#9DAAA2" fillOpacity={0.75} baseValue="dataMin" />
           </AreaChart>
