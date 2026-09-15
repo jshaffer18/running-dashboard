@@ -3478,8 +3478,15 @@ function RaceExpandedCharts({ race }) {
   const raceDistance = Number(race.recorded_distance_mi) || cumulativeDistance || 1;
 
   // Match the Splits-tab chart scales/interval rules.
+  const rawElevationValues = chartData.map((point) => point.elevation).filter(Number.isFinite);
+  const elevationFloor = rawElevationValues.length ? Math.min(0, ...rawElevationValues) : 0;
+  chartData.forEach((point) => {
+    point.elevationPlot = Number.isFinite(point.elevation) ? point.elevation - elevationFloor : null;
+  });
+
   const comboPaceScale = regularPaceScale(chartData.map((point) => point.pace));
-  const comboElevScale = elevationScale(chartData.map((point) => point.elevation), 5);
+  const comboPaceTicks = compactAxisTicks(comboPaceScale.ticks, 4);
+  const comboElevScale = elevationScale(chartData.map((point) => point.elevationPlot), 5);
   const lapPaceScale = regularPaceScale(chartData.map((point) => point.pace));
   const lapPaceTicks = compactAxisTicks(lapPaceScale.ticks, 4);
 
@@ -3525,7 +3532,7 @@ function RaceExpandedCharts({ race }) {
               yAxisId="pace"
               orientation="left"
               domain={comboPaceScale.domain}
-              ticks={comboPaceScale.ticks}
+              ticks={comboPaceTicks}
               interval={0}
               allowDataOverflow
               tick={{ fontSize: 10, fill: "var(--text-secondary)" }}
@@ -3540,7 +3547,7 @@ function RaceExpandedCharts({ race }) {
               formatter={(value, name, item) => {
                 const key = item && item.dataKey;
                 if (key === "paceNeg") return [fmtPace(-Number(value)) + "/mi", "Pace"];
-                if (key === "elevation") return [Math.round(Number(value)) + " ft net", "Elevation"];
+                if (key === "elevationPlot") return [Math.round(Number(value)) + " ft relative", "Elevation"];
                 if (key === "cadPlot") return [Math.round(Number(value)) + " spm", "Cadence"];
                 return [value, name];
               }}
@@ -3549,7 +3556,7 @@ function RaceExpandedCharts({ race }) {
                 return point ? `${Number(point.distanceEnd).toFixed(2)} mi · Lap ${point.mile}` : "";
               }}
             />
-            <Area name="Elevation" yAxisId="elev" type="monotone" dataKey="elevation" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={0.25} strokeWidth={1.2} />
+            <Area name="Elevation" yAxisId="elev" type="monotone" dataKey="elevationPlot" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={0.25} strokeWidth={1.2} baseValue={0} />
             <Line name="Pace" yAxisId="pace" type="monotone" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls />
             <Line
               name="Cadence"
@@ -3572,11 +3579,11 @@ function RaceExpandedCharts({ race }) {
           <AreaChart data={chartData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
             <XAxis
               type="number"
-              dataKey="mile"
-              domain={[1, Math.max(1, Math.ceil(raceDistance))]}
-              ticks={mileTicksForRun(raceDistance)}
+              dataKey="distanceEnd"
+              domain={[0, raceDistance]}
+              ticks={distanceTicksForRun(raceDistance)}
               interval={0}
-              tickFormatter={(value) => String(value)}
+              tickFormatter={(value) => formatDistanceAxisTick(value, raceDistance)}
               tick={{ fontSize: 10, fill: "var(--text-secondary)" }}
               axisLine={{ stroke: "var(--border)" }}
               tickLine={false}
@@ -3595,7 +3602,10 @@ function RaceExpandedCharts({ race }) {
             <Tooltip
               contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }}
               formatter={(value, _, item) => [fmtPace(-Number(value)) + "/mi" + (item?.payload?.partial ? " (extrapolated)" : ""), "Pace"]}
-              labelFormatter={(value) => `Mile ${value}`}
+              labelFormatter={(_, payload) => {
+                const point = payload?.[0]?.payload;
+                return point ? `Mile ${point.mile} · ${Number(point.distanceEnd).toFixed(2)} mi` : "";
+              }}
             />
             <Area type="step" dataKey="paceNeg" stroke="#77807A" strokeWidth={1.5} fill="#9DAAA2" fillOpacity={0.75} baseValue="dataMin" />
           </AreaChart>
