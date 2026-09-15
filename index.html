@@ -853,8 +853,29 @@ const RESPONSIVE_CSS = `
   .rd-tab-button { padding: 8px 1px !important; font-size: 12.5px !important; gap: 1px !important; }
   .rd-tab-button i { font-size: 13px !important; }
 }
+.rd-race-card-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.rd-race-card-column {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+.rd-race-card-mobile-list {
+  display: none;
+}
+
 @media (max-width: 760px) {
-  .rd-race-card-grid { grid-template-columns: 1fr !important; }
+  .rd-race-card-columns { display: none !important; }
+  .rd-race-card-mobile-list {
+    display: flex !important;
+    flex-direction: column;
+    gap: 9px;
+  }
   .rd-race-detail-grid { grid-template-columns: 1fr !important; }
 }
 @media (max-width: 430px) {
@@ -3485,10 +3506,10 @@ function RaceExpandedCharts({ race }) {
   });
 
   const comboPaceScale = regularPaceScale(chartData.map((point) => point.pace));
-  const comboPaceTicks = compactAxisTicks(comboPaceScale.ticks, 4);
+  const comboPaceTicks = comboPaceScale.ticks;
   const comboElevScale = elevationScale(chartData.map((point) => point.elevationPlot), 5);
   const lapPaceScale = regularPaceScale(chartData.map((point) => point.pace));
-  const lapPaceTicks = compactAxisTicks(lapPaceScale.ticks, 4);
+  const lapPaceTicks = lapPaceScale.ticks;
 
   return (
     <div style={{ marginTop: 14 }}>
@@ -3714,7 +3735,17 @@ function RaceArchiveTab() {
     </div>
     {groups.map((group)=>{const rows=filtered.filter((r)=>r.group===group).sort((a,b)=>b.date.localeCompare(a.date));if(!rows.length)return null;return <section key={group} style={{ marginBottom:14 }}>
       <div style={{ display:"flex",alignItems:"baseline",gap:8,margin:"0 2px 7px" }}><p style={{ margin:0,fontSize:12,fontWeight:750,letterSpacing:.8,textTransform:"uppercase" }}>{labelMap[group]}</p><span style={{ fontSize:10,color:"var(--text-secondary)" }}>{rows.length}</span><span style={{ flex:1,height:1,background:"var(--border)" }}/></div>
-      <div className="rd-race-card-grid" style={{ display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",columnGap:12,rowGap:9 }}>{rows.map((race)=><RaceCard key={race.id} race={race} expanded={expandedId===race.id} onToggle={()=>setExpandedId((id)=>id===race.id?null:race.id)}/>)}</div>
+      <div className="rd-race-card-columns">
+        <div className="rd-race-card-column">
+          {rows.filter((_, index) => index % 2 === 0).map((race)=><RaceCard key={race.id} race={race} expanded={expandedId===race.id} onToggle={()=>setExpandedId((id)=>id===race.id?null:race.id)}/>)}
+        </div>
+        <div className="rd-race-card-column">
+          {rows.filter((_, index) => index % 2 === 1).map((race)=><RaceCard key={race.id} race={race} expanded={expandedId===race.id} onToggle={()=>setExpandedId((id)=>id===race.id?null:race.id)}/>)}
+        </div>
+      </div>
+      <div className="rd-race-card-mobile-list">
+        {rows.map((race)=><RaceCard key={race.id} race={race} expanded={expandedId===race.id} onToggle={()=>setExpandedId((id)=>id===race.id?null:race.id)}/>)}
+      </div>
     </section>})}
     {!filtered.length && <div style={{ padding:30,textAlign:"center",color:"var(--text-secondary)",fontSize:12 }}>No races match those filters.</div>}
   </div>;
