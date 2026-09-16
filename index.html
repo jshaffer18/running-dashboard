@@ -853,6 +853,29 @@ const RESPONSIVE_CSS = `
   .rd-tab-button { padding: 8px 1px !important; font-size: 12.5px !important; gap: 1px !important; }
   .rd-tab-button i { font-size: 13px !important; }
 }
+.rd-race-pr-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+}
+@media (max-width: 900px) {
+  .rd-race-pr-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 560px) {
+  .rd-race-pr-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  .rd-race-pr-section > div:first-child {
+    flex-wrap: wrap;
+  }
+  .rd-race-pr-section > div:first-child > span:last-child {
+    display: none;
+  }
+}
+
 .rd-race-card-columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1122,7 +1145,7 @@ function cToF(c) {
 }
 
 function displayWorkoutType(type) {
-  return type === "Hill" ? "Hills" : type;
+  return type === "Hills" ? "Hills" : type;
 }
 
 function typeColorFor(type) {
@@ -1135,7 +1158,7 @@ function runDisplayType(run) {
 
 
 function isHillType(type) {
-  return type === "Hill" || type === "Hills";
+  return type === "Hills" || type === "Hills";
 }
 
 function usesHillRepeatCharts(run) {
@@ -1190,6 +1213,34 @@ function trackRepeatsForRun(run) {
 
 function usesTrackRepeatCharts(run) {
   return trackRepeatsForRun(run).length >= 2;
+}
+
+function repeatPaceSummary(reps) {
+  const valid = (reps || []).filter((rep) => Number(rep.distance_mi) > 0 && Number(rep.time_s) > 0);
+  if (!valid.length) return null;
+  const distance = valid.reduce((sum, rep) => sum + Number(rep.distance_mi), 0);
+  const time = valid.reduce((sum, rep) => sum + Number(rep.time_s), 0);
+  return distance > 0 ? time / distance : null;
+}
+
+function trackDistanceTimeSummary(run, targetMeters) {
+  const targetMi = Number(targetMeters) / 1600;
+  const tolerance = targetMeters <= 400 ? 0.035 : 0.055;
+  const reps = trackRepeatsForRun(run).filter((rep) => Math.abs(Number(rep.distance_mi) - targetMi) <= tolerance);
+  const times = reps.map((rep) => Number(rep.time_s)).filter(Number.isFinite);
+  if (!times.length) return null;
+  return {
+    count: times.length,
+    avg_s: times.reduce((sum, value) => sum + value, 0) / times.length,
+    fastest_s: Math.min(...times),
+  };
+}
+
+function structuredRepeatPaceForRun(run) {
+  if (usesHillRepeatCharts(run) && Number(run.repeat_avg_pace_sec_per_mi) > 0) return Number(run.repeat_avg_pace_sec_per_mi);
+  if (usesIntervalRepeatCharts(run)) return repeatPaceSummary(intervalRepeatsForRun(run));
+  if (usesTrackRepeatCharts(run)) return repeatPaceSummary(trackRepeatsForRun(run));
+  return null;
 }
 
 function usesStructuredRepeatCharts(run) {
@@ -2336,14 +2387,38 @@ function LastActivityOverview({ run }) {
   const [showExtendedMetrics, setShowExtendedMetrics] = useState(false);
   const toggleOverviewSeries = (key) => setOverviewHiddenSeries((current) => ({ ...current, [key]: !current[key] }));
   const distanceScale = niceScale(run.detail_trace.map((p) => p.dist_mi), .5, true);
-  const paceScale = regularPaceScale(run.detail_trace.map((p) => p.pace));
+  const trackOverviewReps = usesTrackRepeatCharts(run) ? trackRepeatsForRun(run) : [];
+  let trackRepIndex = 0;
+  let cumulativeLapDistance = 0;
+  const trackRepRanges = (run.laps || []).map((lap) => {
+    const start = cumulativeLapDistance;
+    cumulativeLapDistance += Number(lap.distance_mi) || 0;
+    const isWork = lap.trigger === "distance" && Number(lap.distance_mi) >= 0.20 && Number(lap.distance_mi) <= 0.55;
+    const rep = isWork ? trackOverviewReps[trackRepIndex++] : null;
+    return rep ? { start, end: cumulativeLapDistance, pace: rep.pace_sec_per_mi } : null;
+  }).filter(Boolean);
+  const overviewTraceData = run.detail_trace.map((p, i) => {
+    const trackRange = usesTrackRepeatCharts(run)
+      ? trackRepRanges.find((range) => Number(p.dist_mi) >= range.start && Number(p.dist_mi) <= range.end)
+      : null;
+    return {
+      ...p,
+      paceNeg: usesTrackRepeatCharts(run)
+        ? (trackRange ? -Number(trackRange.pace) : null)
+        : (p.pace != null ? -p.pace : null),
+      cadPlot: i % 2 === 0 ? p.cad : null,
+    };
+  });
+  const paceScale = regularPaceScale(usesTrackRepeatCharts(run) ? trackOverviewReps.map((rep) => rep.pace_sec_per_mi) : run.detail_trace.map((p) => p.pace));
   const overviewDistanceTicks = Array.from(new Set(distanceScale.ticks.filter((_, i) => i % 2 === 0).filter((v) => v < run.distance_mi - 0.08).concat(Number(run.distance_mi.toFixed(2)))));
   const elevScale = elevationScale(run.detail_trace.map((p) => p.elev_ft), 5);
   const overviewLapData = usesHillRepeatCharts(run)
     ? run.hill_reps.map((rep) => ({ ...rep, mile: rep.rep, pace: rep.pace_sec_per_mi }))
     : usesIntervalRepeatCharts(run)
       ? intervalRepeatsForRun(run).map((rep) => ({ ...rep, mile: rep.rep, pace: rep.pace_sec_per_mi }))
-      : run.splits;
+      : usesTrackRepeatCharts(run)
+        ? trackOverviewReps.map((rep) => ({ ...rep, mile: rep.rep, pace: rep.pace_sec_per_mi }))
+        : run.splits;
   const lapPaceScale = regularPaceScale(overviewLapData.map((s) => s.pace));
   const lapPaceTicks = compactAxisTicks(lapPaceScale.ticks, 4);
   const outerCard = { background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:16, padding:"1rem 1.2rem", WebkitTextSizeAdjust:"100%", textSizeAdjust:"100%", containerType:"inline-size" };
@@ -2363,14 +2438,17 @@ function LastActivityOverview({ run }) {
             </div>
             <RunHeaderVisuals run={run} color={c.solid} compact showRoute={false} />
           </div>
-          <div style={{flex:"1 1 0",minHeight:130,marginTop:5,marginBottom:-2,width:"calc(100% + 12px)",marginLeft:-8,marginRight:-4}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={run.detail_trace.map((p,i)=>({...p,paceNeg:p.pace!=null?-p.pace:null,cadPlot:i%2===0?p.cad:null}))} margin={{top:8,right:0,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],run.distance_mi]} ticks={distanceTicksForRun(run.distance_mi)} interval={0} tickFormatter={(v)=>formatDistanceAxisTick(v, run.distance_mi)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:10,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={32} tickMargin={0} tickFormatter={(v)=>Math.round(v)}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={paceScale.ticks} interval={0} allowDataOverflow tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={38}/><Tooltip content={<ActivityTraceTooltip />} /><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25} hide={!!overviewHiddenSeries.elev_ft}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.paceNeg}/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.hr}/><Line yAxisId="cad" dataKey="cadPlot" stroke="transparent" strokeOpacity={1} dot={{r:1.8,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.2}} activeDot={{r:3.1,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.4}} isAnimationActive={false} connectNulls={false} hide={!!overviewHiddenSeries.cad}/></ComposedChart></ResponsiveContainer></div>
+          <div style={{flex:"1 1 0",minHeight:130,marginTop:5,marginBottom:-2,width:"calc(100% + 12px)",marginLeft:-8,marginRight:-4}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={overviewTraceData} margin={{top:8,right:0,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],run.distance_mi]} ticks={distanceTicksForRun(run.distance_mi)} interval={0} tickFormatter={(v)=>formatDistanceAxisTick(v, run.distance_mi)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:10,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={32} tickMargin={0} tickFormatter={(v)=>Math.round(v)}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={paceScale.ticks} interval={0} allowDataOverflow tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={38}/><Tooltip content={<ActivityTraceTooltip />} /><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25} hide={!!overviewHiddenSeries.elev_ft}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.paceNeg}/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.hr}/><Line yAxisId="cad" dataKey="cadPlot" stroke="transparent" strokeOpacity={1} dot={{r:1.8,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.2}} activeDot={{r:3.1,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.4}} isAnimationActive={false} connectNulls={false} hide={!!overviewHiddenSeries.cad}/></ComposedChart></ResponsiveContainer></div>
         </div>
         <div className="rd-overview-lap-card" style={{...innerCard,width:"100%",flex:"0 0 auto"}}>
+          {usesTrackRepeatCharts(run) && <p style={{margin:"0 0 3px",fontSize:10.5,color:"var(--text-secondary)"}}>Track rep pace</p>}
           <div style={{height:72}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={overviewLapData.map((s)=>({...s,paceNeg:s.pace!=null?-s.pace:null}))} margin={{top:4,right:10,left:0,bottom:0}}><XAxis type="number" dataKey="mile" domain={usesStructuredRepeatCharts(run) ? [1, Math.max(1, overviewLapData.length)] : ["dataMin", "dataMax"]} ticks={usesStructuredRepeatCharts(run) ? compactOrdinalTicks(overviewLapData.length, 5) : undefined} interval={0} tickFormatter={(v)=>usesStructuredRepeatCharts(run) ? "#"+v : "Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={42} tickMargin={2}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} labelFormatter={(v)=>usesStructuredRepeatCharts(run) ? "Rep "+v : "Mile "+v} formatter={(value)=>[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div>
           {usesHillRepeatCharts(run) ? (
             <div style={{ marginTop: 4 }}><HillRepeatsTable run={run} compact /></div>
           ) : usesIntervalRepeatCharts(run) ? (
             <div style={{ marginTop: 4 }}><IntervalRepeatsTable run={run} compact /></div>
+          ) : usesTrackRepeatCharts(run) ? (
+            <div style={{ marginTop: 4 }}><IntervalRepeatsTable run={run} compact repsOverride={trackOverviewReps} /></div>
           ) : (
             <div style={{overflowX:"auto",marginTop:4}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr>{["Mi","Pace","Distance","HR","Elevation","Cadence"].map(h=><th key={h} style={{padding:"3px 5px",textAlign:"center",color:"var(--text-secondary)",fontWeight:500,borderBottom:".5px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{(() => { const paces = run.splits.map((s) => s.pace); const minPace = Math.min(...paces); const maxPace = Math.max(...paces); return run.splits.map((s) => { const barPct = maxPace > minPace ? 100 * (1 - (s.pace - minPace) / (maxPace - minPace)) : 100; const barWidth = Math.max(12, barPct); return <tr key={s.mile}><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}><span style={{ position: "relative", display: "inline-block", minWidth: 18 }}>{s.mile}{s.partial && <sup style={{ position: "absolute", left: "100%", top: -2, marginLeft: -2, fontSize: 8 }}>*</sup>}</span></td><td style={{padding:"3px 5px",borderBottom:".5px solid var(--border)"}}><div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}><span style={{ minWidth: 38, textAlign: "center" }}>{s.pace==null?"—":fmtPace(s.pace)}</span><div style={{ flex: 1, minWidth: 32, maxWidth: 78, height: 7, background: "var(--surface-2)", borderRadius: 4, overflow: "hidden" }}><div style={{ width: barWidth + "%", height: "100%", background: "#9DAAA2", borderRadius: 4 }} /></div></div></td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.partial ? Number(s.partial_distance_mi).toFixed(2) : "1.00"} mi</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_hr??"—"}</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.elev_net_ft != null ? (s.elev_net_ft > 0 ? "+" : "") + s.elev_net_ft + " ft" : "—"}</td><td style={{padding:"3px 5px",textAlign:"center",borderBottom:".5px solid var(--border)"}}>{s.avg_cadence??"—"}</td></tr>; }); })()}</tbody></table>{run.splits.some((s) => s.partial) && <p style={{ fontSize: 9.5, color: "var(--text-secondary)", margin: "5px 0 0" }}>* partial mile, pace extrapolated to a per-mile-equivalent</p>}</div>
           )}
@@ -3771,6 +3849,40 @@ function RaceCard({ race, expanded, onToggle }) {
   </article>;
 }
 
+
+function fastestRaceForCategory(category) {
+  const matching = RACE_DATA
+    .filter((race) => race.source_category === category && Number.isFinite(Number(race.finish_time_s)))
+    .sort((a, b) => Number(a.finish_time_s) - Number(b.finish_time_s));
+  return matching[0] || null;
+}
+
+function fastestContinuousMileRecord() {
+  const records = Object.values(DEVICE_SUPERLATIVE_RECORDS || {})
+    .map((device) => device && device["Fastest Mile"] && device["Fastest Mile"].record)
+    .filter((record) => record && Number.isFinite(Number(record.numeric_value)));
+  if (!records.length) return null;
+  return records.sort((a, b) => Number(a.numeric_value) - Number(b.numeric_value))[0];
+}
+
+function RacePrCard({ label, value, date, detail }) {
+  return (
+    <div className="rd-race-pr-card" style={{
+      minWidth: 0,
+      background: "var(--surface-1)",
+      border: "1px solid var(--border)",
+      borderRadius: 13,
+      padding: "9px 10px 8px",
+      boxShadow: "0 2px 10px rgba(61,52,40,.035)"
+    }}>
+      <p style={{ margin: 0, fontSize: 9, fontWeight: 750, letterSpacing: .8, color: "var(--text-secondary)", textTransform: "uppercase" }}>{label}</p>
+      <p style={{ margin: "3px 0 0", fontSize: 18, lineHeight: 1, fontWeight: 700, letterSpacing: -.25 }}>{value || "—"}</p>
+      <p style={{ margin: "5px 0 0", fontSize: 9.5, lineHeight: 1.2, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{date || "—"}</p>
+      <p style={{ margin: "2px 0 0", fontSize: 9.5, lineHeight: 1.2, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={detail || ""}>{detail || "—"}</p>
+    </div>
+  );
+}
+
 function RaceArchiveTab() {
   const [year,setYear]=useState("All");
   const [distance,setDistance]=useState("All");
@@ -3780,6 +3892,35 @@ function RaceArchiveTab() {
   const groups=["Marathon","Half Marathon","Other","5K"];
   const counts=useMemo(()=>RACE_DATA.reduce((a,r)=>{a.total++;a[r.group]=(a[r.group]||0)+1;return a;},{total:0}),[]);
   const labelMap={"Marathon":"26.2","Half Marathon":"13.1","Other":"10–30K","5K":"5K"};
+  const prCards = useMemo(() => {
+    const mile = fastestContinuousMileRecord();
+    const configs = [
+      { label: "1 mile", mile: true },
+      { label: "5K", category: "5K" },
+      { label: "10K", category: "10K" },
+      { label: "15K", category: "15K" },
+      { label: "13.1", category: "Half Marathon" },
+      { label: "30K", category: "30K" },
+      { label: "26.2", category: "Marathon" },
+    ];
+    return configs.map((config) => {
+      if (config.mile) {
+        return {
+          label: config.label,
+          value: mile?.display_value || "—",
+          date: mile?.date ? new Date(mile.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—",
+          detail: mile?.activity_title || "Fastest continuous mile",
+        };
+      }
+      const race = fastestRaceForCategory(config.category);
+      return {
+        label: config.label,
+        value: race?.finish_time_label || "—",
+        date: race?.date ? new Date(race.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—",
+        detail: race?.race_name || "—",
+      };
+    });
+  }, []);
   return <div className="rd-races-tab">
     <section className="rd-race-archive-hero" style={{ position:"relative", overflow:"hidden", background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:16, padding:"14px 16px", marginBottom:12 }}>
       <div aria-hidden="true" style={{ position:"absolute", width:180,height:180,borderRadius:"50%",right:-65,top:-85,background:"radial-gradient(circle, rgba(182,205,226,.24) 0%, rgba(182,205,226,0) 68%)" }}/>
@@ -3791,6 +3932,16 @@ function RaceArchiveTab() {
           <GrandRaceBib label="10–30K" value={counts.Other||0}/>
           <GrandRaceBib label="5K" value={counts["5K"]||0}/>
         </div>
+      </div>
+    </section>
+    <section className="rd-race-pr-section" style={{ marginBottom: 12 }}>
+      <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"0 2px 7px" }}>
+        <p style={{ margin:0, fontSize:12, fontWeight:750, letterSpacing:.8, textTransform:"uppercase" }}>Personal records</p>
+        <span style={{ fontSize:9.5, color:"var(--text-secondary)" }}>race PRs + fastest continuous mile</span>
+        <span style={{ flex:1, height:1, background:"var(--border)" }} />
+      </div>
+      <div className="rd-race-pr-grid" style={{ display:"grid", gridTemplateColumns:"repeat(7,minmax(0,1fr))", gap:7 }}>
+        {prCards.map((pr) => <RacePrCard key={pr.label} {...pr} />)}
       </div>
     </section>
     <div className="rd-race-filter-row" style={{ display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:12,padding:"0 2px" }}>
@@ -3826,7 +3977,7 @@ function RunningDashboard() {
   const [activeSuperlative, setActiveSuperlative] = useState(null);
   const [bioTrendMetric, setBioTrendMetric] = useState("vo2");
   const [zoneTrendVisible, setZoneTrendVisible] = useState(() =>
-    Object.fromEntries(Array.from(new Set(RUNS.map((run) => run.type))).map((type) => [type, true]))
+    Object.fromEntries(Array.from(new Set(RUNS.map((run) => isHillType(run.type) ? "Hills" : run.type))).map((type) => [type, true]))
   );
   const [zoneTrendHover, setZoneTrendHover] = useState({});
 
@@ -4009,18 +4160,22 @@ function RunningDashboard() {
   const trendsByType = useMemo(() => {
     const map = {};
     RUNS.forEach((r) => {
-      if (!map[r.type]) map[r.type] = [];
-      const isHill = (r.type === "Hill" || r.type === "Hills") && r.repeat_avg_pace_sec_per_mi;
+      const trendType = isHillType(r.type) ? "Hills" : r.type;
+      if (!map[trendType]) map[trendType] = [];
+      const structuredPace = structuredRepeatPaceForRun(r);
+      const isHill = isHillType(r.type) && usesHillRepeatCharts(r);
+      const track400 = trendType === "Track" ? trackDistanceTimeSummary(r, 400) : null;
+      const track800 = trendType === "Track" ? trackDistanceTimeSummary(r, 800) : null;
       const zoneSeconds = [1, 2, 3, 4, 5].map((zoneNumber) => {
         const zone = (r.hr_zone_time || []).find((entry) => String(entry.zone) === `Zone ${zoneNumber}`);
         return Number(zone && zone.seconds) || 0;
       });
       const zoneTotalSeconds = zoneSeconds.reduce((sum, seconds) => sum + seconds, 0);
       const zonePct = zoneSeconds.map((seconds) => zoneTotalSeconds > 0 ? (seconds / zoneTotalSeconds) * 100 : null);
-      map[r.type].push({
+      map[trendType].push({
         date: r.date,
         dateLabel: fmtDateShort(r.date),
-        pace: isHill ? r.repeat_avg_pace_sec_per_mi : runAveragePaceSec(r),
+        pace: structuredPace != null ? structuredPace : runAveragePaceSec(r),
         hr: isHill ? r.repeat_avg_hr : r.avg_hr,
         avgCadence: isHill && r.repeat_avg_cadence != null ? Number(r.repeat_avg_cadence) : (r.avg_cadence != null ? Number(r.avg_cadence) : null),
         hillGrade: isHill && r.repeat_avg_grade_pct != null ? Number(r.repeat_avg_grade_pct) : null,
@@ -4029,6 +4184,10 @@ function RunningDashboard() {
         repTime: isHill ? r.repeat_avg_time_s : null,
         repElev: isHill ? r.repeat_avg_elev_gain_ft : null,
         repCount: isHill ? r.repeat_count : null,
+        track400Avg: track400?.avg_s ?? null,
+        track400Fastest: track400?.fastest_s ?? null,
+        track800Avg: track800?.avg_s ?? null,
+        track800Fastest: track800?.fastest_s ?? null,
         zone1Pct: zonePct[0],
         zone2Pct: zonePct[1],
         zone3Pct: zonePct[2],
@@ -4447,7 +4606,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
       {tab === "trends" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>
-            Pace and heart rate over time, by run type. For hills, this uses only the detected climb-repeat segments &mdash; not the recovery jogs between them &mdash; so it's not diluted by the easy portions.
+            Pace and heart rate over time, by run type. Hills, Track, and Intervals use work-repeat pace instead of full-run pace, so warm-ups, recoveries, and cool-downs do not dilute the pace trend.
           </p>
           {Object.entries(trendsByType).map(([type, points]) => {
             const c = typeColorFor(type);
@@ -4496,15 +4655,15 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                     Zones {zoneTrendVisible[type] ? "On" : "Off"}
                   </button>
                 </div>
-                {type === "Hill" && (
+                {type === "Hills" && (
                   <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 10px" }}>Based on the individual hill-repeat laps (not the recovery jogs between them).</p>
                 )}
                 {points.length > 0 && (
                   <React.Fragment>
                     <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>
-                      Pace, mileage, HR &amp; cadence{zoneTrendVisible[type] ? " · zone distribution shown as a narrow stacked column matching mileage height" : ""}
+                      {["Hills","Track","Intervals"].includes(type) ? "Repeat pace" : "Pace"}, mileage, HR &amp; cadence{zoneTrendVisible[type] ? " · zone distribution shown as a narrow stacked column matching mileage height" : ""}
                     </p>
-                    <div style={{ height: 150, marginBottom: type === "Hill" ? 14 : 0 }}>
+                    <div style={{ height: 150, marginBottom: type === "Hills" ? 14 : 0 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={points.map((p) => ({ ...p, paceNeg: p.pace != null ? -p.pace : null }))} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -4529,7 +4688,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                                     const key = String(item && item.dataKey || "");
                                     let value = item.value;
                                     let name = item.name;
-                                    if (key === "paceNeg") { value = fmtPace(-Number(item.value)) + "/mi"; name = "Pace"; }
+                                    if (key === "paceNeg") { value = fmtPace(-Number(item.value)) + "/mi"; name = ["Hills","Track","Intervals"].includes(type) ? "Repeat Pace" : "Pace"; }
                                     else if (key === "distance") { value = item.value + " mi"; name = "Mileage"; }
                                     else if (key === "hr") { value = item.value + " bpm"; name = "HR"; }
                                     else if (key === "avgCadence") { value = Math.round(Number(item.value)) + " spm"; name = "Avg Cadence"; }
@@ -4578,7 +4737,18 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                         ))}
                       </div>
                     )}
-                    {type === "Hill" && (
+                    {type === "Track" && (
+                      <div className="rd-track-trend-times" style={{ display:"grid", gridTemplateColumns:`repeat(${points.length}, minmax(108px,1fr))`, gap:6, margin:"5px 0 8px", overflowX:"auto", paddingBottom:2 }}>
+                        {points.map((point) => (
+                          <div key={point.date} style={{ minWidth:108, textAlign:"center", padding:"5px 6px", borderRadius:8, background:"var(--surface-2)", border:"0.5px solid var(--border)" }}>
+                            <p style={{ margin:0, fontSize:9.5, color:"var(--text-secondary)", fontWeight:600 }}>{point.dateLabel}</p>
+                            <p style={{ margin:"3px 0 0", fontSize:10.5, whiteSpace:"nowrap" }}>400 · {point.track400Avg == null ? "—" : `${formatHillRepeatTimeLabel(point.track400Avg)} avg`} / {point.track400Fastest == null ? "—" : `${formatHillRepeatTimeLabel(point.track400Fastest)} best`}</p>
+                            <p style={{ margin:"2px 0 0", fontSize:10.5, whiteSpace:"nowrap" }}>800 · {point.track800Avg == null ? "—" : `${formatHillRepeatTimeLabel(point.track800Avg)} avg`} / {point.track800Fastest == null ? "—" : `${formatHillRepeatTimeLabel(point.track800Fastest)} best`}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {type === "Hills" && (
                       <React.Fragment>
                         <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>Hill repeat profile · length, elevation gain &amp; grade · reps/time as columns</p>
                         <div style={{ height: 170 }}>
