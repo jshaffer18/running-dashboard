@@ -1744,22 +1744,23 @@ function IntervalRepeatsTable({ run, compact = false, repsOverride = null }) {
         <tbody>
           {reps.map((rep) => {
             const pace = Number(rep.pace_sec_per_mi);
-            const barPct = Number.isFinite(pace) && maxPace > minPace
-              ? 100 * (1 - (pace - minPace) / (maxPace - minPace))
+            const comparisonValue = Number(trackMode ? rep.time_s : rep.pace_sec_per_mi);
+            const barPct = Number.isFinite(comparisonValue) && maxPace > minPace
+              ? 100 * (1 - (comparisonValue - minPace) / (maxPace - minPace))
               : 100;
-            const repTime = rep.time_s != null ? `${Math.round(Number(rep.time_s))}s` : "—";
+            const repTime = trackMode ? formatTrackRepTime(rep.time_s) : (rep.time_s != null ? `${Math.round(Number(rep.time_s))}s` : "—");
             return (
               <tr key={rep.rep} style={{ borderBottom: "0.5px solid var(--border)" }}>
-                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.rep} · {repTime}</td>
+                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{trackMode ? rep.rep : `${rep.rep} · ${repTime}`}</td>
                 <td className="rd-mile-splits-pace-cell" style={{ padding: cellPad, whiteSpace: "nowrap" }}>
                   <div className="rd-mile-splits-pace-inner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, whiteSpace: "nowrap" }}>
-                    <span style={{ minWidth: 39, textAlign: "center", whiteSpace: "nowrap" }}>{Number.isFinite(pace) ? fmtPace(pace) : "—"}</span>
+                    <span style={{ minWidth: trackMode ? 48 : 39, textAlign: "center", whiteSpace: "nowrap" }}>{trackMode ? repTime : (Number.isFinite(pace) ? fmtPace(pace) : "—")}</span>
                     <div className="rd-mile-splits-pace-bar" style={{ flex: 1, minWidth: 18, maxWidth: 58, height: 7, background: "var(--surface-2)", borderRadius: 4, overflow: "hidden" }}>
                       <div style={{ width: Math.max(12, barPct) + "%", height: "100%", background: "#9DAAA2", borderRadius: 4 }} />
                     </div>
                   </div>
                 </td>
-                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.distance_mi != null ? `${Number(rep.distance_mi).toFixed(3)} mi` : "—"}</td>
+                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{trackMode ? trackRepDistanceLabel(rep.distance_mi) : (rep.distance_mi != null ? `${Number(rep.distance_mi).toFixed(3)} mi` : "—")}</td>
                 <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.avg_hr ?? "—"}</td>
                 <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.avg_cadence ?? "—"}</td>
               </tr>
@@ -3366,6 +3367,37 @@ function mileTicksForRun(distance) {
   return ticks;
 }
 
+class RunDetailErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error) {
+    console.error("Run detail render failed", this.props.run?.date, error);
+  }
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    const run = this.props.run || {};
+    const color = typeColorFor(run.type || "Easy");
+    return (
+      <div style={{ background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:16, padding:"1rem 1.2rem" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, marginBottom:10 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+            <span style={{ background:color.solid, color:"#3D3428", fontSize:12, padding:"3px 9px", borderRadius:8, fontWeight:500 }}>{runDisplayType(run)}</span>
+            <span style={{ fontSize:14, fontWeight:500 }}>{run.date ? fmtDate(run.date) : "Run"}</span>
+          </div>
+          <span style={{ fontSize:11, color:"var(--text-secondary)" }}>{run.distance_mi != null ? `${Number(run.distance_mi).toFixed(2)} mi` : ""}</span>
+        </div>
+        <p style={{ margin:"0 0 8px", fontSize:11, color:"var(--text-secondary)" }}>Detailed chart unavailable for this run.</p>
+        {Array.isArray(run.splits) && run.splits.length > 0 ? <MileSplitsTable run={run} /> : null}
+      </div>
+    );
+  }
+}
+
 function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detailWatchDeviceName = null, hideExpandToggle = false }) {
   const c = typeColorFor(r.type);
   const weather = weatherForRun(r);
@@ -4571,8 +4603,10 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
 
       {tab === "splits" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {(runFilter === "All" ? RUNS : RUNS.filter((r) => r.type === runFilter)).slice().reverse().map((r) => (
-            <RunDetailCard key={r.date} r={r} expanded={!!expanded[r.date]} onToggleExpand={() => setExpanded((e) => ({ ...e, [r.date]: !e[r.date] }))} />
+          {(runFilter === "All" ? RUNS : RUNS.filter((r) => isHillType(r.type) ? runFilter === "Hills" : r.type === runFilter)).slice().reverse().map((r) => (
+            <RunDetailErrorBoundary key={r.activity_id || r.date} run={r}>
+              <RunDetailCard r={r} expanded={!!expanded[r.activity_id || r.date]} onToggleExpand={() => setExpanded((e) => ({ ...e, [r.activity_id || r.date]: !e[r.activity_id || r.date] }))} />
+            </RunDetailErrorBoundary>
           ))}
         </div>
       )}
