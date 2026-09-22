@@ -4060,6 +4060,7 @@ function RunningDashboard() {
   const [activeRunDate, setActiveRunDate] = useState(null);
   const [modalExpanded, setModalExpanded] = useState(false);
   const [runFilter, setRunFilter] = useState("All");
+  const [splitsVisibleCount, setSplitsVisibleCount] = useState(6);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [scheduleScrollSeen, setScheduleScrollSeen] = useState(false);
@@ -4364,6 +4365,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                 setModalExpanded(false);
                 setActiveRunDate(null);
                 setActivePlanDate(null);
+                if (t.id === "splits") setSplitsVisibleCount(6);
               }
               setTab(t.id);
             }}
@@ -4515,13 +4517,26 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
         </div>
       )}
 
-      {tab === "splits" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {(runFilter === "All" ? RUNS : RUNS.filter((r) => r.type === runFilter)).slice().reverse().map((r) => (
-            <RunDetailCard key={r.date} r={r} expanded={!!expanded[r.date]} onToggleExpand={() => setExpanded((e) => ({ ...e, [r.date]: !e[r.date] }))} />
-          ))}
-        </div>
-      )}
+      {tab === "splits" && (() => {
+        const splitRuns = (runFilter === "All" ? RUNS : RUNS.filter((r) => r.type === runFilter)).slice().reverse();
+        const visibleSplitRuns = splitRuns.slice(0, splitsVisibleCount);
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {visibleSplitRuns.map((r) => (
+              <RunDetailCard key={r.activity_id || r.date} r={r} expanded={!!expanded[r.activity_id || r.date]} onToggleExpand={() => setExpanded((e) => ({ ...e, [r.activity_id || r.date]: !e[r.activity_id || r.date] }))} />
+            ))}
+            {splitsVisibleCount < splitRuns.length && (
+              <button
+                type="button"
+                onClick={() => setSplitsVisibleCount((count) => Math.min(splitRuns.length, count + 6))}
+                style={{ alignSelf:"center", margin:"2px 0 8px", padding:"7px 14px", borderRadius:999, border:"1px solid var(--border)", background:"var(--surface-1)", color:"var(--text-primary)", fontSize:11.5, fontWeight:600, cursor:"pointer" }}
+              >
+                Show 6 older runs
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {tab === "races" && <RaceArchiveTab />}
 
