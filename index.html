@@ -2326,9 +2326,7 @@ function ActivityTraceTooltip({ active, payload, label }) {
     if (key === "cadPlot") return;
     let row = null;
     if (key === "elev_ft") row = ["Elevation", `${Math.round(entry.value)} ft`, "#8FA88F"];
-    else if (key === "paceNeg") row = point.trackRepTime_s != null
-      ? ["Rep Time", `${trackRepDistanceLabel(point.trackRepDistance_mi)} · ${formatTrackRepTime(point.trackRepTime_s)}`, "#7E8A85"]
-      : ["Pace", `${fmtPace(-entry.value)}/mi`, "#7E8A85"];
+    else if (key === "paceNeg") row = ["Pace", `${fmtPace(-entry.value)}/mi`, "#9DAAA2"];
     else if (key === "hr") row = ["HR", `${entry.value} bpm`, "#A26360"];
     if (row && !seen.has(row[0])) { seen.add(row[0]); rows.push(row); }
   });
@@ -2478,17 +2476,13 @@ function LastActivityOverview({ run }) {
       : null;
     return {
       ...p,
-      paceNeg: usesTrackRepeatCharts(run)
-        ? (trackRange ? -Number(trackRange.time_s) * 0.25 / Number(trackRange.distance_mi) : null)
-        : (p.pace != null ? -p.pace : null),
+      paceNeg: p.pace != null ? -p.pace : null,
       trackRepTime_s: trackRange ? Number(trackRange.time_s) : null,
       trackRepDistance_mi: trackRange ? Number(trackRange.distance_mi) : null,
       cadPlot: i % 2 === 0 ? p.cad : null,
     };
   });
-  const paceScale = usesTrackRepeatCharts(run)
-    ? trackTimeAxisScale(trackOverviewReps)
-    : regularPaceScale(run.detail_trace.map((p) => p.pace));
+  const paceScale = regularPaceScale(run.detail_trace.map((p) => p.pace));
   const overviewDistanceTicks = Array.from(new Set(distanceScale.ticks.filter((_, i) => i % 2 === 0).filter((v) => v < run.distance_mi - 0.08).concat(Number(run.distance_mi.toFixed(2)))));
   const elevScale = elevationScale(run.detail_trace.map((p) => p.elev_ft), 5);
   const overviewLapData = usesHillRepeatCharts(run)
@@ -2498,9 +2492,7 @@ function LastActivityOverview({ run }) {
       : usesTrackRepeatCharts(run)
         ? trackOverviewReps.map((rep) => ({ ...rep, mile: rep.rep, pace: rep.pace_sec_per_mi }))
         : run.splits;
-  const lapPaceScale = usesTrackRepeatCharts(run)
-    ? trackTimeAxisScale(overviewLapData)
-    : regularPaceScale(overviewLapData.map((s) => s.pace));
+  const lapPaceScale = regularPaceScale(overviewLapData.map((s) => s.pace));
   const lapPaceTicks = compactAxisTicks(lapPaceScale.ticks, 3);
   const traceDistanceEnd = run.detail_trace.length ? Math.max(...run.detail_trace.map((point) => Number(point.dist_mi) || 0)) : Number(run.distance_mi);
   const chartDistanceEnd = usesTrackRepeatCharts(run) && traceDistanceEnd < Number(run.distance_mi) - 0.1 ? traceDistanceEnd : Number(run.distance_mi);
@@ -2517,15 +2509,15 @@ function LastActivityOverview({ run }) {
         <div className="rd-overview-chart-card" style={{...innerCard,width:"100%",display:"flex",flexDirection:"column",flex:"1 1 0",overflow:"visible"}}>
           <div style={{display:"grid",gridTemplateColumns:"minmax(0,1fr) auto",alignItems:"center",gap:4,marginBottom:4,minWidth:0}}>
             <div className="rd-overview-chart-legend" style={{display:"flex",gap:6,fontSize:10,color:"var(--text-secondary)",flexWrap:"nowrap",alignItems:"center",justifyContent:"flex-start",minWidth:0,whiteSpace:"nowrap",marginLeft:-2}}>
-              {[{key:"elev_ft",label:"Elevation",swatch:{background:"#BDD1C5",opacity:.55,borderRadius:2}},{key:"paceNeg",label:usesTrackRepeatCharts(run)?"Rep /400m":"Pace",swatch:{background:"#9DAAA2",borderRadius:2}},{key:"hr",label:"HR",swatch:{background:"#A26360",borderRadius:2}},{key:"cad",label:"Cadence",swatch:{background:TYPE_COLOR.Tempo.solid,borderRadius:"50%"}}].map((item)=><span key={item.key} onClick={()=>toggleOverviewSeries(item.key)} style={{cursor:"pointer",opacity:overviewHiddenSeries[item.key]?.45:1,textDecoration:overviewHiddenSeries[item.key]?"line-through":"none",whiteSpace:"nowrap"}}><span style={{display:"inline-block",width:8,height:8,marginRight:4,...item.swatch}}></span>{item.label}</span>)}
+              {[{key:"elev_ft",label:"Elevation",swatch:{background:"#BDD1C5",opacity:.55,borderRadius:2}},{key:"paceNeg",label:"Pace",swatch:{background:"#9DAAA2",borderRadius:2}},{key:"hr",label:"HR",swatch:{background:"#A26360",borderRadius:2}},{key:"cad",label:"Cadence",swatch:{background:TYPE_COLOR.Tempo.solid,borderRadius:"50%"}}].map((item)=><span key={item.key} onClick={()=>toggleOverviewSeries(item.key)} style={{cursor:"pointer",opacity:overviewHiddenSeries[item.key]?.45:1,textDecoration:overviewHiddenSeries[item.key]?"line-through":"none",whiteSpace:"nowrap"}}><span style={{display:"inline-block",width:8,height:8,marginRight:4,...item.swatch}}></span>{item.label}</span>)}
             </div>
             <RunHeaderVisuals run={run} color={c.solid} compact showRoute={false} />
           </div>
-          <div style={{flex:"1 1 0",minHeight:130,marginTop:5,marginBottom:-2,width:"calc(100% + 12px)",marginLeft:-8,marginRight:-4}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={overviewTraceData} margin={{top:8,right:0,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],chartDistanceEnd]} ticks={distanceTicksForRun(chartDistanceEnd)} interval={0} tickFormatter={(v)=>formatDistanceAxisTick(v, chartDistanceEnd)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:10,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={32} tickMargin={0} tickFormatter={(v)=>Math.round(v)}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={usesTrackRepeatCharts(run)?paceScale.ticks:paceScale.ticks} interval={0} allowDataOverflow tickFormatter={(v)=>usesTrackRepeatCharts(run)?fmtPace(-v):fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={50}/><Tooltip content={<ActivityTraceTooltip />} /><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25} hide={!!overviewHiddenSeries.elev_ft}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls={false} hide={!!overviewHiddenSeries.paceNeg}/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.hr}/><Line yAxisId="cad" dataKey="cadPlot" stroke="transparent" strokeOpacity={1} dot={{r:1.8,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.2}} activeDot={{r:3.1,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.4}} isAnimationActive={false} connectNulls={false} hide={!!overviewHiddenSeries.cad}/></ComposedChart></ResponsiveContainer></div>
+          <div style={{flex:"1 1 0",minHeight:130,marginTop:5,marginBottom:-2,width:"calc(100% + 12px)",marginLeft:-8,marginRight:-4}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={overviewTraceData} margin={{top:8,right:0,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],chartDistanceEnd]} ticks={distanceTicksForRun(chartDistanceEnd)} interval={0} tickFormatter={(v)=>formatDistanceAxisTick(v, chartDistanceEnd)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:10,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={32} tickMargin={0} tickFormatter={(v)=>Math.round(v)}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={paceScale.ticks} interval={0} allowDataOverflow tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={50}/><Tooltip content={<ActivityTraceTooltip />} /><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25} hide={!!overviewHiddenSeries.elev_ft}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls={false} hide={!!overviewHiddenSeries.paceNeg}/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.hr}/><Line yAxisId="cad" dataKey="cadPlot" stroke="transparent" strokeOpacity={1} dot={{r:1.8,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.2}} activeDot={{r:3.1,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.4}} isAnimationActive={false} connectNulls={false} hide={!!overviewHiddenSeries.cad}/></ComposedChart></ResponsiveContainer></div>
         </div>
         <div className="rd-overview-lap-card" style={{...innerCard,width:"100%",flex:"0 0 auto"}}>
-          {usesTrackRepeatCharts(run) && <p style={{margin:"0 0 3px",fontSize:10.5,color:"var(--text-secondary)"}}>Track rep pace · per 400m</p>}
-          <div style={{height:72}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={overviewLapData.map((s)=>({...s,paceNeg:usesTrackRepeatCharts(run)?-track400EquivalentTime(s):(s.pace!=null?-s.pace:null)}))} margin={{top:4,right:10,left:0,bottom:0}}><XAxis type="number" dataKey="mile" domain={usesStructuredRepeatCharts(run) ? [1, Math.max(1, overviewLapData.length)] : ["dataMin", "dataMax"]} ticks={usesStructuredRepeatCharts(run) ? compactOrdinalTicks(overviewLapData.length, 5) : undefined} interval={0} tickFormatter={(v)=>usesStructuredRepeatCharts(run) ? "#"+v : "Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={42} tickMargin={2}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} labelFormatter={(v)=>usesStructuredRepeatCharts(run) ? "Rep "+v : "Mile "+v} formatter={(value, name, entry)=>usesTrackRepeatCharts(run)?[`${trackRepDistanceLabel(entry?.payload?.distance_mi)} · ${formatTrackRepTime(entry?.payload?.time_s)} (${fmtPace(-value)}/400m)`,"Rep Time"]:[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div>
+          {usesTrackRepeatCharts(run) && <p style={{margin:"0 0 3px",fontSize:10.5,color:"var(--text-secondary)"}}>Track rep pace · /mi</p>}
+          <div style={{height:72}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={overviewLapData.map((s)=>({...s,paceNeg:s.pace!=null?-s.pace:null}))} margin={{top:4,right:10,left:0,bottom:0}}><XAxis type="number" dataKey="mile" domain={usesStructuredRepeatCharts(run) ? [1, Math.max(1, overviewLapData.length)] : ["dataMin", "dataMax"]} ticks={usesStructuredRepeatCharts(run) ? compactOrdinalTicks(overviewLapData.length, 5) : undefined} interval={0} tickFormatter={(v)=>usesStructuredRepeatCharts(run) ? "#"+v : "Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={42} tickMargin={2}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} labelFormatter={(v)=>usesStructuredRepeatCharts(run) ? "Rep "+v : "Mile "+v} formatter={(value, name, entry)=>usesTrackRepeatCharts(run)?[`${fmtPace(-value)}/mi · ${trackRepDistanceLabel(entry?.payload?.distance_mi)} ${formatTrackRepTime(entry?.payload?.time_s)}`,"Rep pace"]:[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div>
           {usesHillRepeatCharts(run) ? (
             <div style={{ marginTop: 4 }}><HillRepeatsTable run={run} compact /></div>
           ) : usesIntervalRepeatCharts(run) ? (
@@ -4768,7 +4760,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                       <td style={{ padding: "8px 2px", textAlign: "center", color: deltaColor, fontWeight: 500, background: ACTUAL_COLOR + "55" }}>{actualMi != null ? Number(actualMi).toFixed(2) : "—"}</td>
                       <td style={{ padding: "8px 2px", textAlign: "center", background: PLANNED_COLOR + "33" }}>
                         {trackGoalTargets.length
-                          ? trackGoalTargets.map((target, index) => <div key={`${target.meters}-${index}`} style={{ marginTop: index ? 2 : 0, whiteSpace:"normal", overflowWrap:"anywhere", lineHeight:1.15 }}>{target.meters}m {target.target}</div>)
+                          ? <div style={{ whiteSpace:"normal", overflowWrap:"anywhere", lineHeight:1.2 }}>{trackGoalTargets.map((target) => target.target).join(" / ")}</div>
                           : (d.planned && d.planned.paceTarget ? (() => { const parts = d.planned.paceTarget.split(/[–-]/); return parts.length > 1 ? <span>{parts[0]}–<br />{parts.slice(1).join("–")}</span> : d.planned.paceTarget; })() : "—")}
                       </td>
                       <td style={{ padding: "8px 2px", textAlign: "center", whiteSpace: "nowrap", background: ACTUAL_COLOR + "55" }}>{actualPace}</td>
@@ -4855,9 +4847,9 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                 {points.length > 0 && (
                   <React.Fragment>
                     <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>
-                      {["Hills","Track","Intervals"].includes(type) ? "Repeat pace" : "Pace"}, mileage, HR &amp; cadence{zoneTrendVisible[type] ? " · zone distribution shown as a narrow stacked column matching mileage height" : ""}
+                      {["Hills","Track","Intervals"].includes(type) ? "Repeat pace" : "Pace"}, mileage, HR &amp; cadence{type === "Hills" ? ", avg hill grade" : ""}{zoneTrendVisible[type] ? " · zone distribution shown as a narrow stacked column matching mileage height" : ""}
                     </p>
-                    <div style={{ height: 150, marginBottom: type === "Hills" ? 14 : 0 }}>
+                    <div style={{ height: 150, marginBottom: 0 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={points.map((p) => ({ ...p, paceNeg: p.pace != null ? -p.pace : null }))} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -4866,19 +4858,11 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                           <YAxis yAxisId="distance" orientation="right" domain={trendDistanceScale.domain} ticks={trendDistanceTicks} interval={0} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={34} />
                           <YAxis yAxisId="hr" hide domain={[100, 200]} />
                           <YAxis yAxisId="cadence" hide domain={trendCadenceScale.domain} />
+                          {type === "Hills" && <YAxis yAxisId="hillGrade" hide domain={hillGradeScale.domain} />}
                           <Tooltip
                             content={({ active, payload, label }) => {
                               if (!active || !payload || !payload.length) return null;
                               const showZones = !!zoneTrendHover[type];
-                              if (type === "Track" && payload?.[0]?.payload) {
-                                const point = payload[0].payload;
-                                return (
-                                  <div style={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12, padding: "8px 10px" }}>
-                                    {point.track400Avg != null && point.track400Fastest != null && <p style={{ margin:0, fontWeight:700, whiteSpace:"nowrap" }}>400m avg {formatTrackRepTime(point.track400Avg)} · best {formatTrackRepTime(point.track400Fastest)}</p>}
-                                    {point.track800Avg != null && point.track800Fastest != null && <p style={{ margin: point.track400Avg != null ? "3px 0 0" : 0, fontWeight:700, whiteSpace:"nowrap" }}>800m avg {formatTrackRepTime(point.track800Avg)} · best {formatTrackRepTime(point.track800Fastest)}</p>}
-                                  </div>
-                                );
-                              }
                               const visiblePayload = payload.filter((item) => {
                                 const key = String(item && item.dataKey || "");
                                 return showZones ? /^zone[1-5]Plot$/.test(key) : !/^zone[1-5]Plot$/.test(key);
@@ -4887,6 +4871,19 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                               return (
                                 <div style={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12, padding: "8px 10px" }}>
                                   <p style={{ margin: "0 0 5px", fontWeight: 600 }}>{label}</p>
+                                  {type === "Hills" && !showZones && (() => {
+                                    const point = payload.find((item) => item && item.payload)?.payload || {};
+                                    return point.repCount != null && point.repTime != null && point.repLength != null
+                                      ? <p style={{ margin:"2px 0 6px", fontWeight:600 }}>{Math.round(Number(point.repCount))}x{formatHillRepeatTimeLabel(point.repTime)} · {Number(point.repLength).toFixed(3)}mi</p>
+                                      : null;
+                                  })()}
+                                  {type === "Track" && !showZones && (() => {
+                                    const point = payload.find((item) => item && item.payload)?.payload || {};
+                                    return <div style={{ margin:"0 0 6px", fontWeight:600 }}>
+                                      {point.track400Avg != null && point.track400Fastest != null && <p style={{ margin:"2px 0" }}>400m · {formatTrackRepTime(point.track400Avg)} avg · {formatTrackRepTime(point.track400Fastest)} best</p>}
+                                      {point.track800Avg != null && point.track800Fastest != null && <p style={{ margin:"2px 0" }}>800m · {formatTrackRepTime(point.track800Avg)} avg · {formatTrackRepTime(point.track800Fastest)} best</p>}
+                                    </div>;
+                                  })()}
                                   {visiblePayload.map((item) => {
                                     const key = String(item && item.dataKey || "");
                                     let value = item.value;
@@ -4895,6 +4892,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                                     else if (key === "distance") { value = item.value + " mi"; name = "Mileage"; }
                                     else if (key === "hr") { value = item.value + " bpm"; name = "HR"; }
                                     else if (key === "avgCadence") { value = Math.round(Number(item.value)) + " spm"; name = "Avg Cadence"; }
+                                    else if (key === "hillGrade") { value = Number(item.value).toFixed(1) + "%"; name = "Avg Hill Grade"; }
                                     else if (/^zone[1-5]Plot$/.test(key)) {
                                       const zoneNumber = key.match(/^zone([1-5])Plot$/)?.[1];
                                       const pct = zoneNumber ? item.payload?.[`zone${zoneNumber}Pct`] : null;
@@ -4921,6 +4919,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                           <Line name={type === "Track" ? "Repeat Pace" : "Pace"} yAxisId="pace" type="monotone" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 5 }} />
                           <Line name="HR" yAxisId="hr" type="monotone" dataKey="hr" stroke="#A26360" strokeWidth={2} dot={{ r: 4 }} />
                           <Line name="Avg Cadence" yAxisId="cadence" type="monotone" dataKey="avgCadence" stroke={TYPE_COLOR.Tempo.solid} strokeWidth={1.75} strokeDasharray="4 4" dot={false} activeDot={false} connectNulls />
+                          {type === "Hills" && <Line name="Avg Hill Grade" yAxisId="hillGrade" type="monotone" dataKey="hillGrade" stroke="#6F8FAA" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 4 }} connectNulls={false} />}
                         </ComposedChart>
                       </ResponsiveContainer>
                     </div>
@@ -4940,42 +4939,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                         ))}
                       </div>
                     )}
-                    {type === "Hills" && (
-                      <React.Fragment>
-                        <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>Hill repeat profile · length, elevation gain &amp; grade · reps/time as columns</p>
-                        <div style={{ height: 170 }}>
-                          <ResponsiveContainer width="100%" height="100%">
-                            <ComposedChart data={points} margin={{ top: 4, right: 0, left: 0, bottom: 0 }} barGap={2}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                              <XAxis dataKey="dateLabel" tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
-                              <YAxis yAxisId="len" domain={repLengthScale.domain} ticks={repLengthScale.ticks} interval={0} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={42} tickFormatter={(v) => Number(v).toFixed(2)} />
-                              <YAxis yAxisId="elev" orientation="right" domain={repElevScale.domain} ticks={repElevScale.ticks} interval={0} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={34} />
-                              <YAxis yAxisId="grade" hide domain={hillGradeScale.domain} />
-                              <YAxis yAxisId="repTime" hide domain={repTimeScale.domain} />
-                              <YAxis yAxisId="repCount" hide domain={repCountScale.domain} />
-                              <Tooltip
-                                contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                                formatter={(value, name, item) => {
-                                  const key = item && item.dataKey;
-                                  if (key === "repLength") return [Number(value).toFixed(3) + " mi", "Avg rep length"];
-                                  if (key === "repElev") return [Number(value).toFixed(1) + " ft", "Avg rep elevation gain"];
-                                  if (key === "hillGrade") return [Number(value).toFixed(1) + "%", "Avg hill grade"];
-                                  if (key === "repCount") return [Math.round(Number(value)), "# reps"];
-                                  if (key === "repTime") return [formatHillRepeatTimeLabel(value), "Avg rep time"];
-                                  return [value, name];
-                                }}
-                              />
-                              <Legend wrapperStyle={{ fontSize: 11 }} />
-                              <Bar name="# Reps" yAxisId="repCount" dataKey="repCount" fill="#C8C4B6" radius={[3, 3, 0, 0]} barSize={10} />
-                              <Bar name="Avg rep time" yAxisId="repTime" dataKey="repTime" fill="#A7B8C9" radius={[3, 3, 0, 0]} barSize={10} />
-                              <Line name="Avg rep length" yAxisId="len" type="monotone" dataKey="repLength" stroke="#EDCC8B" strokeWidth={2} dot={{ r: 4 }} />
-                              <Line name="Avg rep elevation gain" yAxisId="elev" type="monotone" dataKey="repElev" stroke="#BDD1C5" strokeWidth={2} dot={{ r: 4 }} />
-                              <Line name="Avg hill grade" yAxisId="grade" type="monotone" dataKey="hillGrade" stroke="#6F8FAA" strokeWidth={1.75} strokeDasharray="4 4" dot={false} activeDot={false} connectNulls />
-                            </ComposedChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </React.Fragment>
-                    )}
+
                   </React.Fragment>
                 )}
               </div>
