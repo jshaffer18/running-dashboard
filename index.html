@@ -1231,6 +1231,29 @@ function formatTrackRepTime(seconds) {
   return `${minutes}:${remaining.toFixed(2).padStart(5, "0")}`;
 }
 
+function track400EquivalentTime(rep) {
+  const time = Number(rep?.time_s);
+  const distance = Number(rep?.distance_mi);
+  return Number.isFinite(time) && Number.isFinite(distance) && distance > 0
+    ? time * 0.25 / distance
+    : null;
+}
+
+// Compact, human-readable ticks for the shared /400m track comparison scale.
+function trackTimeAxisScale(reps) {
+  const seconds = (reps || []).map(track400EquivalentTime).filter((value) => Number.isFinite(value) && value > 0);
+  if (!seconds.length) return { domain: [-120, -80], ticks: [-120, -100, -80] };
+  const minimum = Math.floor((Math.min(...seconds) - 4) / 10) * 10;
+  const maximum = Math.ceil((Math.max(...seconds) + 4) / 10) * 10;
+  const span = Math.max(10, maximum - minimum);
+  const tickStep = Math.ceil(span / 3 / 5) * 5;
+  const low = Math.floor(minimum / tickStep) * tickStep;
+  const high = Math.ceil(maximum / tickStep) * tickStep;
+  const ticks = [];
+  for (let value = low; value <= high; value += tickStep) ticks.push(-value);
+  return { domain: [-high, -low], ticks: ticks.reverse() };
+}
+
 function trackRepDistanceLabel(distanceMi) {
   const distance = Number(distanceMi);
   if (!Number.isFinite(distance) || distance <= 0) return "—";
@@ -1355,8 +1378,8 @@ function trackHeadingSummary(run, { includeDate = true } = {}) {
     });
     parts.push(groups.map((group) => {
       const avgTime = group.reps.reduce((sum, rep) => sum + Number(rep.time_s || 0), 0) / group.reps.length;
-      return `${group.reps.length} x ${group.meters}m @ ${formatTrackRepTime(avgTime)}`;
-    }).join(" + "));
+      return `${group.reps.length}x${group.meters} @ ${fmtPace(avgTime)}`;
+    }).join(" · "));
   } else {
     const pace = runAveragePaceSec(run);
     if (pace != null && Number.isFinite(Number(pace))) parts.push(`${fmtPace(pace)}/mi`);
@@ -1399,6 +1422,7 @@ function runTotalSummary(run) {
   if (pace != null && Number.isFinite(Number(pace))) parts.push(`${fmtPace(pace)}/mi`);
   if (run.duration_s != null) parts.push(fmtDuration(run.duration_s));
   if (run.elev_gain_ft != null) parts.push(`${Math.round(Number(run.elev_gain_ft))} ft gain`);
+  if (run.avg_cadence != null && Number.isFinite(Number(run.avg_cadence))) parts.push(`${Math.round(Number(run.avg_cadence))} spm`);
   return parts.join(" · ");
 }
 
@@ -2455,7 +2479,7 @@ function LastActivityOverview({ run }) {
     return {
       ...p,
       paceNeg: usesTrackRepeatCharts(run)
-        ? (trackRange ? -Number(trackRange.time_s) : null)
+        ? (trackRange ? -Number(trackRange.time_s) * 0.25 / Number(trackRange.distance_mi) : null)
         : (p.pace != null ? -p.pace : null),
       trackRepTime_s: trackRange ? Number(trackRange.time_s) : null,
       trackRepDistance_mi: trackRange ? Number(trackRange.distance_mi) : null,
@@ -2463,7 +2487,7 @@ function LastActivityOverview({ run }) {
     };
   });
   const paceScale = usesTrackRepeatCharts(run)
-    ? niceScale(trackOverviewReps.map((rep) => -Number(rep.time_s)), 5)
+    ? trackTimeAxisScale(trackOverviewReps)
     : regularPaceScale(run.detail_trace.map((p) => p.pace));
   const overviewDistanceTicks = Array.from(new Set(distanceScale.ticks.filter((_, i) => i % 2 === 0).filter((v) => v < run.distance_mi - 0.08).concat(Number(run.distance_mi.toFixed(2)))));
   const elevScale = elevationScale(run.detail_trace.map((p) => p.elev_ft), 5);
@@ -2475,9 +2499,11 @@ function LastActivityOverview({ run }) {
         ? trackOverviewReps.map((rep) => ({ ...rep, mile: rep.rep, pace: rep.pace_sec_per_mi }))
         : run.splits;
   const lapPaceScale = usesTrackRepeatCharts(run)
-    ? niceScale(overviewLapData.map((s) => -Number(s.time_s)), 5)
+    ? trackTimeAxisScale(overviewLapData)
     : regularPaceScale(overviewLapData.map((s) => s.pace));
-  const lapPaceTicks = compactAxisTicks(lapPaceScale.ticks, 4);
+  const lapPaceTicks = compactAxisTicks(lapPaceScale.ticks, 3);
+  const traceDistanceEnd = run.detail_trace.length ? Math.max(...run.detail_trace.map((point) => Number(point.dist_mi) || 0)) : Number(run.distance_mi);
+  const chartDistanceEnd = usesTrackRepeatCharts(run) && traceDistanceEnd < Number(run.distance_mi) - 0.1 ? traceDistanceEnd : Number(run.distance_mi);
   const outerCard = { background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:16, padding:"1rem 1.2rem", WebkitTextSizeAdjust:"100%", textSizeAdjust:"100%", containerType:"inline-size" };
   const innerCard = { background:"rgba(255,255,255,0.22)", border:"1px solid rgba(228,225,218,0.56)", borderRadius:14, padding:"0.9rem 0.78rem", backdropFilter:"blur(1px)", WebkitTextSizeAdjust:"100%", textSizeAdjust:"100%", minWidth:0, maxWidth:"100%", overflow:"hidden", boxSizing:"border-box" };
   return <section className="rd-last-activity-overview" style={{ ...outerCard, marginBottom:16 }}>
@@ -2491,15 +2517,15 @@ function LastActivityOverview({ run }) {
         <div className="rd-overview-chart-card" style={{...innerCard,width:"100%",display:"flex",flexDirection:"column",flex:"1 1 0",overflow:"visible"}}>
           <div style={{display:"grid",gridTemplateColumns:"minmax(0,1fr) auto",alignItems:"center",gap:4,marginBottom:4,minWidth:0}}>
             <div className="rd-overview-chart-legend" style={{display:"flex",gap:6,fontSize:10,color:"var(--text-secondary)",flexWrap:"nowrap",alignItems:"center",justifyContent:"flex-start",minWidth:0,whiteSpace:"nowrap",marginLeft:-2}}>
-              {[{key:"elev_ft",label:"Elevation",swatch:{background:"#BDD1C5",opacity:.55,borderRadius:2}},{key:"paceNeg",label:usesTrackRepeatCharts(run)?"Rep Time":"Pace",swatch:{background:"#9DAAA2",borderRadius:2}},{key:"hr",label:"HR",swatch:{background:"#A26360",borderRadius:2}},{key:"cad",label:"Cadence",swatch:{background:TYPE_COLOR.Tempo.solid,borderRadius:"50%"}}].map((item)=><span key={item.key} onClick={()=>toggleOverviewSeries(item.key)} style={{cursor:"pointer",opacity:overviewHiddenSeries[item.key]?.45:1,textDecoration:overviewHiddenSeries[item.key]?"line-through":"none",whiteSpace:"nowrap"}}><span style={{display:"inline-block",width:8,height:8,marginRight:4,...item.swatch}}></span>{item.label}</span>)}
+              {[{key:"elev_ft",label:"Elevation",swatch:{background:"#BDD1C5",opacity:.55,borderRadius:2}},{key:"paceNeg",label:usesTrackRepeatCharts(run)?"Rep /400m":"Pace",swatch:{background:"#9DAAA2",borderRadius:2}},{key:"hr",label:"HR",swatch:{background:"#A26360",borderRadius:2}},{key:"cad",label:"Cadence",swatch:{background:TYPE_COLOR.Tempo.solid,borderRadius:"50%"}}].map((item)=><span key={item.key} onClick={()=>toggleOverviewSeries(item.key)} style={{cursor:"pointer",opacity:overviewHiddenSeries[item.key]?.45:1,textDecoration:overviewHiddenSeries[item.key]?"line-through":"none",whiteSpace:"nowrap"}}><span style={{display:"inline-block",width:8,height:8,marginRight:4,...item.swatch}}></span>{item.label}</span>)}
             </div>
             <RunHeaderVisuals run={run} color={c.solid} compact showRoute={false} />
           </div>
-          <div style={{flex:"1 1 0",minHeight:130,marginTop:5,marginBottom:-2,width:"calc(100% + 12px)",marginLeft:-8,marginRight:-4}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={overviewTraceData} margin={{top:8,right:0,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],run.distance_mi]} ticks={distanceTicksForRun(run.distance_mi)} interval={0} tickFormatter={(v)=>formatDistanceAxisTick(v, run.distance_mi)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:10,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={32} tickMargin={0} tickFormatter={(v)=>Math.round(v)}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={paceScale.ticks} interval={0} allowDataOverflow tickFormatter={(v)=>usesTrackRepeatCharts(run)?formatTrackRepTime(-v):fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={38}/><Tooltip content={<ActivityTraceTooltip />} /><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25} hide={!!overviewHiddenSeries.elev_ft}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.paceNeg}/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.hr}/><Line yAxisId="cad" dataKey="cadPlot" stroke="transparent" strokeOpacity={1} dot={{r:1.8,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.2}} activeDot={{r:3.1,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.4}} isAnimationActive={false} connectNulls={false} hide={!!overviewHiddenSeries.cad}/></ComposedChart></ResponsiveContainer></div>
+          <div style={{flex:"1 1 0",minHeight:130,marginTop:5,marginBottom:-2,width:"calc(100% + 12px)",marginLeft:-8,marginRight:-4}}><ResponsiveContainer width="100%" height="100%"><ComposedChart data={overviewTraceData} margin={{top:8,right:0,left:0,bottom:0}}><XAxis type="number" dataKey="dist_mi" domain={[distanceScale.domain[0],chartDistanceEnd]} ticks={distanceTicksForRun(chartDistanceEnd)} interval={0} tickFormatter={(v)=>formatDistanceAxisTick(v, chartDistanceEnd)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis yAxisId="elev" orientation="right" domain={elevScale.domain} ticks={elevScale.ticks} tick={{fontSize:10,fill:"#8FA88F"}} axisLine={false} tickLine={false} width={32} tickMargin={0} tickFormatter={(v)=>Math.round(v)}/><YAxis yAxisId="hr" hide domain={[100,220]}/><YAxis yAxisId="cad" hide domain={[130,220]}/><YAxis yAxisId="pace" orientation="left" domain={paceScale.domain} ticks={usesTrackRepeatCharts(run)?paceScale.ticks:paceScale.ticks} interval={0} allowDataOverflow tickFormatter={(v)=>usesTrackRepeatCharts(run)?fmtPace(-v):fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={50}/><Tooltip content={<ActivityTraceTooltip />} /><Area yAxisId="elev" dataKey="elev_ft" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={.25} hide={!!overviewHiddenSeries.elev_ft}/><Line yAxisId="pace" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls={false} hide={!!overviewHiddenSeries.paceNeg}/><Line yAxisId="hr" dataKey="hr" stroke="#A26360" strokeWidth={1.5} dot={false} connectNulls hide={!!overviewHiddenSeries.hr}/><Line yAxisId="cad" dataKey="cadPlot" stroke="transparent" strokeOpacity={1} dot={{r:1.8,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.2}} activeDot={{r:3.1,fill:"transparent",fillOpacity:0,stroke:TYPE_COLOR.Tempo.solid,strokeOpacity:1,strokeWidth:1.4}} isAnimationActive={false} connectNulls={false} hide={!!overviewHiddenSeries.cad}/></ComposedChart></ResponsiveContainer></div>
         </div>
         <div className="rd-overview-lap-card" style={{...innerCard,width:"100%",flex:"0 0 auto"}}>
-          {usesTrackRepeatCharts(run) && <p style={{margin:"0 0 3px",fontSize:10.5,color:"var(--text-secondary)"}}>Track rep time</p>}
-          <div style={{height:72}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={overviewLapData.map((s)=>({...s,paceNeg:usesTrackRepeatCharts(run)?-Number(s.time_s):(s.pace!=null?-s.pace:null)}))} margin={{top:4,right:10,left:0,bottom:0}}><XAxis type="number" dataKey="mile" domain={usesStructuredRepeatCharts(run) ? [1, Math.max(1, overviewLapData.length)] : ["dataMin", "dataMax"]} ticks={usesStructuredRepeatCharts(run) ? compactOrdinalTicks(overviewLapData.length, 5) : undefined} interval={0} tickFormatter={(v)=>usesStructuredRepeatCharts(run) ? "#"+v : "Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v)=>usesTrackRepeatCharts(run)?formatTrackRepTime(-v):fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={42} tickMargin={2}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} labelFormatter={(v)=>usesStructuredRepeatCharts(run) ? "Rep "+v : "Mile "+v} formatter={(value)=>usesTrackRepeatCharts(run)?[formatTrackRepTime(-value),"Rep Time"]:[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div>
+          {usesTrackRepeatCharts(run) && <p style={{margin:"0 0 3px",fontSize:10.5,color:"var(--text-secondary)"}}>Track rep pace · per 400m</p>}
+          <div style={{height:72}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={overviewLapData.map((s)=>({...s,paceNeg:usesTrackRepeatCharts(run)?-track400EquivalentTime(s):(s.pace!=null?-s.pace:null)}))} margin={{top:4,right:10,left:0,bottom:0}}><XAxis type="number" dataKey="mile" domain={usesStructuredRepeatCharts(run) ? [1, Math.max(1, overviewLapData.length)] : ["dataMin", "dataMax"]} ticks={usesStructuredRepeatCharts(run) ? compactOrdinalTicks(overviewLapData.length, 5) : undefined} interval={0} tickFormatter={(v)=>usesStructuredRepeatCharts(run) ? "#"+v : "Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={42} tickMargin={2}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} labelFormatter={(v)=>usesStructuredRepeatCharts(run) ? "Rep "+v : "Mile "+v} formatter={(value, name, entry)=>usesTrackRepeatCharts(run)?[`${trackRepDistanceLabel(entry?.payload?.distance_mi)} · ${formatTrackRepTime(entry?.payload?.time_s)} (${fmtPace(-value)}/400m)`,"Rep Time"]:[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div>
           {usesHillRepeatCharts(run) ? (
             <div style={{ marginTop: 4 }}><HillRepeatsTable run={run} compact /></div>
           ) : usesIntervalRepeatCharts(run) ? (
