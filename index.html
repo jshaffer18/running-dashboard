@@ -1358,29 +1358,35 @@ function intervalHeadingSummary(run, { includeDate = true } = {}) {
   return parts.join(" · ");
 }
 
+function trackRepeatHeadingSummary(run) {
+  if (!run) return "";
+  const reps = trackRepeatsForRun(run);
+  if (!reps.length) return "";
+  const groups = [];
+  reps.forEach((rep) => {
+    const meters = Math.round(Number(rep.distance_mi) * 1600 / 100) * 100;
+    const key = meters || Math.round(Number(rep.distance_mi) * 1600);
+    let group = groups.find((item) => item.meters === key);
+    if (!group) {
+      group = { meters: key, reps: [] };
+      groups.push(group);
+    }
+    group.reps.push(rep);
+  });
+  return groups.map((group) => {
+    const avgTime = group.reps.reduce((sum, rep) => sum + Number(rep.time_s || 0), 0) / group.reps.length;
+    return `${group.reps.length}x${group.meters} @ ${fmtPace(avgTime)}`;
+  }).join(" · ");
+}
+
 function trackHeadingSummary(run, { includeDate = true } = {}) {
   if (!run) return "—";
-  const reps = trackRepeatsForRun(run);
   const parts = [];
   if (includeDate) parts.push(fmtDate(run.date));
   parts.push(run.distance_mi == null ? "—" : `${Number(run.distance_mi).toFixed(2)} mi`);
-  if (reps.length) {
-    const groups = [];
-    reps.forEach((rep) => {
-      const meters = Math.round(Number(rep.distance_mi) * 1600 / 100) * 100;
-      const key = meters || Math.round(Number(rep.distance_mi) * 1600);
-      let group = groups.find((item) => item.meters === key);
-      if (!group) {
-        group = { meters: key, reps: [] };
-        groups.push(group);
-      }
-      group.reps.push(rep);
-    });
-    parts.push(groups.map((group) => {
-      const avgTime = group.reps.reduce((sum, rep) => sum + Number(rep.time_s || 0), 0) / group.reps.length;
-      return `${group.reps.length}x${group.meters} @ ${fmtPace(avgTime)}`;
-    }).join(" · "));
-  } else {
+  const repeats = trackRepeatHeadingSummary(run);
+  if (repeats) parts.push(repeats);
+  else {
     const pace = runAveragePaceSec(run);
     if (pace != null && Number.isFinite(Number(pace))) parts.push(`${fmtPace(pace)}/mi`);
   }
@@ -1667,7 +1673,7 @@ function RunHeaderVisuals({ run, color, compact = false, showRoute = true, showS
       )}
       {showRoute && (
         <div className="rd-route-map-slot" style={{ width: compact ? 47 : 70, height: compact ? 45 : 70, display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "visible", position: "relative", zIndex: 1, marginLeft: compact ? -2 : 0, marginRight: compact ? -2 : 0 }}>
-          <div style={{ width: compact ? 47 : 70, height: compact ? 47 : 70, transform: compact ? "translate(-5px, -3px)" : "translateY(-3px)", transformOrigin: "center" }}>
+          <div style={{ width: compact ? 47 : 70, height: compact ? 47 : 70, transform: compact ? "translate(-5px, -11px)" : "translateY(-3px)", transformOrigin: "center" }}>
             <RouteSvg route={run.route} routeShape={run.route_shape} color={color} />
           </div>
         </div>
@@ -1708,9 +1714,12 @@ function HillRepeatsTable({ run, compact = false }) {
         <tbody>
           {reps.map((rep) => {
             const pace = Number(rep.pace_sec_per_mi);
-            const comparisonValue = Number(trackMode ? rep.time_s : rep.pace_sec_per_mi);
-            const barPct = Number.isFinite(comparisonValue) && maxPace > minPace
-              ? 100 * (1 - (comparisonValue - minPace) / (maxPace - minPace))
+            const meters = trackMode ? trackRepDistanceLabel(rep.distance_mi) : null;
+            const groupPaces = trackMode ? (trackPaceScales[meters] || []) : comparisonValues;
+            const groupMinPace = groupPaces.length ? Math.min(...groupPaces) : minPace;
+            const groupMaxPace = groupPaces.length ? Math.max(...groupPaces) : maxPace;
+            const barPct = Number.isFinite(pace) && groupMaxPace > groupMinPace
+              ? 100 * (1 - (pace - groupMinPace) / (groupMaxPace - groupMinPace))
               : 100;
             const repTime = trackMode ? formatTrackRepTime(rep.time_s) : (rep.time_s != null ? `${Math.round(Number(rep.time_s))}s` : "—");
             const elevationGrade = rep.elev_gain_ft != null
@@ -1743,9 +1752,17 @@ function HillRepeatsTable({ run, compact = false }) {
 function IntervalRepeatsTable({ run, compact = false, repsOverride = null }) {
   const reps = repsOverride || intervalRepeatsForRun(run);
   const trackMode = displayWorkoutType(run?.type) === "Track" && Array.isArray(repsOverride);
-  const comparisonValues = reps.map((rep) => Number(trackMode ? rep.time_s : rep.pace_sec_per_mi)).filter(Number.isFinite);
+  const comparisonValues = reps.map((rep) => Number(rep.pace_sec_per_mi)).filter(Number.isFinite);
   const minPace = comparisonValues.length ? Math.min(...comparisonValues) : 0;
   const maxPace = comparisonValues.length ? Math.max(...comparisonValues) : 0;
+  const trackPaceScales = trackMode ? reps.reduce((map, rep) => {
+    const meters = trackRepDistanceLabel(rep.distance_mi);
+    const pace = Number(rep.pace_sec_per_mi);
+    if (!Number.isFinite(pace)) return map;
+    if (!map[meters]) map[meters] = [];
+    map[meters].push(pace);
+    return map;
+  }, {}) : {};
   const fontSize = compact ? 11 : 12;
   const cellPad = compact ? "4px 4px" : "6px 5px";
   return (
@@ -2502,7 +2519,12 @@ function LastActivityOverview({ run }) {
     <div className="rd-last-activity-overview-grid" style={{ display:"grid", gridTemplateColumns:"minmax(320px,.88fr) minmax(350px,1.12fr)", gap:12, alignItems:"stretch", width:"100%", minWidth:0 }}>
       <div style={{...innerCard,height:"100%",width:"100%"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:6}}><p style={{margin:0,fontSize:13,fontWeight:500,color:"var(--text-secondary)"}}>Last recorded activity</p><span style={{background:c.solid,color:"#3D3428",fontSize:12,padding:"3px 9px",borderRadius:8,fontWeight:500}}>{runDisplayType(run)}</span></div>
-        <p style={{margin:"0 0 12px",fontSize:usesSpecialRunHeading(run) ?14:18,fontWeight:600,lineHeight:1.25}}>{usesSpecialRunHeading(run) ? specialRunHeading(run, { includeDate: true }) : fmtDate(run.date)}</p>
+        {usesTrackRepeatCharts(run) ? (
+          <div style={{margin:"0 0 12px",fontSize:14,fontWeight:600,lineHeight:1.25}}>
+            <div>{fmtDate(run.date)} · {Number(run.distance_mi).toFixed(2)} mi</div>
+            <div style={{marginTop:2}}>{trackRepeatHeadingSummary(run)}</div>
+          </div>
+        ) : <p style={{margin:"0 0 12px",fontSize:usesSpecialRunHeading(run) ?14:18,fontWeight:600,lineHeight:1.25}}>{usesSpecialRunHeading(run) ? specialRunHeading(run, { includeDate: true }) : fmtDate(run.date)}</p>}
         <div className="rd-overview-watch-metrics" style={{display:"grid",gridTemplateColumns:"minmax(0,220px) 132px",justifyContent:"start",gap:8,alignItems:"start",minWidth:0,width:"100%"}}><div className="rd-overview-watch-visual" style={{display:"flex",justifyContent:"center",alignItems:"center",minWidth:0,width:"100%",minHeight:300,transform:"translateY(-11px)"}}><LastActivityWatch run={run} scale={1.12} /></div><OverviewWatchMetrics run={run} expanded={showExtendedMetrics} onToggle={() => setShowExtendedMetrics(true)} /></div>
       </div>
       <div className="rd-last-activity-overview-secondary" style={{display:"flex",flexDirection:"column",gap:10,height:"100%",minWidth:0}}>
@@ -2694,6 +2716,8 @@ function PlannedRunModal({ date, onClose }) {
   const workoutDetailLines = workoutDetailText ? workoutDetailText.split("·").map((part) => part.trim()).filter(Boolean) : [];
   const planNoteLines = splitNoteLines(day.note);
   const logNoteLines = splitNoteLines(actual?.note);
+  const completedTrack400 = actual && displayWorkoutType(actual.type) === "Track" ? trackDistanceTimeSummary(actual, 400) : null;
+  const completedTrack800 = actual && displayWorkoutType(actual.type) === "Track" ? trackDistanceTimeSummary(actual, 800) : null;
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,26,20,0.4)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "24px 16px", overflowY: "auto", zIndex: 1000 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, position: "relative", background: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 18, padding: "1rem 1.1rem", boxShadow: "0 10px 35px rgba(38,36,31,.18)" }}>
@@ -2723,6 +2747,12 @@ function PlannedRunModal({ date, onClose }) {
           {actual && <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
             <p style={{ margin: 0, fontSize: 10, color: "var(--text-secondary)" }}>Completed</p>
             <p style={{ margin: "3px 0 0", fontSize: 13, fontWeight: 500, lineHeight: 1.3 }}>{isHillType(actual.type) && actual.hill_reps?.length ? hillHeadingSummary(actual, { includeDate: true }) : `${Number(actual.distance_mi).toFixed(2)} mi · ${fmtPace(runAveragePaceSec(actual))}/mi`}</p>
+            {displayWorkoutType(actual.type) === "Track" && (completedTrack400 || completedTrack800) && (
+              <div style={{ marginTop:7, display:"grid", rowGap:3 }}>
+                {completedTrack400 && <p style={{ margin:0, fontSize:12, lineHeight:1.35, color:"var(--text-secondary)" }}>400m · {formatTrackRepTime(completedTrack400.avg_s)} avg · {formatTrackRepTime(completedTrack400.fastest_s)} best</p>}
+                {completedTrack800 && <p style={{ margin:0, fontSize:12, lineHeight:1.35, color:"var(--text-secondary)" }}>800m · {formatTrackRepTime(completedTrack800.avg_s)} avg · {formatTrackRepTime(completedTrack800.fastest_s)} best</p>}
+              </div>
+            )}
             {isHillType(actual.type) && actual.hill_reps?.length > 0 && (
               <div style={{ marginTop: 7, display: "grid", rowGap: 3 }}>
                 {actual.hill_reps.map((rep) => (
@@ -3459,6 +3489,10 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
               <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 600, lineHeight: 1.15 }}>{raceName}</p>
               <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 500, minWidth: 0 }}>{detailDateLabel}{detailTimeRange && detailTimeRange !== "—" ? <> &middot; {detailTimeRange}</> : null}</p>
               <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{Number(r.distance_mi).toFixed(2)} mi &middot; {fmtPace(runAveragePaceSec(r))}/mi &middot; {fmtDuration(r.duration_s)}{r.elev_gain_ft != null ? ` · ${Math.round(Number(r.elev_gain_ft))} ft gain` : ""}</p>
+            </React.Fragment> : usesTrackRepeatCharts(r) ? <React.Fragment>
+              <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 500, minWidth: 0 }}>{fmtDate(r.date)} · {Number(r.distance_mi).toFixed(2)} mi</p>
+              <p style={{ margin: "0 0 3px", fontSize: 13, fontWeight: 500, minWidth: 0 }}>{trackRepeatHeadingSummary(r)}</p>
+              <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{runTotalSummary(r)}</p>
             </React.Fragment> : usesSpecialRunHeading(r) ? <React.Fragment>
               <p style={{ margin: "0 0 3px", fontSize: 13, fontWeight: 500, minWidth: 0 }}>{specialRunHeading(r, { includeDate: true })}</p>
               <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>{runTotalSummary(r)}</p>
@@ -4364,8 +4398,10 @@ function RunningDashboard() {
         repCount: isHill ? r.repeat_count : null,
         track400Avg: track400?.avg_s ?? null,
         track400Fastest: track400?.fastest_s ?? null,
+        track400Pace: track400?.avg_s != null ? track400.avg_s / 0.25 : null,
         track800Avg: track800?.avg_s ?? null,
         track800Fastest: track800?.fastest_s ?? null,
+        track800Pace: track800?.avg_s != null ? track800.avg_s / 0.5 : null,
         zone1Pct: zonePct[0],
         zone2Pct: zonePct[1],
         zone3Pct: zonePct[2],
@@ -4710,9 +4746,10 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                   const actualMi = r ? r.distance_mi : null;
                   const tempoLogSummary = r ? tempoSegmentSummary(r) : null;
                   const track400LogSummary = r && displayWorkoutType(r.type) === "Track" ? trackDistanceTimeSummary(r, 400) : null;
+                  const track800LogSummary = r && displayWorkoutType(r.type) === "Track" ? trackDistanceTimeSummary(r, 800) : null;
                   const trackGoalTargets = d.planned ? trackGoalTimeTargets(d.planned) : [];
                   const actualPace = r
-                    ? (track400LogSummary ? formatTrackRepTime(track400LogSummary.avg_s) : fmtPace(tempoLogSummary ? tempoLogSummary.pace_sec_per_mi : runAveragePaceSec(r)))
+                    ? (displayWorkoutType(r.type) === "Track" ? null : fmtPace(tempoLogSummary ? tempoLogSummary.pace_sec_per_mi : runAveragePaceSec(r)))
                     : "\u2014";
                   const dayLetter = { Mon: "M", Tue: "T", Wed: "W", Thu: "T", Fri: "F", Sat: "S", Sun: "S" }[d.day] || d.day;
                   let deltaColor = "var(--text-secondary)";
@@ -4763,7 +4800,14 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                           ? <div style={{ whiteSpace:"normal", overflowWrap:"anywhere", lineHeight:1.2 }}>{trackGoalTargets.map((target) => target.target).join(" / ")}</div>
                           : (d.planned && d.planned.paceTarget ? (() => { const parts = d.planned.paceTarget.split(/[–-]/); return parts.length > 1 ? <span>{parts[0]}–<br />{parts.slice(1).join("–")}</span> : d.planned.paceTarget; })() : "—")}
                       </td>
-                      <td style={{ padding: "8px 2px", textAlign: "center", whiteSpace: "nowrap", background: ACTUAL_COLOR + "55" }}>{actualPace}</td>
+                      <td style={{ padding: "8px 2px", textAlign: "center", whiteSpace: "nowrap", background: ACTUAL_COLOR + "55" }}>
+                        {r && displayWorkoutType(r.type) === "Track" ? (
+                          <div style={{ lineHeight:1.2 }}>
+                            <div>{track400LogSummary ? formatTrackRepTime(track400LogSummary.avg_s) : "—"}</div>
+                            {track800LogSummary && <div style={{ marginTop:2 }}>{formatTrackRepTime(track800LogSummary.avg_s)}</div>}
+                          </div>
+                        ) : actualPace}
+                      </td>
                       <td style={{ padding: "8px 2px", textAlign: "center", whiteSpace: "nowrap" }}>{r ? r.avg_hr : "—"}</td>
                       <td style={{ padding: "8px 2px", textAlign: "center", whiteSpace: "nowrap" }}>{r && weatherForRun(r).weather_temp_f != null ? Math.round(Number(weatherForRun(r).weather_temp_f)) : "—"}</td>
                       <td style={{ padding: "8px 10px", fontSize: 12, color: "var(--text-secondary)", textAlign: "left" }}>
@@ -4796,7 +4840,10 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
           </p>
           {Object.entries(trendsByType).map(([type, points]) => {
             const c = typeColorFor(type);
-            const trendPaceScale = niceScale(points.map((p) => p.pace == null ? null : -p.pace), 30);
+            const trendPaceValues = type === "Track"
+              ? points.flatMap((p) => [p.track400Pace, p.track800Pace]).filter(Number.isFinite).map((pace) => -pace)
+              : points.map((p) => p.pace == null ? null : -p.pace);
+            const trendPaceScale = niceScale(trendPaceValues, 30);
             const trendDistanceScale = niceScale(points.map((p) => p.distance), 1, true);
             const trendDistanceMax = Math.max(...points.map((p) => Number(p.distance) || 0), 0);
             const trendDistanceTicks = trendDistanceMax > 16
@@ -4851,7 +4898,12 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                     </p>
                     <div style={{ height: 150, marginBottom: 0 }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={points.map((p) => ({ ...p, paceNeg: p.pace != null ? -p.pace : null }))} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+                        <ComposedChart data={points.map((p) => ({
+                          ...p,
+                          paceNeg: p.pace != null ? -p.pace : null,
+                          track400PaceNeg: p.track400Pace != null ? -p.track400Pace : null,
+                          track800PaceNeg: p.track800Pace != null ? -p.track800Pace : null,
+                        }))} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                           <XAxis dataKey="dateLabel" tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
                           <YAxis yAxisId="pace" tickFormatter={(v) => fmtPace(-v)} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={42} domain={trendPaceScale.domain} ticks={trendPaceScale.ticks} interval={0} />
@@ -4888,7 +4940,9 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                                     const key = String(item && item.dataKey || "");
                                     let value = item.value;
                                     let name = item.name;
-                                    if (key === "paceNeg") { value = fmtPace(-Number(item.value)) + "/mi"; name = ["Hills","Track","Intervals"].includes(type) ? "Repeat Pace" : "Pace"; }
+                                    if (key === "track400PaceNeg") { value = fmtPace(-Number(item.value)) + "/mi"; name = "400m Repeat Pace"; }
+                                    else if (key === "track800PaceNeg") { value = fmtPace(-Number(item.value)) + "/mi"; name = "800m Repeat Pace"; }
+                                    else if (key === "paceNeg") { value = fmtPace(-Number(item.value)) + "/mi"; name = ["Hills","Intervals"].includes(type) ? "Repeat Pace" : "Pace"; }
                                     else if (key === "distance") { value = item.value + " mi"; name = "Mileage"; }
                                     else if (key === "hr") { value = item.value + " bpm"; name = "HR"; }
                                     else if (key === "avgCadence") { value = Math.round(Number(item.value)) + " spm"; name = "Avg Cadence"; }
@@ -4916,7 +4970,10 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                           {zoneTrendVisible[type] && <Bar name="Zone 3" legendType="none" yAxisId="distance" dataKey="zone3Plot" stackId="zones" fill="#BDD1C5" fillOpacity={0.60} barSize={trendZoneBarSize} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
                           {zoneTrendVisible[type] && <Bar name="Zone 4" legendType="none" yAxisId="distance" dataKey="zone4Plot" stackId="zones" fill="#E8B298" fillOpacity={0.60} barSize={trendZoneBarSize} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
                           {zoneTrendVisible[type] && <Bar name="Zone 5" legendType="none" yAxisId="distance" dataKey="zone5Plot" stackId="zones" fill="#A26360" fillOpacity={0.60} barSize={trendZoneBarSize} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
-                          <Line name={type === "Track" ? "Repeat Pace" : "Pace"} yAxisId="pace" type="monotone" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 5 }} />
+                          {type === "Track" ? <React.Fragment>
+                            <Line name="400m Repeat Pace" yAxisId="pace" type="monotone" dataKey="track400PaceNeg" stroke="#7E8A85" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 5 }} connectNulls={false} />
+                            <Line name="800m Repeat Pace" yAxisId="pace" type="monotone" dataKey="track800PaceNeg" stroke="#9DAAA2" strokeWidth={2} strokeDasharray="5 3" dot={{ r: 4 }} activeDot={{ r: 5 }} connectNulls={false} />
+                          </React.Fragment> : <Line name="Pace" yAxisId="pace" type="monotone" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 5 }} />}
                           <Line name="HR" yAxisId="hr" type="monotone" dataKey="hr" stroke="#A26360" strokeWidth={2} dot={{ r: 4 }} />
                           <Line name="Avg Cadence" yAxisId="cadence" type="monotone" dataKey="avgCadence" stroke={TYPE_COLOR.Tempo.solid} strokeWidth={1.75} strokeDasharray="4 4" dot={false} activeDot={false} connectNulls />
                           {type === "Hills" && <Line name="Avg Hill Grade" yAxisId="hillGrade" type="monotone" dataKey="hillGrade" stroke="#6F8FAA" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 4 }} connectNulls={false} />}
