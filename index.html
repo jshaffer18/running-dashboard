@@ -4445,6 +4445,7 @@ function RunningDashboard() {
         avgCadence: isHill && r.repeat_avg_cadence != null ? Number(r.repeat_avg_cadence) : (r.avg_cadence != null ? Number(r.avg_cadence) : null),
         hillGrade: isHill && r.repeat_avg_grade_pct != null ? Number(r.repeat_avg_grade_pct) : null,
         distance: r.distance_mi,
+        elevGain: r.elev_gain_ft != null ? Number(r.elev_gain_ft) : null,
         repLength: isHill ? r.repeat_avg_distance_mi : null,
         repTime: isHill ? r.repeat_avg_time_s : null,
         repElev: isHill ? r.repeat_avg_elev_gain_ft : null,
@@ -4914,7 +4915,9 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
               ? points.flatMap((p) => [p.track400Avg, p.track800Avg]).filter(Number.isFinite)
               : points.map((p) => p.pace == null ? null : -p.pace);
             const trendPaceScale = niceScale(trendPaceValues, type === "Track" ? 15 : 30);
+            const trendPaceTicks = type === "Track" ? compactAxisTicks(trendPaceScale.ticks, 5) : trendPaceScale.ticks;
             const trendDistanceScale = niceScale(points.map((p) => p.distance), 1, true);
+            const trendElevationScale = elevationScale(points.map((p) => p.elevGain), 25);
             const trendDistanceMax = Math.max(...points.map((p) => Number(p.distance) || 0), 0);
             const trendDistanceTicks = trendDistanceMax > 16
               ? trendDistanceScale.ticks.filter((_, index) => index % 4 === 0)
@@ -4966,7 +4969,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                     <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>
                       {type === "Track" ? "Avg 400m / 800m time" : (type === "Tempo" ? "Tempo pace" : (type === "Hills" ? "Repeat pace" : "Pace"))}, mileage, HR &amp; cadence{type === "Hills" ? ", avg hill grade" : ""}{zoneTrendVisible[type] ? " · zone distribution shown as a narrow stacked column matching mileage height" : ""}
                     </p>
-                    <div style={{ height: 150, marginBottom: 0 }}>
+                    <div style={{ height: 150, marginBottom: 0, position:"relative", zIndex:2 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={points.map((p) => ({
                           ...p,
@@ -4974,12 +4977,14 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                         }))} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                           <XAxis dataKey="dateLabel" tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
-                          <YAxis yAxisId="pace" tickFormatter={(v) => type === "Track" ? formatTrackRepTime(v) : fmtPace(-v)} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={type === "Track" ? 48 : 42} domain={trendPaceScale.domain} ticks={trendPaceScale.ticks} interval={0} />
+                          <YAxis yAxisId="pace" tickFormatter={(v) => type === "Track" ? formatTrackRepTime(v) : fmtPace(-v)} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={type === "Track" ? 48 : 42} domain={trendPaceScale.domain} ticks={trendPaceTicks} interval={0} />
                           <YAxis yAxisId="distance" orientation="right" domain={trendDistanceScale.domain} ticks={trendDistanceTicks} interval={0} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={34} />
                           <YAxis yAxisId="hr" hide domain={[100, 200]} />
                           <YAxis yAxisId="cadence" hide domain={trendCadenceScale.domain} />
+                          {["Long","Tempo"].includes(type) && <YAxis yAxisId="elevation" hide domain={trendElevationScale.domain} />}
                           {type === "Hills" && <YAxis yAxisId="hillGrade" hide domain={hillGradeScale.domain} />}
                           <Tooltip
+                            wrapperStyle={{ zIndex: 50, pointerEvents: "none" }}
                             content={({ active, payload, label }) => {
                               if (!active || !payload || !payload.length) return null;
                               const showZones = !!zoneTrendHover[type];
@@ -5014,6 +5019,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                                     else if (key === "distance") { value = item.value + " mi"; name = "Mileage"; }
                                     else if (key === "hr") { value = item.value + " bpm"; name = "HR"; }
                                     else if (key === "avgCadence") { value = Math.round(Number(item.value)) + " spm"; name = "Avg Cadence"; }
+                                    else if (key === "elevGain") { value = Math.round(Number(item.value)) + " ft"; name = "Elevation Gain"; }
                                     else if (key === "hillGrade") { value = Number(item.value).toFixed(1) + "%"; name = "Avg Hill Grade"; }
                                     else if (/^zone[1-5]Plot$/.test(key)) {
                                       const zoneNumber = key.match(/^zone([1-5])Plot$/)?.[1];
@@ -5039,9 +5045,10 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                           {zoneTrendVisible[type] && <Bar name="Zone 4" legendType="none" yAxisId="distance" dataKey="zone4Plot" stackId="zones" fill="#E8B298" fillOpacity={0.60} barSize={trendZoneBarSize} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
                           {zoneTrendVisible[type] && <Bar name="Zone 5" legendType="none" yAxisId="distance" dataKey="zone5Plot" stackId="zones" fill="#A26360" fillOpacity={0.60} barSize={trendZoneBarSize} onMouseEnter={() => setZoneTrendHover((hover) => ({ ...hover, [type]: true }))} onMouseLeave={() => setZoneTrendHover((hover) => ({ ...hover, [type]: false }))} />}
                           {type === "Track" ? <React.Fragment>
-                            <Line name="Avg 400m" yAxisId="pace" type="monotone" dataKey="track400Avg" stroke="#6F8FAA" strokeWidth={2.5} dot={{ r: 4, fill:"#6F8FAA" }} activeDot={{ r: 5 }} connectNulls={false} />
-                            <Line name="Avg 800m" yAxisId="pace" type="monotone" dataKey="track800Avg" stroke="#B06F86" strokeWidth={2.5} dot={{ r: 4, fill:"#B06F86" }} activeDot={{ r: 5 }} connectNulls={false} />
+                            <Line name="Avg 400m" legendType="circle" yAxisId="pace" type="monotone" dataKey="track400Avg" stroke="#4F82B0" strokeWidth={2.5} dot={{ r: 4, fill:"#4F82B0", stroke:"#4F82B0" }} activeDot={{ r: 5, fill:"#4F82B0", stroke:"#4F82B0" }} connectNulls={false} />
+                            <Line name="Avg 800m" legendType="circle" yAxisId="pace" type="monotone" dataKey="track800Avg" stroke="#B65478" strokeWidth={2.5} dot={{ r: 4, fill:"#B65478", stroke:"#B65478" }} activeDot={{ r: 5, fill:"#B65478", stroke:"#B65478" }} connectNulls={false} />
                           </React.Fragment> : <Line name={type === "Tempo" ? "Tempo Pace" : "Pace"} yAxisId="pace" type="monotone" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 5 }} />}
+                          {["Long","Tempo"].includes(type) && <Line name="Elevation Gain" legendType="plainline" yAxisId="elevation" type="monotone" dataKey="elevGain" stroke="#7F9F87" strokeWidth={1.8} strokeDasharray="3 4" dot={false} activeDot={{ r: 4, fill:"#7F9F87", stroke:"#7F9F87" }} connectNulls />}
                           <Line name="HR" yAxisId="hr" type="monotone" dataKey="hr" stroke="#A26360" strokeWidth={2} dot={{ r: 4 }} />
                           <Line name="Avg Cadence" yAxisId="cadence" type="monotone" dataKey="avgCadence" stroke={TYPE_COLOR.Tempo.solid} strokeWidth={1.75} strokeDasharray="4 4" dot={false} activeDot={false} connectNulls />
                           {type === "Hills" && <Line name="Avg Hill Grade" yAxisId="hillGrade" type="monotone" dataKey="hillGrade" stroke="#6F8FAA" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 4 }} connectNulls={false} />}
