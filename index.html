@@ -1107,11 +1107,22 @@ function trackTimeScale(values) {
   return { domain: best.domain, ticks: best.ticks };
 }
 
+function chartPaceSeconds(value) {
+  const pace = Number(value);
+  if (!Number.isFinite(pace) || pace <= 0 || pace > 1200) return null;
+  return pace;
+}
+
+function chartPaceNeg(value) {
+  const pace = chartPaceSeconds(value);
+  return pace == null ? null : -pace;
+}
+
 function regularPaceScale(values, targetIntervals = 4) {
   // Shared by all pace charts. Keep labels on whole-minute boundaries.
   // Use 1:00 spacing for a tight pace range and 2:00 for a wider spread.
-  const allPaces = values.filter((v) => v != null && isFinite(v) && v > 0);
-  const runningPaces = allPaces.filter((v) => v >= 240 && v <= 1200);
+  const allPaces = values.map(chartPaceSeconds).filter((v) => v != null);
+  const runningPaces = allPaces.filter((v) => v >= 240);
   const paces = runningPaces.length ? runningPaces : allPaces;
   if (!paces.length) return { domain: [-720, -600], ticks: [-720, -660, -600] };
   const minPace = Math.min(...paces);
@@ -2541,7 +2552,7 @@ function LastActivityOverview({ run, onViewDetails = null }) {
       : null;
     return {
       ...p,
-      paceNeg: p.pace != null ? -p.pace : null,
+      paceNeg: chartPaceNeg(p.pace),
       trackRepTime_s: trackRange ? Number(trackRange.time_s) : null,
       trackRepDistance_mi: trackRange ? Number(trackRange.distance_mi) : null,
       cadPlot: i % 2 === 0 ? p.cad : null,
@@ -2578,7 +2589,7 @@ function LastActivityOverview({ run, onViewDetails = null }) {
       <div className="rd-last-activity-overview-secondary" style={{display:"flex",flexDirection:"column",gap:10,height:"100%",minWidth:0}}>
         <div className="rd-overview-lap-card" style={{...innerCard,width:"100%",flex:"1 1 auto",height:"100%",display:"flex",flexDirection:"column",justifyContent:"center"}}>
           {usesTrackRepeatCharts(run) && <p style={{margin:"0 0 3px",fontSize:10.5,color:"var(--text-secondary)"}}>Track rep pace · /mi</p>}
-          <div style={{height:72}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={overviewLapData.map((s)=>({...s,paceNeg:s.pace!=null?-s.pace:null}))} margin={{top:4,right:10,left:0,bottom:0}}><XAxis type="number" dataKey="mile" domain={usesStructuredRepeatCharts(run) ? [1, Math.max(1, overviewLapData.length)] : ["dataMin", "dataMax"]} ticks={usesStructuredRepeatCharts(run) ? compactOrdinalTicks(overviewLapData.length, 5) : undefined} interval={0} tickFormatter={(v)=>usesStructuredRepeatCharts(run) ? "#"+v : "Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={42} tickMargin={2}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} labelFormatter={(v)=>usesStructuredRepeatCharts(run) ? "Rep "+v : "Mile "+v} formatter={(value, name, entry)=>usesTrackRepeatCharts(run)?[`${fmtPace(-value)}/mi · ${trackRepDistanceLabel(entry?.payload?.distance_mi)} ${formatTrackRepTime(entry?.payload?.time_s)}`,"Rep pace"]:[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div>
+          <div style={{height:72}}><ResponsiveContainer width="100%" height="100%"><AreaChart data={overviewLapData.map((s)=>({...s,paceNeg:chartPaceNeg(s.pace)}))} margin={{top:4,right:10,left:0,bottom:0}}><XAxis type="number" dataKey="mile" domain={usesStructuredRepeatCharts(run) ? [1, Math.max(1, overviewLapData.length)] : ["dataMin", "dataMax"]} ticks={usesStructuredRepeatCharts(run) ? compactOrdinalTicks(overviewLapData.length, 5) : undefined} interval={0} tickFormatter={(v)=>usesStructuredRepeatCharts(run) ? "#"+v : "Mi "+v} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={{stroke:"var(--border)"}} tickLine={false}/><YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v)=>fmtPace(-v)} tick={{fontSize:10,fill:"var(--text-secondary)"}} axisLine={false} tickLine={false} width={42} tickMargin={2}/><Tooltip contentStyle={{background:"var(--surface-2)",border:"0.5px solid var(--border)",borderRadius:8,fontSize:12}} labelFormatter={(v)=>usesStructuredRepeatCharts(run) ? "Rep "+v : "Mile "+v} formatter={(value, name, entry)=>usesTrackRepeatCharts(run)?[`${fmtPace(-value)}/mi · ${trackRepDistanceLabel(entry?.payload?.distance_mi)} ${formatTrackRepTime(entry?.payload?.time_s)}`,"Rep pace"]:[fmtPace(-value)+"/mi","Pace"]}/><Area type="step" dataKey="paceNeg" stroke="#77807A" fill="#9DAAA2" fillOpacity={.75} baseValue="dataMin"/></AreaChart></ResponsiveContainer></div>
           {usesHillRepeatCharts(run) ? (
             <div style={{ marginTop: 4 }}><HillRepeatsTable run={run} compact /></div>
           ) : usesIntervalRepeatCharts(run) ? (
@@ -3576,7 +3587,7 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
       </div>
       <div style={{ height: 190, width: "calc(100% + 12px)", marginLeft: -8, marginRight: -4 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={r.detail_trace.map((p, i) => ({ ...p, paceNeg: p.pace != null ? -p.pace : null, cadPlot: i % 2 === 0 ? p.cad : null }))} margin={{ top: 4, right: 0, left: 0, bottom: 4 }}>
+          <ComposedChart data={r.detail_trace.map((p, i) => ({ ...p, paceNeg: chartPaceNeg(p.pace), cadPlot: i % 2 === 0 ? p.cad : null }))} margin={{ top: 4, right: 0, left: 0, bottom: 4 }}>
             <XAxis type="number" dataKey="dist_mi" domain={[detailDistanceScale.domain[0], detailDistanceEnd]} ticks={distanceTicksForRun(r.distance_mi)} interval={0} tickFormatter={(v) => formatDistanceAxisTick(v, detailDistanceEnd)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
             <YAxis yAxisId="elev" orientation="right" domain={detailElevScale.domain} ticks={detailElevScale.ticks} interval={0} tick={{ fontSize: 10, fill: "#8FA88F" }} axisLine={false} tickLine={false} width={32} tickMargin={0} tickFormatter={(v) => Math.round(v)} />
             <YAxis yAxisId="hr" hide domain={[100, 220]} />
@@ -3637,7 +3648,7 @@ function RunDetailCard({ r, expanded, onToggleExpand, detailWatch = null, detail
             <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "0 0 4px" }}>{usesTrackRepeatCharts(r) ? "Track rep pace" : usesStructuredRepeatCharts(r) ? "Rep pace average" : "Lap average pace"}</p>
             <div style={{ height: 100 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={detailLapData.map((s) => ({ ...s, paceNeg: s.pace != null ? -s.pace : null }))} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                <AreaChart data={detailLapData.map((s) => ({ ...s, paceNeg: chartPaceNeg(s.pace) }))} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
                   <XAxis type="number" dataKey="mile" domain={usesStructuredRepeatCharts(r) ? [1, Math.max(1, detailLapData.length)] : [1, Math.max(1, Math.ceil(Number(r.distance_mi) || 1))]} ticks={usesStructuredRepeatCharts(r) ? compactOrdinalTicks(detailLapData.length, 5) : mileTicksForRun(r.distance_mi)} interval={0} tickFormatter={(v) => usesStructuredRepeatCharts(r) ? "#"+v : String(v)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
                   <YAxis domain={lapPaceScale.domain} ticks={lapPaceTicks} interval={0} tickFormatter={(v) => fmtPace(-v)} tick={{ fontSize: 10, fill: "var(--text-secondary)" }} axisLine={false} tickLine={false} width={42} tickMargin={2} />
                   <Tooltip contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(value, _, item) => [fmtPace(-value) + "/mi" + (item.payload.partial ? " (extrapolated)" : ""), "Pace"]} labelFormatter={(v) => (usesStructuredRepeatCharts(r) ? "Rep " : "Mile ") + v} />
@@ -3831,7 +3842,7 @@ function RaceExpandedCharts({ race }) {
       ...split,
       mile: index + 1,
       distanceEnd: cumulativeDistance,
-      paceNeg: Number.isFinite(Number(split.pace)) ? -Number(split.pace) : null,
+      paceNeg: chartPaceNeg(split.pace),
       elevation: cumulativeElevation,
       cadence: split.avg_cadence != null ? Number(split.avg_cadence) : null,
       cadPlot: index % 2 === 0 && split.avg_cadence != null ? Number(split.avg_cadence) : null,
@@ -5006,7 +5017,7 @@ const trainingLoadBiometricTrendDomain = useMemo(() => {
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={points.map((p) => ({
                           ...p,
-                          paceNeg: p.pace != null ? -p.pace : null,
+                          paceNeg: chartPaceNeg(p.pace),
                         }))} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                           <XAxis dataKey="dateLabel" tick={{ fontSize: 11, fill: "var(--text-secondary)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
