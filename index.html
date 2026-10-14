@@ -1852,6 +1852,8 @@ function IntervalRepeatsTable({ run, compact = false, repsOverride = null }) {
   const comparisonValues = reps.map((rep) => Number(rep.pace_sec_per_mi)).filter(Number.isFinite);
   const minPace = comparisonValues.length ? Math.min(...comparisonValues) : 0;
   const maxPace = comparisonValues.length ? Math.max(...comparisonValues) : 0;
+  // Track bars compare pace only within the same interval distance. This keeps
+  // 400m reps relative to the other 400s and 800m reps relative to the other 800s.
   const trackPaceScales = trackMode ? reps.reduce((map, rep) => {
     const meters = trackRepDistanceLabel(rep.distance_mi);
     const pace = Number(rep.pace_sec_per_mi);
@@ -1866,15 +1868,24 @@ function IntervalRepeatsTable({ run, compact = false, repsOverride = null }) {
     <div style={{ overflowX: "visible", width: "100%" }}>
       <table className="rd-mile-splits-table" style={{ width: "100%", borderCollapse: "collapse", fontSize, tableLayout: "fixed" }}>
         <colgroup>
-          <col style={{ width: "18%" }} />
-          <col style={{ width: "30%" }} />
-          <col style={{ width: "20%" }} />
-          <col style={{ width: "14%" }} />
-          <col style={{ width: "18%" }} />
+          {trackMode ? <React.Fragment>
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "28%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "13%" }} />
+            <col style={{ width: "17%" }} />
+          </React.Fragment> : <React.Fragment>
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "30%" }} />
+            <col style={{ width: "20%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "18%" }} />
+          </React.Fragment>}
         </colgroup>
         <thead>
           <tr style={{ borderBottom: "0.5px solid var(--border)" }}>
-            {(trackMode ? ["Rep", "Time", "Distance", "HR", "Cadence"] : ["Rep", "Pace", "Distance", "HR", "Cadence"]).map((label) => (
+            {(trackMode ? ["Rep", "Time", "Pace", "Distance", "HR", "Cadence"] : ["Rep", "Pace", "Distance", "HR", "Cadence"]).map((label) => (
               <th key={label} style={{ textAlign: "center", padding: cellPad, whiteSpace: "nowrap", color: "var(--text-secondary)", fontWeight: 500 }}>{label}</th>
             ))}
           </tr>
@@ -1882,23 +1893,27 @@ function IntervalRepeatsTable({ run, compact = false, repsOverride = null }) {
         <tbody>
           {reps.map((rep) => {
             const pace = Number(rep.pace_sec_per_mi);
-            const comparisonValue = Number(trackMode ? rep.time_s : rep.pace_sec_per_mi);
-            const barPct = Number.isFinite(comparisonValue) && maxPace > minPace
-              ? 100 * (1 - (comparisonValue - minPace) / (maxPace - minPace))
+            const meters = trackMode ? trackRepDistanceLabel(rep.distance_mi) : null;
+            const groupPaces = trackMode ? (trackPaceScales[meters] || []) : comparisonValues;
+            const groupMinPace = groupPaces.length ? Math.min(...groupPaces) : minPace;
+            const groupMaxPace = groupPaces.length ? Math.max(...groupPaces) : maxPace;
+            const barPct = Number.isFinite(pace) && groupMaxPace > groupMinPace
+              ? 100 * (1 - (pace - groupMinPace) / (groupMaxPace - groupMinPace))
               : 100;
             const repTime = trackMode ? formatTrackRepTime(rep.time_s) : (rep.time_s != null ? `${Math.round(Number(rep.time_s))}s` : "—");
             return (
               <tr key={rep.rep} style={{ borderBottom: "0.5px solid var(--border)" }}>
                 <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{trackMode ? rep.rep : `${rep.rep} · ${repTime}`}</td>
+                {trackMode && <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{repTime}</td>}
                 <td className="rd-mile-splits-pace-cell" style={{ padding: cellPad, whiteSpace: "nowrap" }}>
                   <div className="rd-mile-splits-pace-inner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, whiteSpace: "nowrap" }}>
-                    <span style={{ minWidth: trackMode ? 48 : 39, textAlign: "center", whiteSpace: "nowrap" }}>{trackMode ? repTime : (Number.isFinite(pace) ? fmtPace(pace) : "—")}</span>
+                    <span style={{ minWidth: 39, textAlign: "center", whiteSpace: "nowrap" }}>{Number.isFinite(pace) ? fmtPace(pace) : "—"}</span>
                     <div className="rd-mile-splits-pace-bar" style={{ flex: 1, minWidth: 18, maxWidth: 58, height: 7, background: "var(--surface-2)", borderRadius: 4, overflow: "hidden" }}>
                       <div style={{ width: Math.max(12, barPct) + "%", height: "100%", background: "#9DAAA2", borderRadius: 4 }} />
                     </div>
                   </div>
                 </td>
-                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{trackMode ? trackRepDistanceLabel(rep.distance_mi) : (rep.distance_mi != null ? `${Number(rep.distance_mi).toFixed(3)} mi` : "—")}</td>
+                <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{trackMode ? meters : (rep.distance_mi != null ? `${Number(rep.distance_mi).toFixed(3)} mi` : "—")}</td>
                 <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.avg_hr ?? "—"}</td>
                 <td style={{ padding: cellPad, textAlign: "center", whiteSpace: "nowrap" }}>{rep.avg_cadence ?? "—"}</td>
               </tr>
