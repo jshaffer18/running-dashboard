@@ -2943,7 +2943,7 @@ function ScheduleCalendar({ monthDate, setMonthDate, onDayClick }) {
           const typeKey = plannedTypeKey(planned);
           const actual = runForDate(iso);
           const actualTypeKey = actual ? plannedTypeKey({ type: actual.type }) : null;
-          const color = typeColorFor(actualTypeKey || typeKey);
+          const color = typeColorFor(planned ? typeKey : (actualTypeKey || typeKey));
           const isWorkout = planned && typeKey !== "Rest" && Number(planned.distance || 0) > 0;
           const milesValue = planned?.distanceRange || (planned?.distance != null && Number(planned.distance) > 0 ? `${planned.distance}` : "");
           const fullTypeLabel = planned ? getScheduleWorkoutDisplay(planned).main : "";
