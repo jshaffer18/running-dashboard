@@ -1933,10 +1933,18 @@ function RunComparison() {
   })).sort((a, b) => String(b.run.start_time_local || b.run.date).localeCompare(String(a.run.start_time_local || a.run.date))), []);
   const runs = selected.map((key) => choices.find((item) => item.key === key)?.run || null);
   const ready = runs.every(Boolean);
+  const trackMode = ready && runs.some((run) => displayWorkoutType(run.type) === "Track");
+  const repeatGroups = trackMode ? [400, 800].map((meters) => {
+    const sides = runs.map((run) => trackRepeatsForRun(run).filter((rep) => trackRepDistanceLabel(rep.distance_mi) === `${meters}m`).map((rep) => {
+      const lap = (run.laps || []).find((item) => item.lap === rep.lap_num);
+      return { ...rep, pace: rep.pace_sec_per_mi, elev_net_ft: lap?.ascent_ft != null && lap?.descent_ft != null ? Number(lap.ascent_ft) - Number(lap.descent_ft) : null };
+    }));
+    return { meters, sides, count: Math.max(...sides.map((side) => side.length)) };
+  }).filter((group) => group.count > 0) : [];
   const rowCount = ready ? Math.max(...runs.map((run) => (run.splits || []).length)) : 0;
   const mileSource = ready ? runs.reduce((longer, run) => Number(run.distance_mi || 0) > Number(longer.distance_mi || 0) ? run : longer, runs[0]) : null;
   const sharedSplits = mileSource?.splits || [];
-  const hasPartial = ready && runs.some((run) => (run.splits || []).some((split) => split.partial));
+  const hasPartial = ready && !trackMode && runs.some((run) => (run.splits || []).some((split) => split.partial));
   const optionLabel = (run) => {
     const [year, month, day] = String(run.date).split("-");
     const label = `${runDisplayType(run)}, ${month}/${day}/${year}`;
@@ -1959,29 +1967,42 @@ function RunComparison() {
             </select>
           </label>)}
         </div>
-        {!ready ? <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>Select two runs to compare their mile splits.</p> : <>
+        {!ready ? <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>Select two runs to compare mile splits or Track work repeats.</p> : <>
           <div role="region" aria-label="Run comparison table; scroll horizontally on smaller screens" tabIndex={0} style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
             <table style={{ width: "100%", minWidth: 360, borderCollapse: "collapse", tableLayout: "fixed", fontSize: 10, fontVariantNumeric: "tabular-nums" }}>
-              <caption style={{ textAlign: "left", fontSize: 10, color: "var(--text-secondary)", padding: "0 0 8px" }}>Mile splits · HR in bpm · cadence in spm · net elevation in ft</caption>
+              <caption style={{ textAlign: "left", fontSize: 10, color: "var(--text-secondary)", padding: "0 0 8px" }}>{trackMode ? "Work repeats only · time / pace · HR in bpm · cadence in spm · net elevation in ft" : "Mile splits · HR in bpm · cadence in spm · net elevation in ft"}</caption>
               <colgroup><col style={{ width: "6%" }} /></colgroup><colgroup span={4} /><colgroup span={4} />
               <thead>
-                <tr><th rowSpan={2} scope="col" style={{ padding: "4px 1px", verticalAlign: "bottom", textAlign: "center", fontWeight: 500, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>Mi</th>{runs.map((run, side) => <th key={side} scope="colgroup" colSpan={4} style={{ padding: "2px 4px 8px", textAlign: "left", verticalAlign: "top", borderLeft: side ? "2px solid var(--border)" : undefined }}>
+                <tr><th rowSpan={2} scope="col" style={{ padding: "4px 1px", verticalAlign: "bottom", textAlign: "center", fontWeight: 500, color: "var(--text-secondary)", borderBottom: "1px solid var(--border)" }}>{trackMode ? "Rep" : "Mi"}</th>{runs.map((run, side) => <th key={side} scope="colgroup" colSpan={4} style={{ padding: "2px 4px 8px", textAlign: "left", verticalAlign: "top", borderLeft: side ? "2px solid var(--border)" : undefined }}>
                   <div style={{ fontSize: 10, color: "var(--text-secondary)", marginBottom: 5, fontWeight: 500 }}>Run {side + 1} · {runDisplayType(run)}</div>
                   <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, lineHeight: 1.4 }}>{fmtDate(run.date)} · {formatCompactClock(weatherForRun(run).start_time_local)}</div>
                   <div style={{ fontSize: 10, fontWeight: 400, lineHeight: 1.5, whiteSpace: "normal" }}>{run.distance_mi == null ? "—" : `${Number(run.distance_mi).toFixed(2)} mi`} · {fmtPace(runAveragePaceSec(run))}/mi · {run.duration_s == null ? "—" : fmtDuration(run.duration_s)}</div>
                 </th>)}</tr>
-                <tr>{[0, 1].flatMap((side) => ["Pace", "HR", "SPM", "Elevation"].map((label, column) => <th key={`${side}-${label}`} scope="col" style={{ textAlign: "center", padding: "5px 1px", color: "var(--text-secondary)", fontWeight: 500, borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", borderLeft: side && column === 0 ? "2px solid var(--border)" : undefined }}>{label}</th>))}</tr>
+                <tr>{[0, 1].flatMap((side) => [trackMode ? "Time / pace" : "Pace", "HR", "SPM", "Elevation"].map((label, column) => <th key={`${side}-${label}`} scope="col" style={{ textAlign: "center", padding: "5px 1px", color: "var(--text-secondary)", fontWeight: 500, borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", borderLeft: side && column === 0 ? "2px solid var(--border)" : undefined }}>{label}</th>))}</tr>
               </thead>
-              <tbody>{Array.from({ length: rowCount }, (_, index) => <tr key={index}><th scope="row" style={{ padding: "5px 1px", textAlign: "center", fontWeight: 400, borderBottom: "0.5px solid var(--border)", background: index % 2 ? "var(--surface-2)" : undefined }}>{sharedSplits[index]?.mile ?? runs.map((run) => (run.splits || [])[index]?.mile).find((mile) => mile != null) ?? index + 1}{runs.some((run) => (run.splits || [])[index]?.partial) ? "*" : ""}</th>{runs.flatMap((run, side) => {
+              <tbody>{trackMode ? repeatGroups.map((group) => <React.Fragment key={group.meters}>
+                <tr><th colSpan={9} scope="rowgroup" style={{ padding: "9px 5px 5px", textAlign: "left", background: "var(--surface-2)", color: "var(--text-secondary)", fontSize: 11, fontWeight: 600, borderBottom: "1px solid var(--border)" }}>{group.meters}m</th></tr>
+                {Array.from({ length: group.count }, (_, index) => <tr key={index}>
+                  <th scope="row" style={{ padding: "5px 1px", textAlign: "center", fontWeight: 400, borderBottom: "0.5px solid var(--border)", background: index % 2 ? "var(--surface-2)" : undefined }}>{index + 1}</th>
+                  {group.sides.flatMap((sideReps, side) => {
+                    const rep = sideReps[index];
+                    const elevation = rep?.elev_net_ft;
+                    const values = rep ? [<span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.4 }}><span style={{ fontWeight: 600 }}>{formatTrackRepTime(rep.time_s)}</span><span style={{ fontSize: 9, color: "var(--text-secondary)" }}>{fmtPace(rep.pace)}/mi</span></span>, metric(rep.avg_hr), metric(rep.avg_cadence), elevation != null && Number.isFinite(Number(elevation)) ? `${Number(elevation) > 0 ? "+" : ""}${Math.round(Number(elevation))} ft` : "—"] : ["—", "—", "—", "—"];
+                    return values.map((value, column) => <td key={`${side}-${column}`} style={{ padding: "5px 1px", textAlign: "center", whiteSpace: "nowrap", borderBottom: "0.5px solid var(--border)", borderLeft: side && column === 0 ? "2px solid var(--border)" : undefined, background: index % 2 ? "var(--surface-2)" : undefined }}>{value}</td>);
+                  })}
+                </tr>)}
+              </React.Fragment>) : (Array.from({ length: rowCount }, (_, index) => <tr key={index}><th scope="row" style={{ padding: "5px 1px", textAlign: "center", fontWeight: 400, borderBottom: "0.5px solid var(--border)", background: index % 2 ? "var(--surface-2)" : undefined }}>{sharedSplits[index]?.mile ?? runs.map((run) => (run.splits || [])[index]?.mile).find((mile) => mile != null) ?? index + 1}{runs.some((run) => (run.splits || [])[index]?.partial) ? "*" : ""}</th>{runs.flatMap((run, side) => {
                 const split = (run.splits || [])[index];
                 const elevation = split?.elev_net_ft;
                 const values = split ? [fmtPace(split.pace), metric(split.avg_hr), metric(split.avg_cadence), elevation != null && Number.isFinite(Number(elevation)) ? `${Number(elevation) > 0 ? "+" : ""}${Math.round(Number(elevation))} ft` : "—"] : ["—", "—", "—", "—"];
                 return values.map((value, column) => <td key={`${side}-${column}`} style={{ padding: "5px 1px", textAlign: "center", whiteSpace: "nowrap", borderBottom: "0.5px solid var(--border)", borderLeft: side && column === 0 ? "2px solid var(--border)" : undefined, background: index % 2 ? "var(--surface-2)" : undefined }}>{value}</td>);
-              })}</tr>)}</tbody>
+              })}</tr>))}</tbody>
             </table>
           </div>
-          {!rowCount && <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>No mile splits are available for these runs.</p>}
-          {runs.some((run) => !(run.splits || []).length) && rowCount > 0 && <p style={{ fontSize: 10, color: "var(--text-secondary)", margin: "8px 0 0" }}>One selected run has no mile splits; its cells show —.</p>}
+          {!trackMode && !rowCount && <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>No mile splits are available for these runs.</p>}
+          {!trackMode && runs.some((run) => !(run.splits || []).length) && rowCount > 0 && <p style={{ fontSize: 10, color: "var(--text-secondary)", margin: "8px 0 0" }}>One selected run has no mile splits; its cells show —.</p>}
+          {trackMode && runs.some((run) => displayWorkoutType(run.type) !== "Track") && <p style={{ fontSize: 10, color: "var(--text-secondary)", margin: "8px 0 0" }}>Select a Track run on both sides to compare matching work repeats. The other run has no Track repeats.</p>}
+          {trackMode && !repeatGroups.length && <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>No recorded 400m or 800m work repeats are available.</p>}
           {hasPartial && <p style={{ fontSize: 10, color: "var(--text-secondary)", margin: "8px 0 0" }}>* Partial mile; pace is shown per mile. {runs.map((run, side) => (run.splits || []).filter((split) => split.partial).map((split) => `Run ${side + 1}, split ${split.mile}: ${Number(split.partial_distance_mi ?? split.distance_mi).toFixed(3)} mi.`).join(" ")).filter(Boolean).join(" ")}</p>}
         </>}
       </div>
