@@ -4091,16 +4091,19 @@ function RaceExpandedCharts({ race }) {
     const distance = Number(split.distance_mi) || 0;
     cumulativeDistance += distance;
     cumulativeElevation += Number(split.elev_net_ft) || 0;
+    const plotPace = distance > 0 ? split.pace : null;
     return {
       ...split,
       mile: index + 1,
       distanceEnd: cumulativeDistance,
-      paceNeg: chartPaceNeg(split.pace),
+      pace: plotPace,
+      paceNeg: chartPaceNeg(plotPace),
+      partial: distance > 0 && distance < 0.95,
       elevation: cumulativeElevation,
       cadence: split.avg_cadence != null ? Number(split.avg_cadence) : null,
       cadPlot: index % 2 === 0 && split.avg_cadence != null ? Number(split.avg_cadence) : null,
     };
-  });
+  }).filter((point) => Number(point.distance_mi) > 0);
 
   const raceDistance = Number(race.recorded_distance_mi) || cumulativeDistance || 1;
 
@@ -4108,10 +4111,9 @@ function RaceExpandedCharts({ race }) {
   // Keep the final observed distance; never invent a zero-elevation finish.
   const recordedElevation = (race.elevation_profile || []).filter((point) =>
     Number.isFinite(point.distance_mi) && Number.isFinite(point.elevation_ft));
-  const elevationFloor = recordedElevation.length ? Math.min(...recordedElevation.map((point) => point.elevation_ft)) : 0;
   const elevationData = recordedElevation.map((point) => ({
     distanceEnd: point.distance_mi,
-    elevationPlot: point.elevation_ft - elevationFloor,
+    elevationPlot: point.elevation_ft,
   }));
 
   const comboPaceScale = regularPaceScale(chartData.map((point) => point.pace));
@@ -4176,17 +4178,17 @@ function RaceExpandedCharts({ race }) {
               contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 11 }}
               formatter={(value, name, item) => {
                 const key = item && item.dataKey;
-                if (key === "paceNeg") return [fmtPace(-Number(value)) + "/mi", "Pace"];
-                if (key === "elevationPlot") return [Math.round(Number(value)) + " ft relative", "Elevation"];
+                if (key === "paceNeg") return [fmtPace(-Number(value)) + "/mi" + (item?.payload?.partial ? " (partial-lap equivalent)" : ""), "Pace"];
+                if (key === "elevationPlot") return [Math.round(Number(value)) + " ft", "Elevation"];
                 if (key === "cadPlot") return [Math.round(Number(value)) + " spm", "Cadence"];
                 return [value, name];
               }}
               labelFormatter={(_, payload) => {
                 const point = payload?.[0]?.payload;
-                return point ? `${Number(point.distanceEnd).toFixed(2)} mi · Lap ${point.mile}` : "";
+                return point && Number.isFinite(Number(point.distanceEnd)) ? `${Number(point.distanceEnd).toFixed(2)} mi${Number.isFinite(point.mile) ? ` · Lap ${point.mile}${point.partial ? ` · ${Number(point.distance_mi).toFixed(3)} mi partial` : ""}` : ""}` : "";
               }}
             />
-            <Area name="Elevation" data={elevationData} yAxisId="elev" type="monotone" dataKey="elevationPlot" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={0.25} strokeWidth={1.2} baseValue={0} />
+            <Area name="Elevation" data={elevationData} yAxisId="elev" type="monotone" dataKey="elevationPlot" stroke="#BDD1C5" fill="#BDD1C5" fillOpacity={0.25} strokeWidth={1.2} baseValue="dataMin" />
             <Line name="Pace" yAxisId="pace" type="monotone" dataKey="paceNeg" stroke="#9DAAA2" strokeWidth={1.5} dot={false} connectNulls />
             <Line
               name="Cadence"
@@ -4231,10 +4233,10 @@ function RaceExpandedCharts({ race }) {
             />
             <Tooltip
               contentStyle={{ background: "var(--surface-2)", border: "0.5px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-              formatter={(value, _, item) => [fmtPace(-Number(value)) + "/mi" + (item?.payload?.partial ? " (extrapolated)" : ""), "Pace"]}
+              formatter={(value, _, item) => [fmtPace(-Number(value)) + "/mi" + (item?.payload?.partial ? " (partial-lap equivalent)" : ""), "Pace"]}
               labelFormatter={(_, payload) => {
                 const point = payload?.[0]?.payload;
-                return point ? `Mile ${point.mile} · ${Number(point.distanceEnd).toFixed(2)} mi` : "";
+                return point && Number.isFinite(point.mile) ? `Lap ${point.mile}${point.partial ? ` · ${Number(point.distance_mi).toFixed(3)} mi partial` : ""} · ${Number(point.distanceEnd).toFixed(2)} mi` : "";
               }}
             />
             <Area type="step" dataKey="paceNeg" stroke="#77807A" strokeWidth={1.5} fill="#9DAAA2" fillOpacity={0.75} baseValue="dataMin" />
