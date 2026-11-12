@@ -743,6 +743,12 @@ const RESPONSIVE_CSS = `
   .rd-gear-grid { grid-template-columns: 1fr !important; }
 }
 
+.rd-activity-training-strip .rd-activity-stats-group { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; column-gap: 8px; }
+.rd-activity-training-strip .rd-activity-stats-title + div { display: none; }
+.rd-activity-training-strip .rd-activity-stats-metric-sub { white-space: normal !important; }
+@media (max-width: 350px) {
+  .rd-activity-training-strip .rd-activity-stats-group { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
 @media (max-width: 760px) {
   .rd-device-totals-card { align-items: stretch !important; }
   .rd-device-summary { flex-basis: 100% !important; }
@@ -825,7 +831,8 @@ const RESPONSIVE_CSS = `
   .rd-detail-watch-grid { grid-template-columns: 1fr !important; row-gap: 5px !important; }
   .rd-detail-watch-grid > div:first-child { margin-bottom: 10px !important; }
   .rd-activity-stats-title { font-size: 10px !important; white-space: nowrap !important; }
-  .rd-activity-stats-layout { gap: 10px !important; }
+  .rd-activity-stats-layout { column-gap: 12px !important; row-gap: 12px !important; }
+  .rd-activity-stats-panel { padding: 12px 11px !important; }
   .rd-detail-metric-grid { grid-template-columns: repeat(3, minmax(0,1fr)) !important; }
   .rd-detail-metric-grid > div { border-right: 1px solid var(--border) !important; border-bottom: 1px solid var(--border) !important; }
   .rd-splits-header-visuals { width: 100%; justify-content: flex-end !important; margin-top: 1px; }
@@ -2458,7 +2465,7 @@ const DYNAMICS_HELP = {
   oscillation: ["Vertical Oscillation", "How far your torso moves up and down with each step. Compare runs at similar paces and with the same sensor placement.", ["<6.4 cm", "6.4–8.1 cm", "8.1–9.7 cm", "9.7–11.5 cm", ">11.5 cm"]],
   ratio: ["Vertical Ratio", "Vertical oscillation divided by step length, expressed as a percentage. It shows how much you move up and down relative to how far you travel forward.", ["<6.1%", "6.1–7.4%", "7.5–8.6%", "8.7–10.1%", ">10.1%"]],
   contact: ["Ground Contact Time", "How long a foot stays on the ground on each step, measured in milliseconds. Pace and terrain can affect it.", ["<208 ms", "208–240 ms", "241–272 ms", "273–305 ms", ">305 ms"]],
-  balance: ["Ground Contact Balance", "How your ground contact time is split between left and right. Hills, speed changes, and fatigue can shift the split.", [">51.5% R", "50.6–51.5% R", "50.5% R to 50.5% L", "50.6–51.5% L", ">51.5% L"]],
+  balance: ["Ground Contact Balance", "How your ground contact time is split between left and right, shown left first. Hills, speed changes, and fatigue can shift the split.", [">51.5% R", "50.6–51.5% R", "50.5% R to 50.5% L", "50.6–51.5% L", ">51.5% L"]],
   respiration: ["Respiration Rate", "Breaths per minute from the Garmin workout summary. Compare similar runs to see how breathing changes with effort. Inhale/exhale rhythms such as 3:3 on easy efforts or 2:2 at a steadier effort are examples; follow your natural breathing."],
   performance: ["Performance Condition", "Garmin compares pace, heart rate and beat-to-beat variation with your usual fitness. The first score typically appears 6–20 minutes in. A falling score can reflect fatigue.", null, [["Excellent", ">10"], ["Good", "2 to 10"], ["Baseline", "−1 to 1"], ["Fair", "−10 to −2"], ["Poor", "−20 to −11"]]],
   zones: ["Heart Rate Zones", "Zones describe intensity, from warm-up (1) to highest effort (5). % Max HR uses maximum HR; % HR Reserve uses the gap between resting and maximum HR; % LTHR uses running threshold HR. Runs retain their original zone breakdown where available. Time below Zone 1 and rounding can leave the total under 100%."],
@@ -2530,7 +2537,7 @@ function DynamicsHelpValue({ id, value }) {
   return <>
     <button type="button" aria-label={`${title}: ${value}. Open explanation`} aria-haspopup="dialog"
       onClick={(event) => { event.stopPropagation(); dialog.current.showModal(); }}
-      style={{ appearance: "none", border: 0, padding: 0, background: "transparent", color: "inherit", font: "inherit", textAlign: "inherit", cursor: "pointer", textDecoration: "underline dotted", textUnderlineOffset: 3 }}>{value}</button>
+      style={{ appearance: "none", border: 0, padding: 0, background: "transparent", color: "inherit", font: "inherit", textAlign: "inherit", whiteSpace: id === "balance" ? "nowrap" : undefined, fontSize: id === "balance" ? "0.78em" : undefined, cursor: "pointer", textDecoration: "underline dotted", textUnderlineOffset: 3 }}>{value}</button>
     {ReactDOM.createPortal(
       <dialog ref={dialog} aria-label={title} onClick={(event) => { event.stopPropagation(); if (event.target === event.currentTarget) event.currentTarget.close(); }}
         style={{ width: "min(430px, calc(100% - 36px))", boxSizing: "border-box", maxHeight: "85vh", color: "var(--text-primary)", background: "var(--surface-1, #f8f7f4)", border: "1px solid var(--border)", borderRadius: 18, padding: 0 }}>
@@ -2553,6 +2560,10 @@ function DynamicsHelpValue({ id, value }) {
   </>;
 }
 
+function formatGctBalance(left) {
+  return `${Number(left).toFixed(1)}% / ${(100 - left).toFixed(1)}%`;
+}
+
 function runStepLength(run) {
   return run.running_dynamics?.step_length_m ?? run.avg_stride_length_m ??
     (run.avg_cadence > 0 && run.duration_s > 0 && run.distance_mi > 0 ? run.distance_mi * 1609.344 * 60 / run.duration_s / run.avg_cadence : null);
@@ -2570,9 +2581,9 @@ function runningDynamicsGroups(run) {
   const extra = [
     metric("Vertical Oscillation", "oscillation", d.vertical_oscillation_cm, 2, " cm"),
     metric("Vertical Ratio", "ratio", d.vertical_ratio_pct, 2, "%"),
-    metric("Ground Contact Time", "contact", d.ground_contact_time_ms, 1, " ms"),
-    { label: "Ground Contact Balance", help: "balance", value: d.ground_contact_balance_left_pct == null ? "—" : `${d.ground_contact_balance_left_pct.toFixed(2)}% L / ${(100 - d.ground_contact_balance_left_pct).toFixed(2)}% R` },
-    metric("Ground Contact %", "contactPct", d.ground_contact_pct, 2, "%"),
+    metric("GCT", "contact", d.ground_contact_time_ms, 1, " ms"),
+    { label: "GCT Balance", help: "balance", value: d.ground_contact_balance_left_pct == null ? "—" : formatGctBalance(d.ground_contact_balance_left_pct) },
+    metric("GCT %", "contactPct", d.ground_contact_pct, 2, "%"),
   ].filter(({value}) => value !== "—");
   return [[
     metric("Cadence", "cadence", run.avg_cadence, 0, " spm"),
@@ -2593,7 +2604,7 @@ function ActivityStatsMetric({ item }) {
 
 function ActivityStatsGroup({ items, compact = false }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: compact ? 8 : 12 }}>
+    <div className="rd-activity-stats-group" style={{ display: "grid", gridTemplateColumns: "1fr", rowGap: compact ? 7 : 12 }}>
       {items.map((item) => <ActivityStatsMetric key={item.label} item={item} />)}
     </div>
   );
@@ -2614,8 +2625,8 @@ function ActivityStatsMetricGroups({ groups, compact = false, distribute = false
         <div key={groupIndex}>
           <ActivityStatsGroup items={group} compact={compact} />
           {groupIndex < groups.length - 1 ? (
-            <div style={{ display: "flex", justifyContent: "flex-start", padding: compact ? "8px 0" : "10px 0" }}>
-              <div aria-hidden="true" style={{ width: 66, height: 1, background: "var(--border)" }} />
+            <div style={{ display: "flex", justifyContent: "flex-start", padding: compact ? "6px 0" : "10px 0" }}>
+              <div aria-hidden="true" style={{ width: "64%", maxWidth: 66, height: 1, background: "var(--border)" }} />
             </div>
           ) : null}
         </div>
@@ -2718,14 +2729,14 @@ function ActivityStatsTab({ run, showHeader = true }) {
         </div>
         <p className="rd-detail-activity-summary rd-more-stats-weather-line" style={{ margin: usesSpecialRunHeading(run) ? "6px 0 0" : "4px 0 0", fontSize: 12, color: "var(--text-secondary)", textAlign: "center", whiteSpace: "nowrap", width: "100%" }}>{weatherLine}</p>
       </div>}
-      <div style={{ background: "rgba(255,255,255,0.22)", border: "1px solid rgba(228,225,218,0.56)", borderRadius: 14, padding: "0.9rem 0.78rem", backdropFilter: "blur(1px)" }}>
+      <div className="rd-activity-stats-panel" style={{ background: "rgba(255,255,255,0.22)", border: "1px solid rgba(228,225,218,0.56)", borderRadius: 14, padding: "0.9rem 0.78rem", backdropFilter: "blur(1px)" }}>
         <div className="rd-activity-stats-layout" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 15, alignItems: "start" }}>
-          <ActivityStatsBlock title="Run Summary" groups={runStatsGroups} compact={!!tempo} distribute={!!tempo} />
-          <div className="rd-activity-stats-block" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 15, minWidth: 0, alignSelf: "stretch" }}>
-            <ActivityStatsBlock title="Running Dynamics" groups={dynamicsGroups} />
-            <ActivityStatsBlock title="Training Effect" groups={trainingGroups} />
+          <ActivityStatsBlock title="Run Summary" groups={runStatsGroups} compact />
+          <ActivityStatsBlock title="Running Dynamics" groups={dynamicsGroups} compact />
+          <ActivityStatsBlock title="Biometrics" groups={biometricsGroups} compact />
+          <div className="rd-activity-training-strip" style={{ gridColumn: "1 / -1", paddingTop: 9, borderTop: "1px solid var(--border)" }}>
+            <ActivityStatsBlock title="Training Effect" groups={trainingGroups} compact />
           </div>
-          <ActivityStatsBlock title="Biometrics" groups={biometricsGroups} />
         </div>
       </div>
     </div>
@@ -3921,7 +3932,7 @@ function RunDynamicsChart({ run }) {
   const end = Math.max(Number(run.distance_mi) || 0, ...data.map(p => p.dist_mi));
   const paceScale = regularPaceScale(trace.map(p => p.pace));
   const metricText = (v) => key === "gct_left_pct"
-    ? `${Number(v).toFixed(1)}% L / ${(100 - v).toFixed(1)}% R`
+    ? formatGctBalance(v)
     : `${Number(v).toFixed(digits)} ${unit}`;
   return <section aria-label="Running dynamics by distance">
     <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
