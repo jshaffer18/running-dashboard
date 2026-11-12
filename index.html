@@ -2460,9 +2460,9 @@ function getMaxSpeedMph(run, bestPace) {
 const DYNAMICS_PERCENTILES = [">95%", "70–95%", "30–69%", "5–29%", "<5%"];
 const DYNAMICS_COLORS = ["#BD4DA8", "#2499B5", "#43884D", "#DA8A32", "#D94E60"];
 const DYNAMICS_HELP = {
-  cadence: ["Cadence", "Total steps per minute, counting both feet. Compare at similar paces; there is no single target for every runner.", [">185 spm", "174–185 spm", "163–173 spm", "151–162 spm", "<151 spm"]],
+  cadence: ["Cadence", "Total steps per minute, counting both feet. Compare easy, steady, and hard efforts relative to your own ability. 180 spm is a rule of thumb; there is no single target.", [">185 spm", "174–185 spm", "163–173 spm", "151–162 spm", "<151 spm"]],
   step: ["Stride Length", "Distance from one footfall to the next. Garmin Connect calls this stride length; in gait terminology a full stride is two steps, from one footfall to the next landing of the same foot."],
-  oscillation: ["Vertical Oscillation", "How far your torso moves up and down with each step. Compare runs at similar paces and with the same sensor placement.", ["<6.4 cm", "6.4–8.1 cm", "8.1–9.7 cm", "9.7–11.5 cm", ">11.5 cm"]],
+  oscillation: ["Vertical Oscillation", "How far your torso moves up and down with each step. Compare runs at similar paces and with the same sensor placement.", ["<6.4 cm", "6.4–8.0 cm", "8.1–9.6 cm", "9.7–11.5 cm", ">11.5 cm"]],
   ratio: ["Vertical Ratio", "Vertical oscillation divided by step length, expressed as a percentage. It shows how much you move up and down relative to how far you travel forward.", ["<6.1%", "6.1–7.4%", "7.5–8.6%", "8.7–10.1%", ">10.1%"]],
   contact: ["Ground Contact Time", "How long a foot stays on the ground on each step, measured in milliseconds. Pace and terrain can affect it.", ["<208 ms", "208–240 ms", "241–272 ms", "273–305 ms", ">305 ms"]],
   balance: ["Ground Contact Balance", "How your ground contact time is split between left and right, shown left first. Hills, speed changes, and fatigue can shift the split.", [">51.5% R", "50.6–51.5% R", "50.5% R to 50.5% L", "50.6–51.5% L", ">51.5% L"]],
@@ -2530,6 +2530,27 @@ function TrainingLoadTimeline({ runs }) {
   </section>;
 }
 
+const MARATHON_BENCHMARKS = {
+  oscillation: [["≥9.7 cm", "8.1–9.6 cm", "≤8.0 cm"], n => Math.round(n * 10) >= 97 ? 0 : Math.round(n * 10) >= 81 ? 1 : 2],
+  ratio: [["≥8.7%", "7.5–8.6%", "≤7.4%"], n => Math.round(n * 10) >= 87 ? 0 : Math.round(n * 10) >= 75 ? 1 : 2],
+  balance: [["≥1.6 points off 50/50", "0.6–1.5 points off 50/50", "≤0.5 points off 50/50"], n => Math.abs(Math.round(n * 10) - 500) >= 16 ? 0 : Math.abs(Math.round(n * 10) - 500) >= 6 ? 1 : 2],
+  contactPct: [["≥39.0%", "36.1–38.9%", "≤36.0%"], n => Math.round(n * 10) >= 390 ? 0 : Math.round(n * 10) >= 361 ? 1 : 2],
+  cadence: [["≤173 spm", "174–185 spm", "≥186 spm"], n => n < 174 ? 0 : n < 186 ? 1 : 2],
+  step: [["≤0.99 m", "1.00–1.19 m", "≥1.20 m"], n => n < 1 ? 0 : n < 1.2 ? 1 : 2],
+  contact: [["≥241 ms", "231–240 ms", "≤230 ms"], n => Math.round(n) >= 241 ? 0 : Math.round(n) >= 231 ? 1 : 2],
+};
+
+function dynamicsReferenceRow(id, value) {
+  const n = Number.parseFloat(value);
+  if (!Number.isFinite(n)) return -1;
+  if (id === "cadence") return n > 185 ? 0 : n >= 174 ? 1 : n >= 163 ? 2 : n >= 151 ? 3 : 4;
+  if (id === "contact") { const ms = Math.round(n); return ms < 208 ? 0 : ms <= 240 ? 1 : ms <= 272 ? 2 : ms <= 305 ? 3 : 4; }
+  if (id === "ratio") { const pct = Math.round(n * 10) / 10; return pct < 6.1 ? 0 : pct <= 7.4 ? 1 : pct <= 8.6 ? 2 : pct <= 10.1 ? 3 : 4; }
+  if (id === "oscillation") { const cm = Math.round(n * 10) / 10; return cm < 6.4 ? 0 : cm < 8.1 ? 1 : cm < 9.7 ? 2 : cm <= 11.5 ? 3 : 4; }
+  if (id === "balance") return n < 48.5 ? 0 : n < 49.5 ? 1 : n <= 50.5 ? 2 : n <= 51.5 ? 3 : 4;
+  return -1;
+}
+
 function DynamicsHelpValue({ id, value }) {
   const dialog = React.useRef(null);
   const [title, description, ranges, rows] = DYNAMICS_HELP[id];
@@ -2547,12 +2568,17 @@ function DynamicsHelpValue({ id, value }) {
             <button type="button" autoFocus aria-label="Close explanation" onClick={() => dialog.current.close()} style={{ border: "1px solid var(--border)", background: "transparent", color: "inherit", borderRadius: 999, width: 30, height: 30, flexShrink: 0, cursor: "pointer", fontSize: 18 }}>×</button>
           </div>
           <p style={{ fontSize: 13, lineHeight: 1.5 }}>{description}</p>
+          {MARATHON_BENCHMARKS[id]?.[0].map((range, i) => {
+            const match = MARATHON_BENCHMARKS[id][1](Number.parseFloat(value)) === i;
+            return <div key={range} style={{ padding: "4px 7px", fontSize: 12, borderRadius: 5, background: match ? "rgba(139, 168, 149, 0.24)" : undefined }}>
+              {["Recreational", "Intermediate", "Elite"][i]}: {range}{match && <small style={{ marginLeft: 5 }}>This run</small>}
+            </div>;
+          })}
           {scale && <table style={{ width: "100%", textAlign: "left", fontSize: 12, lineHeight: 1.9 }}><thead><tr><th scope="col">Category</th><th scope="col">Range</th></tr></thead><tbody>{scale.map(([label, range]) => <tr key={label}><td>{label}</td><td>{range}</td></tr>)}</tbody></table>}
-          {ranges && <>
-            <p style={{ fontSize: 12 }}>Garmin reference ranges for comparison, not personal targets.</p>
+          {ranges && !MARATHON_BENCHMARKS[id] && <>
             <table style={{ width: "100%", textAlign: "left", fontSize: 12, lineHeight: 1.9 }}>
               <thead><tr><th scope="col">Percentile</th><th scope="col">Range</th></tr></thead>
-              <tbody>{ranges.map((range, i) => <tr key={range}><td><span aria-hidden="true" style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: (id === "balance" ? [DYNAMICS_COLORS[4], DYNAMICS_COLORS[3], DYNAMICS_COLORS[2], DYNAMICS_COLORS[3], DYNAMICS_COLORS[4]] : DYNAMICS_COLORS)[i], marginRight: 7 }} />{DYNAMICS_PERCENTILES[i]}</td><td>{range}</td></tr>)}</tbody>
+              <tbody>{ranges.map((range, i) => <tr key={range} style={i === dynamicsReferenceRow(id, value) ? { background: "rgba(139, 168, 149, 0.24)" } : undefined}><td><span aria-hidden="true" style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: (id === "balance" ? [DYNAMICS_COLORS[4], DYNAMICS_COLORS[3], DYNAMICS_COLORS[2], DYNAMICS_COLORS[3], DYNAMICS_COLORS[4]] : DYNAMICS_COLORS)[i], marginRight: 7 }} />{DYNAMICS_PERCENTILES[i]}</td><td>{range}{i === dynamicsReferenceRow(id, value) && <small style={{ marginLeft: 5 }}>This run</small>}</td></tr>)}</tbody>
             </table>
           </>}
         </div>
