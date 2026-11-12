@@ -2460,25 +2460,25 @@ function getMaxSpeedMph(run, bestPace) {
 const DYNAMICS_PERCENTILES = [">95%", "70–95%", "30–69%", "5–29%", "<5%"];
 const DYNAMICS_COLORS = ["#BD4DA8", "#2499B5", "#43884D", "#DA8A32", "#D94E60"];
 const DYNAMICS_HELP = {
-  cadence: ["Cadence", "Total steps per minute, counting both feet. Compare easy, steady, and hard efforts relative to your own ability. 180 spm is a rule of thumb; there is no single target.", [">185 spm", "174–185 spm", "163–173 spm", "151–162 spm", "<151 spm"]],
-  step: ["Stride Length", "Distance from one footfall to the next. Garmin Connect calls this stride length; in gait terminology a full stride is two steps, from one footfall to the next landing of the same foot."],
-  oscillation: ["Vertical Oscillation", "How far your torso moves up and down with each step. Compare runs at similar paces and with the same sensor placement.", ["<6.4 cm", "6.4–8.0 cm", "8.1–9.6 cm", "9.7–11.5 cm", ">11.5 cm"]],
-  ratio: ["Vertical Ratio", "Vertical oscillation divided by step length, expressed as a percentage. It shows how much you move up and down relative to how far you travel forward.", ["<6.1%", "6.1–7.4%", "7.5–8.6%", "8.7–10.1%", ">10.1%"]],
-  contact: ["Ground Contact Time", "How long a foot stays on the ground on each step, measured in milliseconds. Pace and terrain can affect it.", ["<208 ms", "208–240 ms", "241–272 ms", "273–305 ms", ">305 ms"]],
-  balance: ["Ground Contact Balance", "How your ground contact time is split between left and right, shown left first. Hills, speed changes, and fatigue can shift the split.", [">51.5% R", "50.6–51.5% R", "50.5% R to 50.5% L", "50.6–51.5% L", ">51.5% L"]],
-  respiration: ["Respiration Rate", "Breaths per minute from the Garmin workout summary. Compare similar runs to see how breathing changes with effort. Inhale/exhale rhythms such as 3:3 on easy efforts or 2:2 at a steadier effort are examples; follow your natural breathing."],
-  performance: ["Performance Condition", "Garmin compares pace, heart rate and beat-to-beat variation with your usual fitness. The first score typically appears 6–20 minutes in. A falling score can reflect fatigue.", null, [["Excellent", ">10"], ["Good", "2 to 10"], ["Baseline", "−1 to 1"], ["Fair", "−10 to −2"], ["Poor", "−20 to −11"]]],
-  zones: ["Heart Rate Zones", "Zones describe intensity, from warm-up (1) to highest effort (5). % Max HR uses maximum HR; % HR Reserve uses the gap between resting and maximum HR; % LTHR uses running threshold HR. Runs retain their original zone breakdown where available. Time below Zone 1 and rounding can leave the total under 100%."],
-  threshold: ["Lactate Threshold", "Garmin estimates the running intensity where lactate begins to accumulate more rapidly. The current Garmin estimate is 175 bpm at 8:37/mi. It is a reference for training zones and sustained workouts, not a marathon pace target."],
-  vo2: ["VO₂ Max", "Garmin estimates maximum oxygen use in mL/kg/min from heart rate and exercise data. Running and cycling estimates can differ; heat and altitude can affect readings. These reference bands are for women ages 30–39.", null, [["Superior", "47.4+"], ["Excellent", "42.4–47.4"], ["Good", "37.8–42.4"], ["Fair", "34.4–37.8"], ["Poor", "≤34.4"]]],
-  hrv: ["HRV Status", "Garmin compares a seven-day average of overnight beat-to-beat variation with a personal baseline, which typically takes about three weeks of sleep data to establish. Workout beat intervals alone do not provide this status."],
-  status: ["Training Status", "Garmin uses trends in recent load, VO₂ max and HRV status where available. Labels include Productive, Maintaining, Recovery, Peaking, Strained, Unproductive, Overreaching, Detraining, No Status and Paused."],
-  focus: ["Training Load Focus", "Garmin compares the distribution of recent load across low aerobic, high aerobic and anaerobic efforts with personalized ranges. This requires Garmin load-focus data; the running-load chart does not calculate these ranges."],
-  load: ["Training Load", "Exercise Load is a single-workout score based on estimated excess post-exercise oxygen consumption (EPOC). Garmin acute load weights recent activities. This dashboard instead shows transparent rolling totals from logged runs only."],
-  exercise: ["Exercise Load", "Garmin’s single-workout load score is based on estimated excess post-exercise oxygen consumption (EPOC). Longer or harder sessions generally contribute more load."],
-  aerobic: ["Aerobic Training Effect", "Garmin uses heart rate and accumulated effort to estimate the workout’s effect on aerobic fitness. Steady work and longer intervals tend to contribute to this score."],
-  anaerobic: ["Anaerobic Training Effect", "Garmin uses heart rate and speed or power to estimate the effect of very intense efforts. Short, hard repeats often contribute to this score."],
-  contactPct: ["Ground Contact %", "The portion of the step cycle spent in contact with the ground, shown as a percentage rather than milliseconds."],
+  cadence: ["Cadence", "Steps per minute, counting both feet. 180 spm is a rule of thumb.", [">185 spm", "174–185 spm", "163–173 spm", "151–162 spm", "<151 spm"]],
+  step: ["Stride Length", "Distance from one footfall to the next. Garmin calls this stride length."],
+  oscillation: ["Vertical Oscillation", "How far your torso moves up and down with each step.", ["<6.4 cm", "6.4–8.0 cm", "8.1–9.6 cm", "9.7–11.5 cm", ">11.5 cm"]],
+  ratio: ["Vertical Ratio", "Vertical oscillation divided by stride length, shown as a percentage.", ["<6.1%", "6.1–7.4%", "7.5–8.6%", "8.7–10.1%", ">10.1%"]],
+  contact: ["Ground Contact Time", "How long each foot stays on the ground per step.", ["<208 ms", "208–240 ms", "241–272 ms", "273–305 ms", ">305 ms"]],
+  balance: ["Ground Contact Balance", "Share of ground contact time on each foot, shown left / right.", [">51.5% R", "50.6–51.5% R", "50.5% R to 50.5% L", "50.6–51.5% L", ">51.5% L"]],
+  respiration: ["Respiration Rate", "Breaths per minute during the run. Compare similar runs to see how breathing changes with effort."],
+  performance: ["Performance Condition", "Garmin uses pace, heart rate, and HRV to compare your effort with your usual fitness. The first score typically appears after 6–20 minutes.", null, [["Excellent", ">10"], ["Good", "2 to 10"], ["Baseline", "−1 to 1"], ["Fair", "−10 to −2"], ["Poor", "−20 to −11"]]],
+  zones: ["Heart Rate Zones", "Zones 1–5 track intensity using max HR, HR reserve, or threshold HR. Original zones are retained when available; time below Zone 1 is excluded."],
+  threshold: ["Lactate Threshold", "The effort where lactate starts building faster. Garmin estimates yours at 175 bpm and 8:37/mi."],
+  vo2: ["VO₂ Max", "Garmin’s estimate of maximum oxygen use (mL/kg/min). The ranges below are for women ages 30–39.", null, [["Superior", "47.4+"], ["Excellent", "42.4–47.4"], ["Good", "37.8–42.4"], ["Fair", "34.4–37.8"], ["Poor", "≤34.4"]]],
+  hrv: ["HRV Status", "Garmin compares your seven-day overnight HRV average with your personal baseline."],
+  status: ["Training Status", "Garmin summarizes how training is going using recent load, VO₂ max, and HRV when available."],
+  focus: ["Training Load Focus", "Garmin compares your low aerobic, high aerobic, and anaerobic load with personalized ranges."],
+  load: ["Training Load", "Garmin weights recent activities for acute load. This dashboard shows rolling totals for logged runs."],
+  exercise: ["Exercise Load", "Garmin estimates workout load from the extra oxygen your body uses during recovery (EPOC)."],
+  aerobic: ["Aerobic Training Effect", "Estimates how a workout affects aerobic fitness using heart rate and accumulated effort."],
+  anaerobic: ["Anaerobic Training Effect", "Estimates the effect of hard efforts using heart rate and speed or power."],
+  contactPct: ["Ground Contact %", "Percentage of the step cycle spent on the ground."],
 };
 
 function TrainingLoadTimeline({ runs }) {
@@ -2554,11 +2554,12 @@ function dynamicsReferenceRow(id, value) {
 function DynamicsHelpValue({ id, value }) {
   const dialog = React.useRef(null);
   const [title, description, ranges, rows] = DYNAMICS_HELP[id];
+  const runBadge = <span aria-label={`Run value: ${value}`} style={{ display: "inline-block", marginLeft: "auto", padding: "2px 7px", borderRadius: 999, border: "1px solid rgba(139, 168, 149, 0.65)", background: "var(--surface-1, #f8f7f4)", color: "var(--text-primary)", fontWeight: 700, whiteSpace: "nowrap" }}>{value}</span>;
   const scale = rows || (id === "aerobic" || id === "anaerobic" ? [["No Benefit", "0.0–0.9"], ["Minor Benefit", "1.0–1.9"], ["Maintaining", "2.0–2.9"], ["Improving", "3.0–3.9"], ["Highly Improving", "4.0–4.9"], ["Overreaching", "5.0"]] : null);
   return <>
     <button type="button" aria-label={`${title}: ${value}. Open explanation`} aria-haspopup="dialog"
       onClick={(event) => { event.stopPropagation(); dialog.current.showModal(); }}
-      style={{ appearance: "none", border: 0, padding: 0, background: "transparent", color: "inherit", font: "inherit", textAlign: "inherit", whiteSpace: id === "balance" ? "nowrap" : undefined, fontSize: id === "balance" ? "0.78em" : undefined, cursor: "pointer", textDecoration: "underline dotted", textUnderlineOffset: 3 }}>{value}</button>
+      style={{ appearance: "none", border: 0, padding: 0, background: "transparent", color: "inherit", fontFamily: "inherit", fontSize: "inherit", fontWeight: "inherit", lineHeight: "inherit", textAlign: "inherit", maxWidth: "100%", cursor: "pointer", textDecoration: "underline dotted", textUnderlineOffset: 3 }}>{value}</button>
     {ReactDOM.createPortal(
       <dialog ref={dialog} aria-label={title} onClick={(event) => { event.stopPropagation(); if (event.target === event.currentTarget) event.currentTarget.close(); }}
         style={{ width: "min(430px, calc(100% - 36px))", boxSizing: "border-box", maxHeight: "85vh", color: "var(--text-primary)", background: "var(--surface-1, #f8f7f4)", border: "1px solid var(--border)", borderRadius: 18, padding: 0 }}>
@@ -2568,19 +2569,19 @@ function DynamicsHelpValue({ id, value }) {
             <button type="button" autoFocus aria-label="Close explanation" onClick={() => dialog.current.close()} style={{ border: "1px solid var(--border)", background: "transparent", color: "inherit", borderRadius: 999, width: 30, height: 30, flexShrink: 0, cursor: "pointer", fontSize: 18 }}>×</button>
           </div>
           <p style={{ fontSize: 13, lineHeight: 1.5 }}>{description}</p>
-          {MARATHON_BENCHMARKS[id]?.[0].map((range, i) => {
-            const match = MARATHON_BENCHMARKS[id][1](Number.parseFloat(value)) === i;
-            return <div key={range} style={{ padding: "4px 7px", fontSize: 12, borderRadius: 5, background: match ? "rgba(139, 168, 149, 0.24)" : undefined }}>
-              {["Recreational", "Intermediate", "Elite"][i]}: {range}{match && <small style={{ marginLeft: 5 }}>This run</small>}
-            </div>;
-          })}
           {scale && <table style={{ width: "100%", textAlign: "left", fontSize: 12, lineHeight: 1.9 }}><thead><tr><th scope="col">Category</th><th scope="col">Range</th></tr></thead><tbody>{scale.map(([label, range]) => <tr key={label}><td>{label}</td><td>{range}</td></tr>)}</tbody></table>}
-          {ranges && !MARATHON_BENCHMARKS[id] && <>
-            <table style={{ width: "100%", textAlign: "left", fontSize: 12, lineHeight: 1.9 }}>
+          {ranges && <>
+            <table aria-label="Garmin reference ranges" style={{ width: "100%", textAlign: "left", fontSize: 12, lineHeight: 1.9 }}>
               <thead><tr><th scope="col">Percentile</th><th scope="col">Range</th></tr></thead>
-              <tbody>{ranges.map((range, i) => <tr key={range} style={i === dynamicsReferenceRow(id, value) ? { background: "rgba(139, 168, 149, 0.24)" } : undefined}><td><span aria-hidden="true" style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: (id === "balance" ? [DYNAMICS_COLORS[4], DYNAMICS_COLORS[3], DYNAMICS_COLORS[2], DYNAMICS_COLORS[3], DYNAMICS_COLORS[4]] : DYNAMICS_COLORS)[i], marginRight: 7 }} />{DYNAMICS_PERCENTILES[i]}</td><td>{range}{i === dynamicsReferenceRow(id, value) && <small style={{ marginLeft: 5 }}>This run</small>}</td></tr>)}</tbody>
+              <tbody>{ranges.map((range, i) => <tr key={range} style={!MARATHON_BENCHMARKS[id] && i === dynamicsReferenceRow(id, value) ? { background: "rgba(139, 168, 149, 0.24)" } : undefined}><td><span aria-hidden="true" style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: (id === "balance" ? [DYNAMICS_COLORS[4], DYNAMICS_COLORS[3], DYNAMICS_COLORS[2], DYNAMICS_COLORS[3], DYNAMICS_COLORS[4]] : DYNAMICS_COLORS)[i], marginRight: 7 }} />{DYNAMICS_PERCENTILES[i]}</td><td><div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "2px 6px" }}>{range}{!MARATHON_BENCHMARKS[id] && i === dynamicsReferenceRow(id, value) && runBadge}</div></td></tr>)}</tbody>
             </table>
           </>}
+          {MARATHON_BENCHMARKS[id]?.[0].map((range, i) => {
+            const match = MARATHON_BENCHMARKS[id][1](Number.parseFloat(value)) === i;
+            return <div key={range} style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "4px 8px", padding: "4px 7px", fontSize: 12, borderRadius: 5, background: match ? "rgba(139, 168, 149, 0.24)" : undefined }}>
+              <span>{["Recreational", "Intermediate", "Elite"][i]}: {range}</span>{match && runBadge}
+            </div>;
+          })}
         </div>
       </dialog>, document.body)}
   </>;
@@ -2613,7 +2614,7 @@ function runningDynamicsGroups(run) {
   ].filter(({value}) => value !== "—");
   return [[
     metric("Cadence", "cadence", run.avg_cadence, 0, " spm"),
-    metric("Max Cadence", "cadence", run.max_cadence, 0, " spm"),
+    metric("Max Cadence", null, run.max_cadence, 0, " spm"),
     metric("Stride Length", "step", runStepLength(run), 2, " m"),
   ], ...(extra.length ? [extra] : [])];
 }
